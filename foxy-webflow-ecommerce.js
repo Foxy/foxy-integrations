@@ -31,6 +31,11 @@ export default function init(foxyConfig) {
             '';
           const image =
             document.querySelector('[foxy-product-option="image"]')?.src || '';
+          const weight =
+            parseFloat(
+              document.querySelector('[foxy-product-option="weight"]')
+                ?.innerText
+            ) || '';
           const quantity =
             document.querySelector('.w-commerce-commerceaddtocartquantityinput')
               ?.value || 1;
@@ -43,7 +48,7 @@ export default function init(foxyConfig) {
             code
           )}&quantity=${quantity}&image=${encodeURIComponent(
             image
-          )}&url=${encodeURIComponent(window.location.href)}`;
+          )}&weight=${weight}&url=${encodeURIComponent(window.location.href)}`;
 
           const optionEls = Array.from(
             document.querySelectorAll(
