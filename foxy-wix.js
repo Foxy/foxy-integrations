@@ -176,7 +176,9 @@ FC.onLoad = function () {
               encodeURIComponent(select.options[select.selectedIndex].text)
             );
       const allVariantName = Array.from(
-        document.querySelectorAll("[data-hook='options-dropdown-title']")
+        document.querySelectorAll(
+          "[data-hook='options-dropdown-title'], [data-hook='dropdown-label']"
+        )
       ).map((div) => encodeURIComponent(div.innerText));
 
       // Color option
