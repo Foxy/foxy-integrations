@@ -1,4 +1,3 @@
-var foxySubdomain = '';
 document.addEventListener('DOMContentLoaded', () => {
   const forms = document.querySelectorAll('form[action*="https://www.asecurecart.net"]');
 
