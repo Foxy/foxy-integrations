@@ -179,7 +179,7 @@ FC.onLoad = function () {
         document.querySelectorAll(
           "[data-hook='options-dropdown-title'], [data-hook='dropdown-label']"
         )
-      ).map((div) => encodeURIComponent(div.innerText));
+      ).map((div) => encodeURIComponent(div.innerText.replace(/\*$/, '')));
 
       // Color option
       const colorOption = document
