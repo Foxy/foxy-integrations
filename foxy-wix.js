@@ -97,11 +97,13 @@ FC.onLoad = function () {
 
       const slug = window.location.pathname.split('/').slice(-1) || '';
       const quantity =
-        document.querySelector("[data-hook='number-input-spinner-input']")
-          ?.value || 1;
+        document.querySelector(
+          '[data-hook="number-input-spinner-input"], [data-hook="product-quantity-container"] input'
+        )?.value || 1;
       const quantity_max =
-        document.querySelector("[data-hook='number-input-spinner-input']")
-          ?.max || 0;
+        document.querySelector(
+          '[data-hook="number-input-spinner-input"], [data-hook="product-quantity-container"] input'
+        )?.max || 0;
       const code =
         document.querySelector("[data-hook='sku']")?.innerText.split(': ')[1] ||
         '';
