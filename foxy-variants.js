@@ -46,7 +46,7 @@ var FC = FC || {},
           q = v?.querySelectorAll(`[${a}]`),
           E = document.querySelector("[foxy-id='switch']");
         function x(e, t) {
-          Object.assign(e, t);
+          if (t && "object" == typeof t) for (const n in t) n in e && (e[n] = t[n]);
         }
         function A() {
           let e = "DEFAULT";
