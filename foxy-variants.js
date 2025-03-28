@@ -300,7 +300,7 @@ var FC = FC || {},
               })(),
               N(),
               w(),
-              v?.addEventListener("change", U);
+              v?.addEventListener("change", F);
         }
         function D() {
           d.length &&
@@ -346,7 +346,9 @@ var FC = FC || {},
               b && (b.textContent = t), b?.classList.remove("w-dyn-bind-empty");
             } else {
               const t = G(n.defaultLocale, n.defaultCurrency, e[0]);
-              b && (b.textContent = t), L && (L.value = t);
+              b?.classList.remove("w-dyn-bind-empty"),
+                b && (b.textContent = t),
+                L && (L.value = parseFloat(e[0]));
             }
           }
         }
@@ -369,7 +371,7 @@ var FC = FC || {},
                 ((C.textContent = n.inventoryDefaultLabel), C.classList.remove("w-dyn-bind-empty"))
               : n.inventoryControl && (S.value = u.array[0]?.inventory ?? 0);
         }
-        function U(e) {
+        function F(e) {
           const t = e.target,
             { value: r } = t,
             o = t,
@@ -377,7 +379,7 @@ var FC = FC || {},
           if (!r) return;
           if (!t.closest(`div[${a}]`)) return;
           const l = P(t.getAttribute(c));
-          F(o, !1);
+          U(o, !1);
           const u = T();
           console.log("selectedProductVariants", u);
           const d = k(i, u);
@@ -420,7 +422,7 @@ var FC = FC || {},
               N(), w();
             })(d, u);
         }
-        function F(e, t) {
+        function U(e, t) {
           const { nodeName: i } = e;
           if ("INPUT" === i) {
             if ((e.parentElement.classList.remove(r), t)) {
@@ -541,7 +543,7 @@ var FC = FC || {},
             }),
             l)
           ) {
-            F(a, !0);
+            U(a, !0);
             const e = T();
             j(k(a.value, e), t);
           }
