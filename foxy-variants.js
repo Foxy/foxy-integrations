@@ -897,7 +897,7 @@ var Foxy = (function () {
           currentVariantSelectionElement.value,
           selectedProductVariants
         );
-        updateVariantOptions(availableProductsStateChange, variantSelectionGroup);
+        updateVariantOptions(availableProductsStateChange, variantSelectionGroup,currentVariantSelectionElement);
       }
     }
 
