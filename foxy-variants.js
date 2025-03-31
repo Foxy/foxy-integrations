@@ -228,6 +228,8 @@ var Foxy = (function () {
 
       // Handle selected variants if foxy form is set
       foxyForm?.addEventListener("change", handleVariantSelection);
+      // Run on page load
+      checkAndRunVariantSelection();
     }
 
     function setDefaults() {
@@ -956,6 +958,24 @@ var Foxy = (function () {
 
       setInventory();
     }
+
+    function checkAndRunVariantSelection() {
+      // Check if every variant group is valid (i.e. all required fields are valid)
+      if (isVariantsSelectionComplete()) {
+        const variantGroup = foxyForm.querySelector("[foxy-variant-group]");
+        if (variantGroup) {
+          // For radio groups, pick the checked input; for select, pick the select element.
+          const inputElement =
+            variantGroup.querySelector("select") ||
+            variantGroup.querySelector("input[type='radio']");
+          if (inputElement) {
+            const fakeEvent = { target: inputElement };
+            handleVariantSelection(fakeEvent);
+          }
+        }
+      }
+    }
+
 
     // Utils
 
