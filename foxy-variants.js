@@ -392,61 +392,75 @@ var FC = FC || {},
             (variantGroups = []));
         }
         function addPrice() {
-          if (
-            (variantItems.array.length <= 1 &&
-              priceElement &&
-              (priceElement.textContent = moneyFormat(
+          if (1 === variantItems.array.length) {
+            const variantPrice = variantItems.array[0].price;
+            priceElement &&
+              ((priceElement.textContent = moneyFormat(
                 config.defaultLocale,
                 config.defaultCurrency,
-                priceElement.textContent
+                variantPrice
               )),
-            variantItems.array.length > 1)
-          ) {
-            const sortedPrices = variantItems.array
-              .map(variant => Number(variant.price))
-              .sort((a, b) => a - b);
-            if (sortedPrices[0] !== sortedPrices[sortedPrices.length - 1]) {
-              if ("low" === config.priceDisplay)
-                return (
-                  priceElement &&
-                    (priceElement.textContent = moneyFormat(
-                      config.defaultLocale,
-                      config.defaultCurrency,
-                      sortedPrices[0]
-                    )),
-                  void priceElement?.classList.remove("w-dyn-bind-empty")
+              priceElement.classList.remove("w-dyn-bind-empty")),
+              priceAddToCart && (priceAddToCart.value = parseFloat(variantPrice));
+          }
+          if (variantItems.array.length) {
+            if (variantItems.array.length > 1) {
+              const sortedPrices = variantItems.array
+                .map(variant => Number(variant.price))
+                .sort((a, b) => a - b);
+              if (sortedPrices[0] !== sortedPrices[sortedPrices.length - 1]) {
+                if ("low" === config.priceDisplay)
+                  return (
+                    priceElement &&
+                      (priceElement.textContent = moneyFormat(
+                        config.defaultLocale,
+                        config.defaultCurrency,
+                        sortedPrices[0]
+                      )),
+                    void priceElement?.classList.remove("w-dyn-bind-empty")
+                  );
+                if ("high" === config.priceDisplay)
+                  return (
+                    priceElement &&
+                      (priceElement.textContent = moneyFormat(
+                        config.defaultLocale,
+                        config.defaultCurrency,
+                        sortedPrices[sortedPrices.length - 1]
+                      )),
+                    void priceElement?.classList.remove("w-dyn-bind-empty")
+                  );
+                const priceText = `${moneyFormat(
+                  config.defaultLocale,
+                  config.defaultCurrency,
+                  sortedPrices[0]
+                )}–${moneyFormat(
+                  config.defaultLocale,
+                  config.defaultCurrency,
+                  sortedPrices[sortedPrices.length - 1]
+                )}`;
+                priceElement && (priceElement.textContent = priceText),
+                  priceElement?.classList.remove("w-dyn-bind-empty");
+              } else {
+                const price = moneyFormat(
+                  config.defaultLocale,
+                  config.defaultCurrency,
+                  sortedPrices[0]
                 );
-              if ("high" === config.priceDisplay)
-                return (
-                  priceElement &&
-                    (priceElement.textContent = moneyFormat(
-                      config.defaultLocale,
-                      config.defaultCurrency,
-                      sortedPrices[sortedPrices.length - 1]
-                    )),
-                  void priceElement?.classList.remove("w-dyn-bind-empty")
-                );
-              const priceText = `${moneyFormat(
-                config.defaultLocale,
-                config.defaultCurrency,
-                sortedPrices[0]
-              )}–${moneyFormat(
-                config.defaultLocale,
-                config.defaultCurrency,
-                sortedPrices[sortedPrices.length - 1]
-              )}`;
-              priceElement && (priceElement.textContent = priceText),
-                priceElement?.classList.remove("w-dyn-bind-empty");
-            } else {
-              const price = moneyFormat(
-                config.defaultLocale,
-                config.defaultCurrency,
-                sortedPrices[0]
-              );
-              priceElement?.classList.remove("w-dyn-bind-empty"),
-                priceElement && (priceElement.textContent = price),
-                priceAddToCart && (priceAddToCart.value = parseFloat(sortedPrices[0]));
+                priceElement?.classList.remove("w-dyn-bind-empty"),
+                  priceElement && (priceElement.textContent = price),
+                  priceAddToCart && (priceAddToCart.value = parseFloat(sortedPrices[0]));
+              }
             }
+          } else if (priceElement && priceElement.textContent) {
+            const numericPrice = Number(priceElement.textContent);
+            isNaN(numericPrice)
+              ? ((priceElement.textContent = ""), priceElement.classList.add("w-dyn-bind-empty"))
+              : ((priceElement.textContent = moneyFormat(
+                  config.defaultLocale,
+                  config.defaultCurrency,
+                  numericPrice
+                )),
+                priceElement.classList.remove("w-dyn-bind-empty"));
           }
         }
         function setInventory(isVariantsSelectionDone) {
