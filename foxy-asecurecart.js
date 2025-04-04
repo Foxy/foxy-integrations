@@ -139,7 +139,7 @@ function calculateRunningTotal(form) {
    * @param {HTMLFormElement} form - The form to update.
    */
   function updatePercentageModifiers(form) {
-    const runningTotal =  (form);
+    const runningTotal =  calculateRunningTotal(form);
     form.querySelectorAll('[data-is-percentage="true"]').forEach(el => {
       const percentage = parseFloat(el.dataset.percent);
       if (isNaN(percentage)) return;
@@ -148,54 +148,6 @@ function calculateRunningTotal(form) {
       el.value = `${displayText}${newModifier}`;
     });
   }
-
-/**
- * Transforms a Returnlink value from AsecureCart into a FoxyCart-compatible URL.
- *
- * The AsecureCart Returnlink value is expected to be in the format:
- *   baseURL{p+imageURL}
- * For example:
- *   "https://www.showroom450.com/gallery3.htm#zone3{p+https://www.asecurecart.net/server/images/9409/ascfi1-366.jpg}"
- *
- * This function extracts the base URL and the image URL from the modifier,
- * then returns a new URL combining them (in this example, by appending
- * the image URL as a query parameter). You can customize the output as needed.
- *
- * @param {string} value - The original Returnlink value.
- * @returns {string} - The transformed Returnlink value.
- */
-function transformReturnlink(input) {
-  const value = input.value;
-  // Check if the value contains the FoxyCart modifier syntax.
-  const marker = '{p+';
-  const markerIndex = value.indexOf(marker);
-  if (markerIndex === -1) {
-    // No modifier found; return the original value.
-    return value;
-  }
-  // Find the closing brace.
-  const endIndex = value.indexOf('}', markerIndex);
-  if (endIndex === -1) {
-    // Malformed modifier; return the original value.
-    return value;
-  }
-  // Extract the base URL and the image URL.
-  const baseURL = value.substring(0, markerIndex);
-  const imageURL = value.substring(markerIndex + marker.length, endIndex);
-  // Example transformation:
-  // Append the image URL as a query parameter "img" to the base URL.
-  input.value = baseURL;
-    
-  // create hidden input for product image 
-  const productImageInput = document.createElement('input');
-  productImageInput.type = 'hidden';
-  productImageInput.name = 'image';
-  productImageInput.value = imageURL;
-  form.appendChild(productImageInput);
-}
-
-
-
   /**
  * Transforms an AsecureCart Recur value to a FoxyCart sub_frequency value.
  *
@@ -259,7 +211,7 @@ function transformRecurToSubFrequency(value) {
         input.setAttribute("min", "1");
       }
 
-      if (input.name === 'ReturnLink') {
+      if (input.name === 'ReturnLink' || input.name === 'Returnlink') {
         input.name = 'url';
 
         if(input.value.includes('^')){
@@ -278,15 +230,6 @@ function transformRecurToSubFrequency(value) {
           return;
         }
       }
-
-      if (input.name === 'Returnlink') {
-      // Remap the name if needed:
-      input.name = 'url';  // or however you're mapping it for FoxyCart.
-      // Transform the value using our helper function.
-      transformReturnlink(input);
-    }
-
-      if(input.name.includes("AddOn")) input.name = "AddOn";
 
        if (input.name === 'Recur') {
         // Remap field name.
