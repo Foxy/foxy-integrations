@@ -1,4 +1,9 @@
-document.addEventListener("DOMContentLoaded", () => {
+var FC = FC || {};
+const existingOnLoad = typeof FC.onLoad == "function" ? FC.onLoad : function () {};
+FC.onLoad = function () {
+existingOnLoad();
+
+FC.client.on('ready.done', function () {
   const forms = document.querySelectorAll('form[action*="https://www.asecurecart.net"]');
 
   // Map legacy input names to FoxyCart product option names
@@ -162,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   forms.forEach(form => {
-    form.action = `${foxySubdomain}/cart`;
+    form.action = `https://${FC.settings.storedomain}/cart`;
 
     form.querySelectorAll("input").forEach(input => {
       if (input.type === "submit") return;
@@ -262,4 +267,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updatePercentageModifiers(form);
   });
-});
+})};
