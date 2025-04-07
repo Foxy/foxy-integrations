@@ -27,11 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
    *    isPercentage: true if modifier ends with '%'
    */
   function parseModifier(value) {
-    if (!value.includes('^')) {
-      return { display: value, modifier: null, isPercentage: false };
-    }
-    const [displayText, modifierValue] = value.split('^').map(s => s.trim());
-    const isPercentage = modifierValue.endsWith('%');
+    const firstCaret = value.indexOf("^");
+    if (firstCaret === -1) return { display: value, modifier: null, isPercentage: false };
+
+    const displayText = value.substring(0, firstCaret).trim();
+    const rest = value.substring(firstCaret + 1).trim();
+    const modifierValue = rest.split("^")[0];
+    const isPercentage = modifierValue.endsWith("%");
     return { display: displayText, modifier: modifierValue, isPercentage };
   }
  
