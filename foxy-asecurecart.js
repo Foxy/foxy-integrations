@@ -1,9 +1,9 @@
 var FC = FC || {};
-const existingOnLoad = typeof FC.onLoad == "function" ? FC.onLoad : function () {};
+const existingOnLoadASecureCart = typeof FC.onLoad == "function" ? FC.onLoad : function () {};
 FC.onLoad = function () {
-existingOnLoad();
+existingOnLoadASecureCart();
 
-FC.client.on('ready.done', function () {
+FC.client.on("ready.done", () => {
   const forms = document.querySelectorAll('form[action*="https://www.asecurecart.net"]');
 
   // Map legacy input names to FoxyCart product option names
@@ -166,88 +166,102 @@ FC.client.on('ready.done', function () {
     return `${num}${period}`;
   }
 
-  forms.forEach(form => {
+function processInputs(form) {
+  // Process all inputs and selects in the form
+  form.querySelectorAll("input").forEach(input => {
+    if (input.type === "submit") return;
+
+    if (input.name === "Qty") {
+      input.setAttribute("value", "1");
+      input.setAttribute("min", "1");
+    }
+
+    if (input.name === "ReturnLink" || input.name === "Returnlink") {
+      input.name = "url";
+
+      if (input.value.includes("^")) {
+        const splitReturnLink = input.value.split("^");
+        const productLink = splitReturnLink[0];
+        const productImageURL = splitReturnLink[1];
+
+        input.value = productLink;
+
+        const productImageInput = document.createElement("input");
+        productImageInput.type = "hidden";
+        productImageInput.name = "image";
+        productImageInput.value = productImageURL;
+        form.appendChild(productImageInput);
+        debugLog("Processed returnlink + image", productLink, productImageURL);
+        return;
+      }
+    }
+
+    if (input.name === "Recur") {
+      input.name = "sub_frequency";
+      input.value = transformRecurToSubFrequency(input.value);
+      debugLog("Transformed Recur field to sub_frequency", input.value);
+    }
+
+    if (inputNameMap.hasOwnProperty(input.name)) {
+      input.name = inputNameMap[input.name];
+    }
+
+    const allowedOptionsRegex = /^(Size|Color|AddOn\d*|NAddOn\d*)/i;
+    if (input.value && input.value.includes("^") && allowedOptionsRegex.test(input.name)) {
+      const { display, modifier, isPercentage } = parseModifier(input.value);
+      if (!isPercentage && modifier) {
+        input.value = `${display}${fixedModifierToFoxy(modifier)}`;
+        debugLog("Applied fixed modifier to input", input.name, input.value);
+      } else if (isPercentage) {
+        input.dataset.isPercentage = "true";
+        input.dataset.percent = modifier.replace("%", "");
+        input.dataset.display = display;
+        input.value = display;
+        debugLog("Registered percentage modifier input", input.name, modifier);
+      }
+    }
+  });
+}
+
+function processSelects(form) {
+  // Process all selects in the form
+  form.querySelectorAll("select").forEach(select => {
+    if (select.name === "Recur") {
+      select.name = "sub_frequency";
+      select.querySelectorAll("option").forEach(option => {
+        option.value = transformRecurToSubFrequency(option.value);
+      });
+    }
+
+    select.querySelectorAll("option").forEach(option => {
+      const allowedOptionsRegex = /^(Size|Color|AddOn\d*|NAddOn\d*)/i;
+      if (
+        option.value &&
+        option.value.includes("^") &&
+        allowedOptionsRegex.test(select.name)
+      ) {
+        const { display, modifier, isPercentage } = parseModifier(option.value);
+        if (!isPercentage && modifier) {
+          option.value = `${display}${fixedModifierToFoxy(modifier)}`;
+          debugLog("Applied fixed modifier to select option", select.name, option.value);
+        } else if (isPercentage) {
+          option.dataset.isPercentage = "true";
+          option.dataset.percent = modifier.replace("%", "");
+          option.dataset.display = display;
+          option.value = display;
+          debugLog("Registered percentage modifier select", select.name, modifier);
+        }
+      }
+    });
+  });
+}
+
+forms.forEach(form => {
+    
     form.action = `https://${FC.settings.storedomain}/cart`;
 
-    form.querySelectorAll("input").forEach(input => {
-      if (input.type === "submit") return;
-
-      if (input.name === "Qty") {
-        input.setAttribute("value", "1");
-        input.setAttribute("min", "1");
-      }
-
-      if (input.name === "ReturnLink" || input.name === "Returnlink") {
-        input.name = "url";
-
-        if (input.value.includes("^")) {
-          const splitReturnLink = input.value.split("^");
-          const productLink = splitReturnLink[0];
-          const productImageURL = splitReturnLink[1];
-
-          input.value = productLink;
-
-          const productImageInput = document.createElement("input");
-          productImageInput.type = "hidden";
-          productImageInput.name = "image";
-          productImageInput.value = productImageURL;
-          form.appendChild(productImageInput);
-          debugLog("Processed returnlink + image", productLink, productImageURL);
-          return;
-        }
-      }
-
-      if (input.name === "Recur") {
-        input.name = "sub_frequency";
-        input.value = transformRecurToSubFrequency(input.value);
-        debugLog("Transformed Recur field to sub_frequency", input.value);
-      }
-
-      if (inputNameMap.hasOwnProperty(input.name)) {
-        input.name = inputNameMap[input.name];
-      }
-
-      const allowedOptionsRegex = /^(Size|Color|AddOn\d*|NAddOn\d*)/i;
-      if (input.value && input.value.includes("^") && allowedOptionsRegex.test(input.name)) {
-        const { display, modifier, isPercentage } = parseModifier(input.value);
-        if (!isPercentage && modifier) {
-          input.value = `${display}${fixedModifierToFoxy(modifier)}`;
-          debugLog("Applied fixed modifier to input", input.name, input.value);
-        } else if (isPercentage) {
-          input.dataset.isPercentage = "true";
-          input.dataset.percent = modifier.replace("%", "");
-          input.dataset.display = display;
-          input.value = display;
-          debugLog("Registered percentage modifier input", input.name, modifier);
-        }
-      }
-    });
-
-    form.querySelectorAll("select").forEach(select => {
-      if (select.name === "Recur") {
-        select.name = "sub_frequency";
-        select.querySelectorAll("option").forEach(option => {
-          option.value = transformRecurToSubFrequency(option.value);
-        });
-      }
-
-      select.querySelectorAll("option").forEach(option => {
-        const allowedOptionsRegex = /^(Size|Color|AddOn\d*|NAddOn\d*)/i;
-        if (option.value && option.value.includes("^") && allowedOptionsRegex.test(select.name)) {
-          const { display, modifier, isPercentage } = parseModifier(option.value);
-          if (!isPercentage && modifier) {
-            option.value = `${display}${fixedModifierToFoxy(modifier)}`;
-            debugLog("Applied fixed modifier to select option", select.name, option.value);
-          } else if (isPercentage) {
-            option.dataset.isPercentage = "true";
-            option.dataset.percent = modifier.replace("%", "");
-            option.dataset.display = display;
-            option.value = display;
-            debugLog("Registered percentage modifier select", select.name, modifier);
-          }
-        }
-      });
-    });
+    processInputs(form);
+    processSelects(form)
 
     if (!form.querySelector('input[name="name"]')) {
       const codeInput = form.querySelector('input[name="code"]');
@@ -262,18 +276,23 @@ FC.client.on('ready.done', function () {
     }
 
     if (!form.querySelector('input[name="price"]')) {
-        const hiddenPrice = document.createElement("input");
-        hiddenPrice.type = "hidden";
-        hiddenPrice.name = "price";
-        hiddenPrice.value = 0;
-        form.appendChild(hiddenPrice);
-        debugLog("Added missing price input with default value", hiddenPrice.value);
+      const hiddenPrice = document.createElement("input");
+      hiddenPrice.type = "hidden";
+      hiddenPrice.name = "price";
+      hiddenPrice.value = 0;
+      form.appendChild(hiddenPrice);
+      debugLog("Added missing price input with default value", hiddenPrice.value);
     }
 
-    form.addEventListener("change", () => {
+    form.addEventListener("change", (e) => {
       updatePercentageModifiers(form);
+      processInputs(form);
+      processSelects(form);
+      debugLog("Form changed", e.target.name, e.target.value);
     });
 
     updatePercentageModifiers(form);
   });
-})};
+});
+}
+
