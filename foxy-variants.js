@@ -270,7 +270,6 @@ var Foxy = (function () {
         variantItems.serialized[variant?.code ?? variant.name] = filterEmpty(variant);
         variantItems.array.push(filterEmpty(variant));
       });
-      console.log("variantItems", variantItems);
     }
 
     function buildVariantGroupList() {
@@ -320,7 +319,7 @@ var Foxy = (function () {
           variantGroupElement.querySelector(variantOptionDesignElement).remove();
         }
       });
-      console.log("variantGroups", variantGroups);
+      
     }
 
     function variantGroupElementsType(variantGroupElement) {
@@ -806,8 +805,6 @@ var Foxy = (function () {
     ) {
       const selectedProductVariants = getSelectedVariantOptions();
       const availableProducts = getAvailableProductsPerVariantSelection(selectedProductVariants);
-      console.log("selectedProductVariants", selectedProductVariants);
-      console.log("availableProducts updateVariantOptions", availableProducts);
       let variantGroupsStateChange = false;
 
       variantGroups.forEach(group => {
@@ -822,11 +819,8 @@ var Foxy = (function () {
           true
         );
         const stillValid = availableProducts.some(prod => prod[name] === currentValue);
-        console.log(
-          `Checking if "${currentValue}" is still valid for group "${name}": ${stillValid}`
-        );
         if (!stillValid) {
-          console.log(`Resetting group "${name}" from "${currentValue}" (now invalid).`);
+          
           selectedProductVariants[name] = "";
           variantGroupsStateChange = true;
 
@@ -855,7 +849,7 @@ var Foxy = (function () {
       if (variantGroupsStateChange) {
         finalSelected = getSelectedVariantOptions();
         finalAvailable = getAvailableProductsPerVariantSelection(finalSelected);
-        console.log("finalAvailable", finalAvailable);
+        
       }
 
       disableInvalidOptionsAcrossAllGroups(
@@ -866,9 +860,7 @@ var Foxy = (function () {
       );
 
       if (variantGroupsStateChange && currentVariantSelectionElement) {
-        console.log(
-          "Some old selection was reset. Removing disabled style from changed element..."
-        );
+        
         removeDisabledStyleVariantGroupOptions(currentVariantSelectionElement, true);
       }
     }

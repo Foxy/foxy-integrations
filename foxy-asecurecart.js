@@ -261,6 +261,15 @@ FC.client.on('ready.done', function () {
       }
     }
 
+    if (!form.querySelector('input[name="price"]')) {
+        const hiddenPrice = document.createElement("input");
+        hiddenPrice.type = "hidden";
+        hiddenPrice.name = "price";
+        hiddenPrice.value = 0;
+        form.appendChild(hiddenPrice);
+        debugLog("Added missing price input with default value", hiddenPrice.value);
+    }
+
     form.addEventListener("change", () => {
       updatePercentageModifiers(form);
     });
