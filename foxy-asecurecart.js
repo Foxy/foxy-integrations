@@ -4,7 +4,9 @@ FC.onLoad = function () {
 existingOnLoadASecureCart();
 
 FC.client.on("ready.done", () => {
-  const forms = document.querySelectorAll('form[action*="https://www.asecurecart.net"]');
+  const forms = document.querySelectorAll(
+    'form[action*="asecurecart.net"], form[action*=".foxycart.com"]'
+  );
 
   // Map legacy input names to FoxyCart product option names
   const inputNameMap = {
