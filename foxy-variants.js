@@ -975,7 +975,7 @@ var Foxy = (function () {
               // Update inventory element
               setInventory(isVariantsSelectionDone);
               break;
-            case "price":
+            case "price":{
               if (priceElement)
                 priceElement.textContent = moneyFormat(
                   config.defaultLocale,
@@ -992,8 +992,9 @@ var Foxy = (function () {
                 }
 
                 priceAddToCart.value = parseFloat(variantSelectionCompleteProduct[key]).toFixed(decimalPlaces);
-                  
-              break;
+                break;
+              }
+
             case "image":
               // Remove srcset from primary image element
               imageElement?.setAttribute("srcset", "");
