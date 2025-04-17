@@ -11,7 +11,7 @@ var Foxy = (function () {
       sortOrder: "",
       defaultLocale: "en-US",
       defaultCurrency: "USD",
-      priceDisplay: "low",
+      priceDisplay: "",
       pricePrecision: 2,
       inventoryDefaultLabel: "Please choose options",
       selectUnavailableLabel: "Unavailable",
@@ -371,14 +371,14 @@ var Foxy = (function () {
           const priceA = a.price;
           const priceB = b.price;
 
-          return sortOrder === "Descending" ? priceB - priceA : priceA - priceB;
+          return sortOrder === "descending" ? priceB - priceA : priceA - priceB;
         } else if (sortBy === "label") {
           const labelA = a.label;
           const labelB = b.label;
 
           if (sortOrder === "descending") {
             return labelB.localeCompare(labelA);
-          } else if (sortOrder === "ascending") {
+          } else {
             return labelA.localeCompare(labelB);
           }
         }
