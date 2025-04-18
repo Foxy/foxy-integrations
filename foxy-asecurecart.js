@@ -1,4 +1,5 @@
 var FC = FC || {};
+var foxySubdomain = foxySubdomain || "";
 const existingOnLoadASecureCart = typeof FC.onLoad == "function" ? FC.onLoad : function () {};
 FC.onLoad = function () {
 existingOnLoadASecureCart();
@@ -260,7 +261,7 @@ function processSelects(form) {
 
 forms.forEach(form => {
     
-    form.action = `https://${FC.settings.storedomain}/cart`;
+    form.action = foxySubdomain ? `https://${foxySubdomain}/cart` : `https://${FC?.settings?.storedomain}/cart` ;
 
     processInputs(form);
     processSelects(form)
