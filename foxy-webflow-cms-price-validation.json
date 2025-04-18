@@ -1,0 +1,132 @@
+{
+  "name": "Foxy + Webflow CMS Price Validation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pre-checkout-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4ad37db2-e330-4904-8b23-cf8e9dfb8e4e",
+      "name": "Foxy Pre-Checkout Webhook",
+      "webhookId": "fbd7da26-cc30-492c-947e-51110010ddbd"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body._embedded['fx:items']",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "ad163b6c-e6a0-44f7-ad9c-85841f286774",
+      "name": "Loop Through Cart Items"
+    },
+    {
+      "parameters": {
+        "url": "https://api.webflow.com/v2/collections/COLLECTION_ID/items/live",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "webflowApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "slug",
+              "value": "={{ $json._embedded['fx:item_options']?.find(option => option.name.toLowerCase() === 'slug')?.value || '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "ead07004-0804-481d-b9c2-64b37efd4044",
+      "name": "Find Matching Webflow CMS Items",
+      "credentials": {
+        "webflowApi": {
+          "id": "AAyVSHecLqKOhk8D",
+          "name": "Webflow account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const itemNotFound = [];\nconst priceNotMatch = [];\nconst wfItems = $input\n  .all()\n  .filter((input) => input.json.pagination.total === 1)\n  .map((input) => input.json.items[0]);\nconst cartItems = $('Foxy Pre-Checkout Webhook').first().json.body._embedded[\n  'fx:items'\n];\n\nfor (const cartItem of cartItems) {\n  const wfItem = wfItems.find((item) => item.fieldData.sku === cartItem.code);\n\n  if (!wfItem) {\n    itemNotFound.push(cartItem.name);\n    continue;\n  }\n\n  if (wfItem.fieldData.price !== cartItem.price) {\n    priceNotMatch.push(cartItem.code);\n  }\n}\n\nif (itemNotFound.length > 0 || priceNotMatch.length > 0) {\n  return {\n    ok: false,\n    details:\n      (itemNotFound.length > 0\n        ? `Cannot find item(s) in Webflow: ${itemNotFound.join(', ')}. `\n        : '') +\n      (priceNotMatch.length > 0\n        ? `Price does not match for item(s): ${priceNotMatch.join(', ')}.`\n        : ''),\n  };\n}\n\nreturn {\n  ok: true,\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "eefb967e-9b0d-4d19-aadf-a377e455dba6",
+      "name": "Validation Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Foxy Pre-Checkout Webhook": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Cart Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Cart Items": {
+      "main": [
+        [
+          {
+            "node": "Find Matching Webflow CMS Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Matching Webflow CMS Items": {
+      "main": [
+        [
+          {
+            "node": "Validation Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Code": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "96d46ac2-e565-49e5-811e-a2579ccacb54",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
+  },
+  "id": "i3WBw8vC7ug9wwQo",
+  "tags": []
+}
