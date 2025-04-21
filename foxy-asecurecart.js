@@ -261,7 +261,7 @@ function processSelects(form) {
 
 forms.forEach(form => {
     
-    form.action = foxySubdomain ? `https://${foxySubdomain}/cart` : `https://${FC?.settings?.storedomain}/cart` ;
+    form.action = foxySubdomain ? `${foxySubdomain}/cart` : `https://${FC?.settings?.storedomain}/cart` ;
 
     processInputs(form);
     processSelects(form)
