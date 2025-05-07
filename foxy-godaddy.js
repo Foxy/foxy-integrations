@@ -90,7 +90,7 @@ export default function init(foxyConfig) {
         });
 
         if (missingLabels.length) {
-          alert(
+          parent.window.alert(
             `Please select a valid value for: ${missingLabels.join(', ')}`
           );
           return;
