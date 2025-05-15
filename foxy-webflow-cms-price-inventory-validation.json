@@ -21,14 +21,21 @@
     {
       "parameters": {
         "url": "=https://api.webflow.com/v2/collections/{{ $('Configurations').first().json.collectionId || $('Loop Through Cart Items').item.json._embedded['fx:item_options']?.find((option) => option.name.toLowerCase() === 'collection_id')?.value || '' }}/items/live",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "webflowApi",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
               "name": "slug",
               "value": "={{ $('Loop Through Cart Items').item.json._embedded['fx:item_options']?.find(option => option.name.toLowerCase() === 'slug')?.value || '' }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Configurations').item.json.webflowApiToken }}"
             }
           ]
         },
@@ -41,13 +48,7 @@
         340
       ],
       "id": "cd87ea05-7d17-47cf-8c42-e53afdc6a6ef",
-      "name": "Find Matching Webflow CMS Items",
-      "credentials": {
-        "webflowApi": {
-          "id": "HzEPAJKjSOEmfZNy",
-          "name": "Webflow account 9"
-        }
-      }
+      "name": "Find Matching Webflow CMS Items"
     },
     {
       "parameters": {
@@ -65,8 +66,15 @@
     {
       "parameters": {
         "url": "=https://api.webflow.com/v2/collections/{{ $('Get CMS Collection ID(s)').item.json.collectionId }}",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "webflowApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Configurations').item.json.webflowApiToken }}"
+            }
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -76,18 +84,18 @@
         340
       ],
       "id": "3c388709-648d-4328-9239-a9dbeb4206cd",
-      "name": "Get Webflow CMS Details",
-      "credentials": {
-        "webflowApi": {
-          "id": "HzEPAJKjSOEmfZNy",
-          "name": "Webflow account 9"
-        }
-      }
+      "name": "Get Webflow CMS Details"
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
+            {
+              "id": "f809bd99-b33d-4353-8a12-a24d32e031c8",
+              "name": "webflowApiToken",
+              "value": "",
+              "type": "string"
+            },
             {
               "id": "d5faf23c-5c65-434b-9588-704ba8085c30",
               "name": "collectionId",
@@ -261,7 +269,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "45de8984-0d17-4156-bfdb-8c9852e8e781",
+  "versionId": "5a08fd13-1437-43d9-920c-1bb0887678a2",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
