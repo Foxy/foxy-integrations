@@ -35,7 +35,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $('Configurations').item.json.webflowApiToken }}"
+              "value": "=Bearer {{ $('Configurations').first().json.webflowApiToken }}"
             }
           ]
         },
@@ -52,7 +52,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const itemNotFound = [];\nconst priceNotMatch = [];\nconst inventoryNotEnough = [];\n\nconst config = $('Configurations').first().json;\nconst collections = $('Get Webflow CMS Details').all();\n\nfunction parseSlug(str) {\n  return str\n    .split(',')\n    .map((slug) => slug.trim())\n    .filter((slug) => slug !== '');\n}\nconst skipPriceValidateSlugs = parseSlug(config.skipPriceValidate || '');\nconst skipInventoryValidateSlugs = parseSlug(\n  config.skipInventoryValidate || ''\n);\n\nconst cartItems = $('Foxy Pre-Checkout Webhook').first().json.body._embedded[\n  'fx:items'\n];\nfor (const [index, cartItem] of cartItems.entries()) {\n  const itemSlug = cartItem._embedded['fx:item_options']?.find(\n    (option) => option.name.toLowerCase() === 'slug'\n  )?.value;\n  if (!itemSlug) {\n    itemNotFound.push(cartItem.name);\n    continue;\n  }\n\n  const shouldSkipPriceValidate = skipPriceValidateSlugs.includes(itemSlug);\n  const shouldSkipInventoryValidate =\n    skipInventoryValidateSlugs.includes(itemSlug);\n\n  if (shouldSkipPriceValidate && shouldSkipInventoryValidate) {\n    continue;\n  }\n\n  const wfItem = $('Find Matching Webflow CMS Items').all()[index].json;\n  const wfItemData = wfItem.items[0]?.fieldData;\n\n  if (wfItem.pagination.total !== 1 || wfItemData.slug !== itemSlug) {\n    itemNotFound.push(`${cartItem.name} (${itemSlug})`);\n    continue;\n  }\n\n  const cmsFields = collections.find(\n    (collection) =>\n      collection.json.id ===\n        cartItem._embedded['fx:item_options']?.find(\n          (option) => option.name.toLowerCase() === 'collection_id'\n        )?.value || config.collectionId\n  )?.json.fields;\n  if (!cmsFields) {\n    return {\n      ok: false,\n      details: 'Invalid collection ID',\n    };\n  }\n\n  if (config.validatePrice && !shouldSkipPriceValidate) {\n    const priceFieldSlug = cmsFields.find(\n      (field) => field.displayName === (config.priceField.trim() || 'Price')\n    )?.slug;\n    if (!priceFieldSlug) {\n      return {\n        ok: false,\n        details: `Price field \"${config.priceField}\" does not exist`,\n      };\n    }\n    if (wfItemData[priceFieldSlug] !== cartItem.price) {\n      priceNotMatch.push(cartItem.name);\n    }\n  }\n\n  if (config.validateInventory && !shouldSkipInventoryValidate) {\n    const inventoryFieldSlug = cmsFields.find(\n      (field) =>\n        field.displayName === (config.inventoryField.trim() || 'Inventory')\n    )?.slug;\n    if (!inventoryFieldSlug) {\n      return {\n        ok: false,\n        details: `Inventory field \"${config.inventoryField}\" does not exist`,\n      };\n    }\n    if (wfItemData[inventoryFieldSlug] < cartItem.quantity) {\n      inventoryNotEnough.push(cartItem.name);\n    }\n  }\n}\n\nif (\n  itemNotFound.length > 0 ||\n  priceNotMatch.length > 0 ||\n  inventoryNotEnough.length > 0\n) {\n  return {\n    ok: false,\n    details:\n      (itemNotFound.length > 0\n        ? `${\n            config.itemErrorMsg || 'Cannot find item(s) in Webflow'\n          }: ${itemNotFound.join(', ')}. `\n        : '') +\n      (priceNotMatch.length > 0\n        ? `${\n            config.priceErrorMsg || 'Price does not match for item(s)'\n          }: ${priceNotMatch.join(', ')}. `\n        : '') +\n      (inventoryNotEnough.length > 0\n        ? `${\n            config.inventoryErrorMsg || 'Insufficient inventory for item(s)'\n          }: ${inventoryNotEnough.join(', ')}.`\n        : ''),\n  };\n}\n\nreturn {\n  ok: true,\n};\n"
+        "jsCode": "const itemNotFound = [];\nconst priceNotMatch = [];\nconst inventoryNotEnough = [];\n\nconst config = $('Configurations').first().json;\nconst collections = $('Get Webflow CMS Details').all();\n\nfunction parseSlug(str) {\n  return str\n    .split(',')\n    .map((slug) => slug.trim())\n    .filter((slug) => slug !== '');\n}\nconst skipPriceValidateSlugs = parseSlug(config.skipPriceValidate || '');\nconst skipInventoryValidateSlugs = parseSlug(\n  config.skipInventoryValidate || ''\n);\n\nconst cartItems = $('Foxy Pre-Checkout Webhook').first().json.body._embedded[\n  'fx:items'\n];\nfor (const [index, cartItem] of cartItems.entries()) {\n  const itemSlug = cartItem._embedded['fx:item_options']?.find(\n    (option) => option.name.toLowerCase() === 'slug'\n  )?.value;\n  if (!itemSlug) {\n    itemNotFound.push(cartItem.name);\n    continue;\n  }\n\n  const shouldSkipPriceValidate = skipPriceValidateSlugs.includes(itemSlug);\n  const shouldSkipInventoryValidate =\n    skipInventoryValidateSlugs.includes(itemSlug);\n  if (shouldSkipPriceValidate && shouldSkipInventoryValidate) {\n    continue;\n  }\n\n  const wfItem = $('Find Matching Webflow CMS Items').all()[index].json;\n  const wfItemData = wfItem.items[0]?.fieldData;\n  if (wfItem.pagination.total !== 1 || wfItemData.slug !== itemSlug) {\n    itemNotFound.push(cartItem.name);\n    continue;\n  }\n\n  const cmsFields = collections.find(\n    (collection) =>\n      collection.json.id ===\n        cartItem._embedded['fx:item_options']?.find(\n          (option) => option.name.toLowerCase() === 'collection_id'\n        )?.value || config.collectionId\n  )?.json.fields;\n  if (!cmsFields) {\n    return {\n      ok: false,\n      details: 'There was an issue processing your order. Please contact us.',\n      error: 'Invalid collection ID',\n    };\n  }\n\n  if (config.validatePrice && !shouldSkipPriceValidate) {\n    const priceFieldSlug = cmsFields.find(\n      (field) => field.displayName === (config.priceField.trim() || 'Price')\n    )?.slug;\n    if (!priceFieldSlug) {\n      return {\n        ok: false,\n        details: 'There was an issue processing your order. Please contact us.',\n        error: `Price field \"${config.priceField}\" does not exist`,\n      };\n    }\n    if (wfItemData[priceFieldSlug] !== cartItem.price) {\n      priceNotMatch.push(cartItem.name);\n    }\n  }\n\n  if (config.validateInventory && !shouldSkipInventoryValidate) {\n    const inventoryFieldSlug = cmsFields.find(\n      (field) =>\n        field.displayName === (config.inventoryField.trim() || 'Inventory')\n    )?.slug;\n    if (!inventoryFieldSlug) {\n      return {\n        ok: false,\n        details: 'There was an issue processing your order. Please contact us.',\n        error: `Inventory field \"${config.inventoryField}\" does not exist`,\n      };\n    }\n    if (wfItemData[inventoryFieldSlug] < cartItem.quantity) {\n      inventoryNotEnough.push(cartItem.name);\n    }\n  }\n}\n\nif (\n  itemNotFound.length > 0 ||\n  priceNotMatch.length > 0 ||\n  inventoryNotEnough.length > 0\n) {\n  return {\n    ok: false,\n    details:\n      (itemNotFound.length > 0\n        ? `${\n            config.itemErrorMsg ||\n            'There was an issue processing your order. Please contact us. '\n          }`\n        : '') +\n      (priceNotMatch.length > 0\n        ? `${\n            config.priceErrorMsg ||\n            'There was an issue processing your order. Please contact us. '\n          }`\n        : '') +\n      (inventoryNotEnough.length > 0\n        ? `${\n            config.inventoryErrorMsg ||\n            'Inventory not available for one or more items in cart.'\n          }`\n        : ''),\n    error:\n      (itemNotFound.length > 0\n        ? `Cannot find item(s) in Webflow CMS: ${itemNotFound.join(', ')}. `\n        : '') +\n      (priceNotMatch.length > 0\n        ? `Price does not match for item(s) in Webflow CMS: ${priceNotMatch.join(\n            ', '\n          )}. `\n        : '') +\n      (inventoryNotEnough.length > 0\n        ? `Insufficient inventory for item(s) in Webflow CMS': ${inventoryNotEnough.join(\n            ', '\n          )}.`\n        : ''),\n  };\n}\n\nreturn {\n  ok: true,\n};\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -129,19 +129,19 @@
             {
               "id": "d40891da-588c-4dd9-a98a-d1e9ea351ee9",
               "name": "itemErrorMsg",
-              "value": "Cannot find item(s) in Webflow",
+              "value": "There was an issue processing your order. Please contact us. ",
               "type": "string"
             },
             {
               "id": "f33e415b-0a07-42a5-beae-2470c797d976",
               "name": "priceErrorMsg",
-              "value": "Price does not match for item(s)",
+              "value": "There was an issue processing your order. Please contact us. ",
               "type": "string"
             },
             {
               "id": "286cf268-49b1-4976-ab2c-dd896674996e",
               "name": "inventoryErrorMsg",
-              "value": "Insufficient inventory for item(s)",
+              "value": "Inventory not available for one or more items in cart. ",
               "type": "string"
             },
             {
@@ -269,7 +269,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5a08fd13-1437-43d9-920c-1bb0887678a2",
+  "versionId": "e1f2ea34-e053-408b-8160-2a6581080974",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
