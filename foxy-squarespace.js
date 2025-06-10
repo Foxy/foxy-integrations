@@ -31,12 +31,18 @@ FC.onLoad = function () {
         const image =
           document.querySelector('.ProductItem-gallery-slides-item-image')
             ?.src || '';
+        const category =
+          document.querySelector('input[name="foxy-category"]')?.value || '';
 
         const cartUrl = `https://${
           FC.settings.storedomain
         }/cart?name=${encodeURIComponent(
           name
-        )}&quantity=${quantity}&image=${encodeURIComponent(image)}`;
+        )}&quantity=${quantity}&image=${encodeURIComponent(
+          image
+        )}&category=${encodeURIComponent(category)}&url=${encodeURIComponent(
+          window.location.href
+        )}`;
 
         // get variant info from static Squarespace context
         const variantData = Static.SQUARESPACE_CONTEXT.product.variants;
