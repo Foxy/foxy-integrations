@@ -22,7 +22,7 @@ function initCustomCart() {
 
   const cartSubtotalEl = document.querySelector('[foxy-id="cart-subtotal"]');
   if (!!cartSubtotalEl) {
-    $(cartSubtotalEl).text(FC.json.total_item_with_tax_price);
+    $(cartSubtotalEl).text(formatMoney(FC.json.total_item_with_tax_price));
   }
 
   const cartEmptyEl = document.querySelector('[foxy-id="cart-empty"]');
@@ -65,8 +65,10 @@ function initCustomCart() {
         $(newItem).find('[foxy-id="cart-item-name"]')?.text(name);
         $(newItem)
           .find('[foxy-id="cart-item-price"]')
-          ?.text(price_each_with_tax);
-        $(newItem).find('[foxy-id="cart-item-total"]')?.text(price_with_tax);
+          ?.text(formatMoney(price_each_with_tax));
+        $(newItem)
+          .find('[foxy-id="cart-item-total"]')
+          ?.text(formatMoney(price_with_tax));
         $(newItem).find('[foxy-id="cart-item-code"]')?.text(code);
         $(newItem).find('[foxy-id="cart-item-quantity"]')?.text(quantity);
         $(newItem).find('[foxy-id="cart-item-image"]')?.attr('src', image);
@@ -174,5 +176,9 @@ function initCustomCart() {
         cartItemsEl.appendChild(newItem);
       }
     );
+  }
+
+  function formatMoney(amount) {
+    return FC.util.money_format(FC.json.config.currency_format, amount).trim();
   }
 }
