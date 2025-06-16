@@ -16,13 +16,22 @@ FC.onLoad = function () {
 
 function initCustomCart() {
   const cartQtyEl = document.querySelector('[foxy-id="cart-quantity"]');
-  if (!!cartQtyEl) {
-    $(cartQtyEl).text(FC.json.item_count);
+  if (cartQtyEl) {
+    cartQtyEl.textContent = FC.json.item_count;
   }
 
   const cartSubtotalEl = document.querySelector('[foxy-id="cart-subtotal"]');
-  if (!!cartSubtotalEl) {
-    $(cartSubtotalEl).text(formatMoney(FC.json.total_item_with_tax_price));
+  if (cartSubtotalEl) {
+    cartSubtotalEl.textContent = formatMoney(FC.json.total_item_price);
+  }
+
+  const cartSubtotalWithTaxEl = document.querySelector(
+    '[foxy-id="cart-subtotal-with-tax"]'
+  );
+  if (cartSubtotalWithTaxEl) {
+    cartSubtotalWithTaxEl.textContent = formatMoney(
+      FC.json.total_item_with_tax_price
+    );
   }
 
   const cartEmptyEl = document.querySelector('[foxy-id="cart-empty"]');
@@ -45,7 +54,9 @@ function initCustomCart() {
     FC.json.items.forEach(
       ({
         name,
+        price,
         price_with_tax,
+        price_each,
         price_each_with_tax,
         code,
         category,
@@ -65,9 +76,15 @@ function initCustomCart() {
         $(newItem).find('[foxy-id="cart-item-name"]')?.text(name);
         $(newItem)
           .find('[foxy-id="cart-item-price"]')
+          ?.text(formatMoney(price_each));
+        $(newItem)
+          .find('[foxy-id="cart-item-price-with-tax"]')
           ?.text(formatMoney(price_each_with_tax));
         $(newItem)
           .find('[foxy-id="cart-item-total"]')
+          ?.text(formatMoney(price));
+        $(newItem)
+          .find('[foxy-id="cart-item-total-with-tax"]')
           ?.text(formatMoney(price_with_tax));
         $(newItem).find('[foxy-id="cart-item-code"]')?.text(code);
         $(newItem).find('[foxy-id="cart-item-quantity"]')?.text(quantity);
