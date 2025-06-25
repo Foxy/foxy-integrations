@@ -214,14 +214,15 @@ var Foxy = (function () {
         return;
       }
 
-      // Set quantity input defaults
-      setDefaults();
       // Build variant list info into variable
       buildVariantList();
       // Build variant group list info into variable
       buildVariantGroupList();
       // Build variant/radio options
       renderVariantGroups();
+
+      // Set quantity + variant input defaults
+      setDefaults();
 
       addPrice();
 
@@ -235,6 +236,16 @@ var Foxy = (function () {
       if (quantityElement) {
         quantityElement.setAttribute("value", "1");
         quantityElement.setAttribute("min", "1");
+      }
+      
+      if (!variantItems.array.length) {
+        // Handle no variants case
+        const isVariantInput = `<input type="hidden" name="isVariant" value="true" />`;
+        foxyForm.insertAdjacentHTML("beforeend", isVariantInput);
+      } else if (variantItems.array.length >= 1) {
+        // Handle one or more variants case
+        const isNotVariantInput = `<input type="hidden" name="isVariant" value="false" />`;
+        foxyForm.insertAdjacentHTML("beforeend", isNotVariantInput);
       }
     }
 
