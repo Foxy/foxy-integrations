@@ -240,11 +240,11 @@ var Foxy = (function () {
       
       if (!variantItems.array.length) {
         // Handle no variants case
-        const isVariantInput = `<input type="hidden" name="isVariant" value="true" />`;
+        const isVariantInput = `<input type="hidden" name="isVariant" value="false" />`;
         foxyForm.insertAdjacentHTML("beforeend", isVariantInput);
       } else if (variantItems.array.length >= 1) {
         // Handle one or more variants case
-        const isNotVariantInput = `<input type="hidden" name="isVariant" value="false" />`;
+        const isNotVariantInput = `<input type="hidden" name="isVariant" value="true" />`;
         foxyForm.insertAdjacentHTML("beforeend", isNotVariantInput);
       }
     }
