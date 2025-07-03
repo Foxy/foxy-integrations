@@ -13,10 +13,11 @@ FC.onLoad = function () {
     FC.client.updateMiniCart();
 
     document
-      .querySelector(
-        '#wsite-com-product-add-to-cart:not(.wsite-com-product-disabled)'
-      )
-      ?.addEventListener('click', () => {
+      .querySelector('#wsite-com-product-add-to-cart')
+      ?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
         const name = document
           .querySelector('#wsite-com-product-title')
           ?.textContent.trim();
@@ -25,9 +26,7 @@ FC.onLoad = function () {
           return;
         }
 
-        const price = document
-          .querySelector('[itemprop="price"]')
-          ?.getAttribute('content');
+        const price = document.querySelector('[itemprop="price"]')?.textContent;
         if (!price) {
           console.error('Foxy: Cannot find product price');
           return;
