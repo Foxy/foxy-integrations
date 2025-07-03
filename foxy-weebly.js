@@ -50,7 +50,7 @@ FC.onLoad = function () {
         }/cart?name=${encodeURIComponent(
           name
         )}&price=${price}&quantity=${quantity}&quantity_max=${quantityMax}&code=${encodeURIComponent(
-          code
+          code === 'null' ? '' : code
         )}&image=${encodeURIComponent(image)}&url=${encodeURIComponent(
           window.location.href
         )}`;
