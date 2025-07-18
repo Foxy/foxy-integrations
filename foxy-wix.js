@@ -116,12 +116,15 @@ FC.onLoad = function () {
           ?.style.backgroundImage.slice(4, -1)
           .replace(/"/g, '') ||
         '';
-      const weight = Array.from(
-        document.querySelectorAll('[data-hook="info-section-title"]')
-      )
-        .map((el) => el.innerText)
-        .find((el) => el.toLowerCase().startsWith('weight'))
-        ?.match(/[\d.]+/)[0];
+      const weight =
+        Array.from(
+          document.querySelectorAll('[data-hook="info-section-title"]')
+        )
+          .map((el) => el.textContent.trim())
+          .find((el) => el.toLowerCase().startsWith('weight'))
+          ?.match(/[\d.]+/)[0] ||
+        document.querySelector('[data-foxy-product="weight"]')?.textContent ||
+        0;
 
       // Subscriptions
       const subContainer = document.querySelector(
@@ -160,7 +163,9 @@ FC.onLoad = function () {
           name
         )}&price=${price}&quantity=${quantity}&quantity_max=${quantity_max}&image=${encodeURIComponent(
           image
-        )}&code=${encodeURIComponent(code)}&Slug=${slug}` +
+        )}&code=${encodeURIComponent(
+          code
+        )}&Slug=${slug}&url=${encodeURIComponent(window.location.href)}` +
         (weight ? `&weight=${weight}` : '') +
         (subFrequency ? `&sub_frequency=${subFrequency}` : '') +
         (subEndDate ? `&sub_enddate=${subEndDate}` : '');
@@ -185,7 +190,9 @@ FC.onLoad = function () {
 
       // Color option
       const colorOption = document
-        .querySelector("[data-hook='product-colors-title']")
+        .querySelector(
+          '[data-hook="product-colors-title"], [data-hook="color-picker-fieldset-label"]'
+        )
         ?.innerText.split(': ')
         .map((el) => encodeURIComponent(el));
 
@@ -196,7 +203,10 @@ FC.onLoad = function () {
         // add color option if exists
         if (!!colorOption) {
           if (colorOption.length === 2) {
-            variantParams += `&${colorOption[0]}=${colorOption[1]}`;
+            variantParams += `&${colorOption[0]}=${colorOption[1].replace(
+              '*',
+              ''
+            )}`;
           } else {
             return;
           }
@@ -215,7 +225,8 @@ FC.onLoad = function () {
         // only color options
         FC.client.event('cart-submit').trigger({
           data: { cart: 'add' },
-          url: atcLink + `&${colorOption[0]}=${colorOption[1]}`,
+          url:
+            atcLink + `&${colorOption[0]}=${colorOption[1].replace('*', '')}`,
         });
       } else if (allVariantValues.length === 0 && !colorOption) {
         // if there are no variants or color options
