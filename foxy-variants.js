@@ -972,6 +972,10 @@ var Foxy = (function () {
         Object.keys(variantSelectionCompleteProduct).forEach(key => {
           const inputToUpdate = foxyForm.querySelector(`input[type='hidden'][name="${key}"]`);
           if (inputToUpdate) inputToUpdate.value = variantSelectionCompleteProduct[key];
+          const foxyElement = container.querySelector(`[foxy-id="${key}"]`);
+
+          const restrictedMatch = ["inventory", "price", "image"].includes(key);
+          if (foxyElement && !restrictedMatch) foxyElement.textContent = variantSelectionCompleteProduct[key];
 
           switch (key) {
             case "inventory":
