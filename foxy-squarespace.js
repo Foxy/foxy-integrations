@@ -1,5 +1,4 @@
 var FC = FC || {};
-
 FC.onLoad = function () {
   FC.client.on('ready.done', function () {
     // modify mini-cart links
@@ -21,16 +20,18 @@ FC.onLoad = function () {
       btn.addEventListener('click', () => {
         // get product info from elements
         const name =
-          document.querySelector('.ProductItem-details-title')?.innerText ||
-          Static.SQUARESPACE_CONTEXT.item.title;
+          document.querySelector('.ProductItem-details-title, .product-title')
+            ?.textContent || Static.SQUARESPACE_CONTEXT.item.title;
         if (!name) console.error('Foxy: cannot find product name');
 
         const quantity =
-          document.querySelector('.product-quantity-input')?.lastElementChild
-            .value || 1;
+          document.querySelector('.product-quantity-input input')?.value ||
+          document.querySelector('input.product-quantity-input')?.value ||
+          1;
         const image =
-          document.querySelector('.ProductItem-gallery-slides-item-image')
-            ?.src || '';
+          document.querySelector(
+            '.ProductItem-gallery-slides-item-image, .product-gallery-slides-item-image'
+          )?.src || '';
         const category =
           document.querySelector('input[name="foxy-category"]')?.value || '';
 
@@ -49,14 +50,16 @@ FC.onLoad = function () {
 
         // select elements for variants
         const variantSelect = document.querySelectorAll(
-          'select[data-variant-option-name]'
+          '.variant-select-wrapper select'
         );
 
         if (variantSelect.length > 0) {
           // product has variants
           // get selected variant name and value from elements
           const allVariantName = Array.from(variantSelect).map(
-            (variant) => variant.dataset.variantOptionName
+            (variant) =>
+              variant.dataset.variantOptionName ||
+              variant.parentElement.parentElement.dataset.variantOptionName
           );
           const allVariantValue = Array.from(variantSelect).map(
             (variant) => variant.value
