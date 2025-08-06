@@ -663,7 +663,7 @@ var Foxy = (function () {
         if (!config.inventoryControl) return;
 
         const quantity = quantityElement?.value ?? 1;
-        const submitButton = foxyForm.querySelector("input[type=submit]");
+        const submitButton = foxyForm.querySelector("input[type=submit], button[type=submit]");
         const inventory =
           variantItems.array.length === 1
             ? variantItems.array[0]?.inventory
