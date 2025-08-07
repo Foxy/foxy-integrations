@@ -1,0 +1,123 @@
+{
+  "name": "Folders Simple",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerOn": "transaction",
+        "useQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "zoom",
+              "value": "zoom=applied_taxes,attributes,billing_addresses,custom_fields,customer,discounts,items,items:item_category,items:item_options,payments,shipments,transaction_logs,transaction_logs:transaction_log_details,folder"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.foxyApiTrigger",
+      "typeVersion": 1.1,
+      "position": [-1180, 20],
+      "id": "07d89dfb-c255-4374-98fd-08a8f9d578b2",
+      "name": "Foxy API Trigger",
+      "webhookId": "a34839f0-eee6-4be9-89cf-26bf628e569d",
+      "credentials": {
+        "foxyJwtApi": {
+          "id": "dEwNjQys7hwV2XS1",
+          "name": "Foxy Managed Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "14e9c8da-2a10-48fe-be71-e2ee79d9cab1",
+              "leftValue": "={{ $json._headers[\"foxy-webhook-event\"] }}",
+              "rightValue": "transaction/modified",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "8c321cda-331f-4079-a628-c2806cfb8ef4",
+              "leftValue": "={{ $json._embedded['fx:folder'].name }}",
+              "rightValue": "Shipped",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-760, 20],
+      "id": "bb65076d-9d9d-4fbb-9bbf-cb68f07d1fc3",
+      "name": "Check if event is transaction modification"
+    },
+    {
+      "parameters": {
+        "fromEmail": "example@domain.com",
+        "toEmail": "={{ $json.customer_email }}",
+        "subject": "=Order #{{$json.display_id}} has shipped!",
+        "html": "=Hi {{ $json.customer_first_name }},\n\nYour order #{{ $json.display_id }} has been shipped to:\n\n{{ [\n  `${$json._embedded['fx:shipments'][0].first_name || ''} ${$json._embedded['fx:shipments'][0].last_name || ''}`.trim(),\n  $json._embedded['fx:shipments'][0].company      || '',\n  $json._embedded['fx:shipments'][0].address1     || '',\n  $json._embedded['fx:shipments'][0].address2     || '',\n  `${$json._embedded['fx:shipments'][0].city || ''}, ${$json._embedded['fx:shipments'][0].region || ''} ${$json._embedded['fx:shipments'][0].postal_code || ''}`.trim(),\n  $json._embedded['fx:shipments'][0].country      || ''\n].filter(Boolean).join('\\n') }}\n\nYou can track your shipment here: {{\n  ($json._embedded['fx:custom_fields'] || [])\n    .find(c => c.name === 'tracking-url')?.value || ''\n}}\n\nYour billing address is:\n\n{{ [\n  `${$json._embedded['fx:billing_addresses'][0].first_name || ''} ${$json._embedded['fx:billing_addresses'][0].last_name || ''}`.trim(),\n  $json._embedded['fx:billing_addresses'][0].company      || '',\n  $json._embedded['fx:billing_addresses'][0].address1     || '',\n  $json._embedded['fx:billing_addresses'][0].address2     || '',\n  `${$json._embedded['fx:billing_addresses'][0].city || ''}, ${$json._embedded['fx:billing_addresses'][0].region || ''} ${$json._embedded['fx:billing_addresses'][0].customer_postal_code || ''}`.trim(),\n  $json._embedded['fx:billing_addresses'][0].customer_country      || ''\n].filter(Boolean).join('\\n') }}\n\nItems:\n{{ (\n  $json._embedded['fx:items'] || []\n).map(i => `${i.quantity} × ${i.name}`).join('\\n') }}\n\nCustom field \"at-customer-id\": {{\n  ($json._embedded['fx:custom_fields'] || [])\n    .find(c => c.name === 'at-customer-id')?.value || ''\n}}\n\nTotal: {{ $json.currency_symbol }}{{ $json.total_order }}\n\nReceipt: {{ $json._links['fx:receipt'].href }}\n\nThanks for your purchase!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [-380, 0],
+      "id": "613b6b6b-3ae7-47ad-8723-6cc8e735a76a",
+      "name": "Send Email",
+      "webhookId": "609ba195-7573-47b3-a5b1-16db2b81231a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Foxy API Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check if event is transaction modification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if event is transaction modification": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "9f183de7-b2b4-40d0-9393-3a07ada2ef3c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
+  },
+  "id": "UGcmeRcv05qeZSNn",
+  "tags": []
+}
