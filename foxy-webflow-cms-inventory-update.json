@@ -1,0 +1,468 @@
+{
+  "name": "Update Webflow CMS Inventory",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f809bd99-b33d-4353-8a12-a24d32e031c8",
+              "name": "webflowApiToken",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "d5faf23c-5c65-434b-9588-704ba8085c30",
+              "name": "collectionId",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "aa9ea237-4434-4f9a-9712-8ccff241b58c",
+              "name": "inventoryFieldName",
+              "value": "Inventory",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1540, 220],
+      "id": "59deb1d6-1fb4-4de7-9919-dbff4fd9bb3e",
+      "name": "Configurations"
+    },
+    {
+      "parameters": {
+        "jsCode": "const collectionIds = [\n  ...new Set(\n    $('Foxy new transaction')\n      .first()\n      .json._embedded['fx:items'].map(\n        (item) =>\n          item._embedded['fx:item_options']?.find(\n            (option) => option.name === 'collection_id'\n          )?.value || ''\n      )\n  ),\n].filter((id) => id !== '');\n\nreturn collectionIds.length > 0\n  ? collectionIds.map((id) => ({\n      collectionId: id,\n    }))\n  : [{ collectionId: $('Configurations').first().json.collectionId }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1100, 120],
+      "id": "2fd396fd-3139-4b70-97b7-11e8e62caafb",
+      "name": "Get CMS Collection ID(s)"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{ $('Get CMS Collection ID(s)').item.json.collectionId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Configurations').item.json.webflowApiToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-880, 120],
+      "id": "110fc451-4f35-4da7-9f42-a17bd5242db2",
+      "name": "Get Webflow CMS Details"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Foxy new transaction').first().json._embedded[\"fx:items\"]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-660, 120],
+      "id": "f62b8dbf-aa42-4de8-9d5f-e5eaff5f801e",
+      "name": "Loop Through Cart Items"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.webflow.com/v2/collections/{{ $('Loop Through Cart Items').item.json._embedded['fx:item_options']?.find((option) => option.name.toLowerCase() === 'collection_id')?.value || $('Configurations').first().json.collectionId || '' }}/items/live",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "slug",
+              "value": "={{ $('Loop Through Cart Items').item.json._embedded['fx:item_options']?.find(option => option.name.toLowerCase() === 'slug')?.value || '' }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Configurations').first().json.webflowApiToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-440, 120],
+      "id": "75968124-ce03-4eb2-9278-ba1c2e61e22d",
+      "name": "Find Matching Webflow CMS Items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3ce9bc5a-7e3c-48eb-b0f1-562217514dc1",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "transaction",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "88ffc7d7-99e1-470e-bc3c-cfccbdf3c619",
+              "leftValue": "={{ [\"transaction/created\", \"transaction/refeed\"] }}",
+              "rightValue": "={{ $json._headers[\"foxy-webhook-event\"] }}",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [-1760, 220],
+      "id": "7a7325d9-f55d-4fc7-9288-61e48401caf7",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "triggerOn": "transaction"
+      },
+      "type": "n8n-nodes-base.foxyApiTrigger",
+      "typeVersion": 1.1,
+      "position": [-1980, 220],
+      "id": "587487aa-6e57-4ac4-87db-5854c3fd9a42",
+      "name": "Foxy new transaction",
+      "webhookId": "",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.webflow.com/v2/collections/{{ $json.cmsId }}/items/{{ $json.itemId }}/live",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Configurations').first().json.webflowApiToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fieldData\": {\n    \"{{ $json.inventoryFieldSlug }}\": {{ $json.itemInventory - $json.cartQuantity }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 20],
+      "id": "ea4ce892-8713-432e-adb4-aa97c434d1ea",
+      "name": "Update Inventory"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const itemId = $json['items'][0].id;\nconst currentCartItem = $('Loop Through Cart Items').all().at($itemIndex).json;\nconst cmsId =\n  currentCartItem._embedded['fx:item_options']?.find(\n    (option) => option.name.toLowerCase() === 'collection_id'\n  )?.value ||\n  $('Configurations').first().json.collectionId ||\n  '';\nconst inventoryFieldSlug =\n  $('Get Webflow CMS Details')\n    .all()\n    .find((cms) => cms.json.id === cmsId)\n    ?.json.fields.find(\n      (field) =>\n        field.displayName ===\n        $('Configurations').first().json.inventoryFieldName\n    )?.slug || '';\nconst itemInventory = $('Find Matching Webflow CMS Items').all().at($itemIndex)\n  .json['items'][0].fieldData[inventoryFieldSlug];\nconst cartQuantity = currentCartItem.quantity;\n\nreturn { itemId, cmsId, inventoryFieldSlug, itemInventory, cartQuantity };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 20],
+      "id": "a5fb1aa4-fa77-44fb-af51-0788c73bd1df",
+      "name": "Get Item Details"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [-220, 120],
+      "id": "5e06341e-1ddc-4718-ba04-1913b3328faa",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [220, 20],
+      "id": "b6eaf5c6-412d-45cf-af94-ba4d5c24ed14",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0ed43817-0d10-48e4-8d82-26ca1db66f9d",
+              "leftValue": "={{ $json.data.every((item) => item.pagination.total === 1) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [0, 120],
+      "id": "740a0aea-0a50-4585-8b99-161bb8749912",
+      "name": "If a Matching CMS Item is Found"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Invalid Webflow CMS collection ID"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [-1100, 320],
+      "id": "fecd751b-2316-4ebb-9ba6-b1379d6aa0fe",
+      "name": "Invalid Collection ID"
+    },
+    {
+      "parameters": {
+        "errorMessage": "=Cannot find a matching CMS item by slug for some products: {{ $json.data.filter((item) => item.pagination.total !== 1).map((_, index) => $('Loop Through Cart Items').all().at(index).json._embedded['fx:item_options'].find((option) => option.name === 'slug')?.value || '').join(', ') }}"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [220, 220],
+      "id": "fb23772d-703f-447d-a52c-b38312c6b49f",
+      "name": "Cannot Find a Matching CMS Item"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "00679f9b-d673-4a5e-a2b3-c3d07ab49f5c",
+              "leftValue": "={{ $json.collectionId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "939cdd00-bffa-426d-97fd-3b8d4e424e03",
+              "leftValue": "={{ $('Foxy new transaction').first().json._embedded['fx:items'].every((item) => item._embedded['fx:item_options']?.find((option) => option.name === 'collection_id')) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-1320, 220],
+      "id": "9554287f-09e3-4bee-ac36-3c70e66977a2",
+      "name": "If Collection ID is Valid"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Configurations": {
+      "main": [
+        [
+          {
+            "node": "If Collection ID is Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get CMS Collection ID(s)": {
+      "main": [
+        [
+          {
+            "node": "Get Webflow CMS Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Webflow CMS Details": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Cart Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Cart Items": {
+      "main": [
+        [
+          {
+            "node": "Find Matching Webflow CMS Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Matching Webflow CMS Items": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Configurations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Foxy new transaction": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Item Details": {
+      "main": [
+        [
+          {
+            "node": "Update Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "If a Matching CMS Item is Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Get Item Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If a Matching CMS Item is Found": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cannot Find a Matching CMS Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Collection ID is Valid": {
+      "main": [
+        [
+          {
+            "node": "Get CMS Collection ID(s)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Collection ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "218b2ff4-c1c7-4d90-a1a8-adba35e89165",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
+  },
+  "id": "lEfniMW2aNZgnWKW",
+  "tags": []
+}
