@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "pre-checkout-webhook",
+        "path": "",
         "responseMode": "lastNode",
         "options": {}
       },
@@ -16,7 +16,7 @@
       ],
       "id": "7435105a-5580-4f13-8d94-c8a86180b4fa",
       "name": "Foxy Pre-Checkout Webhook",
-      "webhookId": "fbd7da26-cc30-492c-947e-51110010ddbd"
+      "webhookId": ""
     },
     {
       "parameters": {

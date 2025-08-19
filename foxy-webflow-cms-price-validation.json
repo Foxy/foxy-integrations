@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "pre-checkout-webhook",
+        "path": "",
         "responseMode": "lastNode",
         "options": {}
       },
@@ -16,7 +16,7 @@
       ],
       "id": "4ad37db2-e330-4904-8b23-cf8e9dfb8e4e",
       "name": "Foxy Pre-Checkout Webhook",
-      "webhookId": "fbd7da26-cc30-492c-947e-51110010ddbd"
+      "webhookId": ""
     },
     {
       "parameters": {
@@ -56,12 +56,7 @@
       ],
       "id": "ead07004-0804-481d-b9c2-64b37efd4044",
       "name": "Find Matching Webflow CMS Items",
-      "credentials": {
-        "webflowApi": {
-          "id": "AAyVSHecLqKOhk8D",
-          "name": "Webflow account 6"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
