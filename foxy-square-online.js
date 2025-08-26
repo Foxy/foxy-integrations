@@ -22,7 +22,7 @@ FC.onLoad = function () {
           if (!!cartBtnIcon && !foxyMiniCart) {
             const cartBtn = document.querySelector('button.cart-icon');
             const cartLink = document.createElement('a');
-            cartLink.href = `https://${FC.settings.storedomain}.foxycart.com/cart?cart=view`;
+            cartLink.href = `https://${FC.settings.storedomain}/cart?cart=view`;
             cartLink.id = 'foxy-mini-cart';
             const clonedBtn = cartBtn.cloneNode(true);
             cartLink.appendChild(clonedBtn);
