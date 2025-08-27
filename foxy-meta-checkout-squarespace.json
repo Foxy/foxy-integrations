@@ -1,0 +1,233 @@
+{
+  "name": "Instagram/Facebook Checkout with Foxy (Squarespace)",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5b5df7a8-373b-4c1a-a28e-94863f99f6b6",
+              "name": "Squarespace API Key",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "edb154f5-de05-4e24-94cc-cf857d0cc08d",
+              "name": "Foxy Store Domain",
+              "value": "example.foxycart.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [224, 80],
+      "id": "6cb0ed4d-a047-4bdc-91bb-d35bdd733e51",
+      "name": "Configurations"
+    },
+    {
+      "parameters": {
+        "url": "https://api.squarespace.com/1.0/commerce/products",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Configurations').first().json['Squarespace API Key'] }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "responseContainsNextURL",
+              "nextURL": "={{ $response.body.pagination.nextPageUrl }}",
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.pagination.hasNextPage === false }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [672, -16],
+      "id": "156f1a1c-85f7-4bef-a37b-0a71fcfcde66",
+      "name": "Get All Squarespace Products"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $('Checkout URL').first().json.query;\nconst sqProducts = $('Get All Squarespace Products')\n  .all()\n  .map((batch) => batch.json.products)\n  .flat();\n\nconst products = query.products\n  .split(',')\n  .map((str, index) => {\n    const variantId = str.split(':')[0];\n    const quantity = str.split(':')[1];\n\n    const sqProduct = sqProducts.find((product) =>\n      product.variants.some((variant) => variant.id === variantId)\n    );\n    const variant = sqProduct.variants.find(\n      (variant) => variant.id === variantId\n    );\n\n    const name = sqProduct.name;\n    const price = variant.pricing.onSale\n      ? variant.pricing.salePrice.value\n      : variant.pricing.basePrice.value;\n    const image = sqProduct.images[0].url;\n    const SKU = variant.sku;\n    const quantity_max = variant.stock.quantity;\n    const weight = variant.shippingMeasurements.weight.value;\n    const { length, width, height } = variant.shippingMeasurements.dimensions;\n    const url = sqProduct.url;\n\n    const product = {\n      name,\n      price,\n      quantity,\n      code: variantId,\n      image,\n      SKU,\n      quantity_max,\n      weight,\n      length,\n      width,\n      height,\n      url,\n    };\n\n    for (const [key, value] of Object.entries(variant.attributes)) {\n      // @ts-ignore\n      product[key] = value;\n    }\n\n    return Object.entries(product)\n      .map(\n        (param) =>\n          `${index + 1}:${encodeURIComponent(param[0])}=${encodeURIComponent(\n            param[1]\n          )}`\n      )\n      .join('&');\n  })\n  .join('&');\n\nreturn [{ params: products }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [896, -16],
+      "id": "9d59e6a1-04a3-4005-81ea-7973ac54d3f8",
+      "name": "Generate Product Parameters for Foxy"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "=https://{{ $('Configurations').first().json['Foxy Store Domain'] }}/cart?cart=checkout&empty=true&{{ $json.params }}&h:Source={{ $('Checkout URL').first().json.query.cart_origin || '' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1120, -16],
+      "id": "b689f9c2-f9bb-4e67-b486-09f30a76c56a",
+      "name": "Redirect to Foxy Checkout"
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "=https://{{ $('Configurations').first().json['Foxy Store Domain'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [672, 176],
+      "id": "e77e8be7-6d0a-4ae0-b0a7-d09925902a33",
+      "name": "Redirect to Store Website"
+    },
+    {
+      "parameters": {
+        "path": "",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 80],
+      "id": "4ab4d4e6-5cce-4b3d-880c-c7492b44c8ae",
+      "name": "Checkout URL",
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "539a5995-c0ee-4b0d-9317-8fcf099d01b9",
+              "leftValue": "={{ $('Checkout URL').first().json.query.hasField('products') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "fadc5d40-ada0-47a2-8bde-b5c9f75dfd53",
+              "leftValue": "={{ $json['Squarespace API Key'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "3d118717-ddd5-42c0-a70f-908699e3d85f",
+              "leftValue": "={{ $json['Foxy Store Domain'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [448, 80],
+      "id": "fb8fd41d-1d66-4cb3-85be-72216ec2c8a8",
+      "name": "If Parameters Are Valid"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Configurations": {
+      "main": [
+        [
+          {
+            "node": "If Parameters Are Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Squarespace Products": {
+      "main": [
+        [
+          {
+            "node": "Generate Product Parameters for Foxy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Product Parameters for Foxy": {
+      "main": [
+        [
+          {
+            "node": "Redirect to Foxy Checkout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checkout URL": {
+      "main": [
+        [
+          {
+            "node": "Configurations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Parameters Are Valid": {
+      "main": [
+        [
+          {
+            "node": "Get All Squarespace Products",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redirect to Store Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f7c9cc48-4698-4c2e-a3a9-2a2a3c2372b1",
+  "meta": {
+    "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
+  },
+  "id": "iofTOuGAPOlXynUL",
+  "tags": []
+}
