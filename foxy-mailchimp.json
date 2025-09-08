@@ -1,0 +1,194 @@
+{
+  "name": "Add Contacts in Mailchimp",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerOn": "transaction"
+      },
+      "type": "n8n-nodes-base.foxyApiTrigger",
+      "typeVersion": 1.1,
+      "position": [0, -160],
+      "id": "437485fe-bd3c-4ebe-bdc1-04221ea2184a",
+      "name": "Foxy New Transaction",
+      "webhookId": "",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "list": "",
+        "email": "={{ $('Foxy New Transaction').item.json.customer_email }}",
+        "status": "subscribed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mailchimp",
+      "typeVersion": 1,
+      "position": [672, -64],
+      "id": "778317e0-4fde-4628-9548-29b5f8b6a7f1",
+      "name": "Add a New Contact and Subscribe",
+      "alwaysOutputData": false,
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "list": "",
+        "email": "={{ $('Foxy New Transaction').item.json.customer_email }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mailchimp",
+      "typeVersion": 1,
+      "position": [448, -160],
+      "id": "78d69e40-6db2-4db6-8715-a0f827e46334",
+      "name": "Find Contact by Customer Email",
+      "credentials": {},
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "list": "",
+        "email": "={{ $('Foxy New Transaction').item.json.customer_email }}",
+        "updateFields": {
+          "status": "subscribed"
+        }
+      },
+      "type": "n8n-nodes-base.mailchimp",
+      "typeVersion": 1,
+      "position": [896, -240],
+      "id": "c15e0dae-13c7-44ca-98b6-3828469fdc17",
+      "name": "Update Contact to Subscribed",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a66f88e2-0a8d-401c-85cf-a16dee669fdd",
+              "leftValue": "={{ $json._embedded['fx:custom_fields'].find((field) => field.name === 'newsletter_subscribe')?.value }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [224, -160],
+      "id": "31875266-3709-4bcf-ad0f-2c234fdccd57",
+      "name": "If Subscribe to Newsletter Checkbox Is Checked"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b1ccfccc-80d4-4556-84e0-480d5730882d",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "subscribed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [672, -256],
+      "id": "ee2e299f-0020-4267-abca-17f869ad73e8",
+      "name": "If Contact Is Already Subscribed"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Foxy New Transaction": {
+      "main": [
+        [
+          {
+            "node": "If Subscribe to Newsletter Checkbox Is Checked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add a New Contact and Subscribe": {
+      "main": [[]]
+    },
+    "Find Contact by Customer Email": {
+      "main": [
+        [
+          {
+            "node": "If Contact Is Already Subscribed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add a New Contact and Subscribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Subscribe to Newsletter Checkbox Is Checked": {
+      "main": [
+        [
+          {
+            "node": "Find Contact by Customer Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Contact Is Already Subscribed": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Update Contact to Subscribed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "915fc839-bdaf-4fd8-b5ad-2f5f2745a10a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
+  },
+  "id": "lphtivSTINww7JkL",
+  "tags": []
+}
