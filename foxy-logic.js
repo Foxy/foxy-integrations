@@ -14,8 +14,8 @@ var FC = FC || {};
 
   function resolvedSettings() {
     const fromGlobal =
-      window.FoxyLogicConfig && typeof window.FoxyLogicConfig === "object"
-        ? window.FoxyLogicConfig
+      window.foxyPortalLogicConfig && typeof window.foxyPortalLogicConfig === "object"
+        ? window.foxyPortalLogicConfig
         : {};
     // Merge shallowly
     return Object.assign({}, DEFAULT_SETTINGS, fromGlobal);
