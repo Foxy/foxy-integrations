@@ -99,6 +99,15 @@ var FC = FC || {};
     customerAttributes = {};
   }
 
+  function resolvedSettings() {
+    const fromGlobal =
+      window.foxyPortalLogicConfig && typeof window.foxyPortalLogicConfig === "object"
+        ? window.foxyPortalLogicConfig
+        : {};
+
+    return Object.assign({}, DEFAULT_SETTINGS, fromGlobal);
+  }
+
   document.addEventListener("click", async function (event) {
     const target = event.target;
     if (event.target.matches(attributeCustomerLogout + "," + attributeCustomerLogout + " *")) {
@@ -674,14 +683,6 @@ var FC = FC || {};
       hasDynamicRedirect = false; // No dynamic redirect found
     }
   };
-  let resolvedSettings = function () {
-    const fromGlobal =
-      window.foxyPortalLogicConfig && typeof window.foxyPortalLogicConfig === "object"
-        ? window.foxyPortalLogicConfig
-        : {};
-    // Merge shallowly
-    return Object.assign({}, DEFAULT_SETTINGS, fromGlobal);
-  }
 
   if (!FC.hasOwnProperty("custom")) {
     FC.custom = {};
