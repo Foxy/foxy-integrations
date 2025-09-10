@@ -12,47 +12,13 @@ var FC = FC || {};
     webhookEndpointURL: "",
   };
 
-  // Pull config from (in order of precedence):
-  // 1) window.FoxyPortalConfig (define before this script)
-  // 2) <script ... data-*> attributes on the current script tag
-  // 3) hard-coded defaults above
-  function readDatasetConfig() {
-    const s = document.currentScript;
-    if (!s || !s.dataset) return {};
-    // Coerce boolean-like dataset values
-    const bool = v => (typeof v === "string" ? v === "true" || v === "1" : !!v);
-    return {
-      protectedPath: s.dataset.protectedPath,
-      loginOrSignupPath: s.dataset.loginOrSignupPath,
-      loginRedirect: s.dataset.loginRedirect,
-      redirectIfNoActiveSubscriptions:
-        s.dataset.redirectIfNoActiveSubscriptions !== undefined
-          ? bool(s.dataset.redirectIfNoActiveSubscriptions)
-          : undefined,
-      useLatestTransactionOnly:
-        s.dataset.useLatestTransactionOnly !== undefined
-          ? bool(s.dataset.useLatestTransactionOnly)
-          : undefined,
-      ignoreSubscriptionsWithPastDue:
-        s.dataset.ignoreSubscriptionsWithPastDue !== undefined
-          ? bool(s.dataset.ignoreSubscriptionsWithPastDue)
-          : undefined,
-      removeElementsFromPage:
-        s.dataset.removeElementsFromPage !== undefined
-          ? bool(s.dataset.removeElementsFromPage)
-          : undefined,
-      webhookEndpointURL: s.dataset.webhookEndpointUrl,
-    };
-  }
-
   function resolvedSettings() {
     const fromGlobal =
       window.FoxyLogicConfig && typeof window.FoxyLogicConfig === "object"
         ? window.FoxyLogicConfig
         : {};
-    const fromDataset = readDatasetConfig();
     // Merge shallowly
-    return Object.assign({}, DEFAULT_SETTINGS, fromDataset, fromGlobal);
+    return Object.assign({}, DEFAULT_SETTINGS, fromGlobal);
   }
 
   let SETTINGS = resolvedSettings();
