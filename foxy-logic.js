@@ -72,6 +72,7 @@ var FC = FC || {};
   customElements.whenDefined("foxy-customer-portal").then(() => {
     if (portal) {
       portal.addEventListener("signin", function (event) {
+        showSpinnerAnimation(event.detail.forcePasswordReset);
         fetchCustomerData(!event.detail.forcePasswordReset);
       });
 
@@ -244,6 +245,19 @@ var FC = FC || {};
       !window.location.pathname.match(new RegExp("^" + loginRedirect))
     ) {
       window.location.assign(window.location.origin + loginRedirect);
+    }
+  };
+  let showSpinnerAnimation = function (forcePasswordReset) {
+    checkForDynamicRedirect();
+    if (
+      loginRedirect != "" && !forcePasswordReset &&
+      !window.location.pathname.match(new RegExp("^" + loginRedirect))
+    ) {
+      portal.parentElement.style.display = "none";
+      portal.parentElement.insertAdjacentHTML(
+        "beforebegin",
+        '<div style="display:flex; justify-content:center;"><svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg></div>'
+      );
     }
   };
   let updatePage = function () {
@@ -701,28 +715,5 @@ var FC = FC || {};
     checkAuthentication();
     return authenticated && activeSubs > 0;
   };
-  FC.custom.configure = function updateConfig(patch = {}) {
-    // Merge and rebind locals used throughout the script
-    SETTINGS = Object.assign({}, SETTINGS, patch);
-    ({
-      protectedPath,
-      loginOrSignupPath,
-      loginRedirect,
-      redirectIfNoActiveSubscriptions,
-      useLatestTransactionOnly,
-      ignoreSubscriptionsWithPastDue,
-      removeElementsFromPage,
-      webhookEndpointURL,
-    } = SETTINGS);
-
-    // Re-apply current visibility and redirects with new settings
-    try {
-      updatePage();
-    } catch (e) {
-      // Non-fatal; keep going so caller isn't blocked
-      console.warn("[FoxyPortal] configure/update failed to update page immediately:", e);
-    }
-  };
-
   init();
 })(FC);
