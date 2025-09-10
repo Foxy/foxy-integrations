@@ -12,15 +12,6 @@ var FC = FC || {};
     webhookEndpointURL: "",
   };
 
-  function resolvedSettings() {
-    const fromGlobal =
-      window.foxyPortalLogicConfig && typeof window.foxyPortalLogicConfig === "object"
-        ? window.foxyPortalLogicConfig
-        : {};
-    // Merge shallowly
-    return Object.assign({}, DEFAULT_SETTINGS, fromGlobal);
-  }
-
   let SETTINGS = resolvedSettings();
 
   let {
@@ -683,6 +674,14 @@ var FC = FC || {};
       hasDynamicRedirect = false; // No dynamic redirect found
     }
   };
+  let resolvedSettings = function () {
+    const fromGlobal =
+      window.foxyPortalLogicConfig && typeof window.foxyPortalLogicConfig === "object"
+        ? window.foxyPortalLogicConfig
+        : {};
+    // Merge shallowly
+    return Object.assign({}, DEFAULT_SETTINGS, fromGlobal);
+  }
 
   if (!FC.hasOwnProperty("custom")) {
     FC.custom = {};
