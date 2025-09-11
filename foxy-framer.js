@@ -13,19 +13,19 @@ FC.onLoad = function () {
     urlObserver.observe(document, { subtree: true, childList: true });
 
     function foxyAddToCart() {
-      const form = document.querySelector('[data-foxy-product="form"]');
+      const foxyForm = document.querySelector('[data-foxy-product="form"]');
 
-      if (!form) return;
+      if (!foxyForm) return;
 
-      form.addEventListener('submit', (e) => {
+      foxyForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
         const formData = new FormData(e.target);
         const formValues = Object.fromEntries(formData.entries());
-        const { name, price, ...params } = formValues;
+        const { name, price, cart, ...params } = formValues;
         const image =
           document.querySelector('[data-foxy-product="image"] img')?.src ||
-          form.querySelector('img')?.src ||
+          foxyForm.querySelector('img')?.src ||
           '';
 
         if (!name || !price) {
@@ -33,16 +33,25 @@ FC.onLoad = function () {
           return;
         }
 
-        FC.client.event('cart-submit').trigger({
-          data: { cart: 'add' },
-          url:
-            `https://${FC.settings.storedomain}/cart?name=${encodeURIComponent(
-              name
-            )}&price=${price}` +
-            Object.entries({ ...params, image })
-              .map((param) => `&${param[0]}=${param[1]}`)
-              .join(''),
-        });
+        const cartUrl =
+          `https://${FC.settings.storedomain}/cart?name=${encodeURIComponent(
+            name
+          )}&price=${price}` +
+          Object.entries({ ...params, image })
+            .map(
+              ([key, value]) =>
+                `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+            )
+            .join('');
+
+        if (cart === 'checkout') {
+          window.location.href = `${cartUrl}&cart=checkout`;
+        } else {
+          FC.client.event('cart-submit').trigger({
+            data: { cart: 'add' },
+            url: cartUrl,
+          });
+        }
       });
     }
   });
