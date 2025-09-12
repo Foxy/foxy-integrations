@@ -30,7 +30,7 @@ FC.onLoad = function () {
           1;
         const image =
           document.querySelector(
-            '.ProductItem-gallery-slides-item-image, .product-gallery-slides-item-image'
+            '.ProductItem-gallery-slides-item-image, .product-gallery-slides-item-image, .pdp-gallery-slides-image'
           )?.src || '';
         const category =
           document.querySelector('input[name="foxy-category"]')?.value || '';
