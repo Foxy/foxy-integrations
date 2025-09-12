@@ -53,6 +53,46 @@ FC.onLoad = function () {
           });
         }
       });
+
+      const priceEl = document.querySelector('[data-foxy-product="price"]');
+
+      if (priceEl) {
+        initDynamicPrice(foxyForm, priceEl);
+
+        foxyForm.addEventListener('change', () =>
+          initDynamicPrice(foxyForm, priceEl)
+        );
+      }
+    }
+
+    function initDynamicPrice(foxyForm, priceEl) {
+      const formData = new FormData(foxyForm);
+      const formValues = Object.fromEntries(formData.entries());
+      const priceModRegex = /[{\|]p([+\-:])([\d\.]+)(?:\D{3})?(?=[\|}])/;
+
+      let displayPrice = +formValues.price;
+      for (const formValue of Object.values(formValues)) {
+        const match = formValue.match(priceModRegex);
+
+        if (match) {
+          const modifier = match[1];
+          const value = +match[2];
+
+          if (modifier === ':') {
+            displayPrice = value;
+            break;
+          } else if (modifier === '+') {
+            displayPrice += value;
+          } else if (modifier === '-') {
+            displayPrice -= value;
+          }
+        }
+      }
+
+      priceEl.firstElementChild.textContent = FC.util.money_format(
+        FC.json.config.currency_format,
+        displayPrice
+      );
     }
   });
 };
