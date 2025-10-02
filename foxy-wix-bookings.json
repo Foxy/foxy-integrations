@@ -1,0 +1,381 @@
+{
+  "name": "Wix Bookings",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5250f254-d6de-4274-8b6d-1751343865a2",
+              "leftValue": "={{ $('Foxy New Transaction').first().json.type }}",
+              "rightValue": "transaction",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "d57a7215-1f97-4d60-9601-049a2a520289",
+              "leftValue": "={{ $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].some((option) => option.name === 'Start_Date') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [224, 96],
+      "id": "73d3c47d-a975-47ed-93ac-86c9cc4a92d7",
+      "name": "Is Wix Booking"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.wixapis.com/bookings/v2/resources/query",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Configurations').first().json['Wix API Key'] }}"
+            },
+            {
+              "name": "wix-site-id",
+              "value": "={{ $('Configurations').first().json['Wix Site ID'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": {\n    \"filter\": {\n      \"name\": {\n        \"$eq\": \"{{ $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'staff')?.value || '' }}\"\n      }\n    },\n    \"cursorPaging\": {\n      \"limit\": 1\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 0],
+      "id": "878b273c-b5e2-4ebd-886c-10a9fbcc3b2d",
+      "name": "Query Resource"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.wixapis.com/_api/bookings/v2/services/query",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Configurations').first().json['Wix API Key'] }}"
+            },
+            {
+              "name": "wix-site-id",
+              "value": "={{ $('Configurations').first().json['Wix Site ID'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": {\n    \"filter\": {\n      \"mainSlug.name\": {\n        \"$eq\": \"{{ $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'slug')?.value || '' }}\"\n      },\n      \"hidden\": {\n        \"$eq\": false\n      }\n    },\n    \"paging\": {\n      \"limit\": 1\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [672, 96],
+      "id": "147b3c30-162f-42c7-b842-34e2105f6739",
+      "name": "Query Service"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2961172-1429-4704-929b-7a478ae9488a",
+              "name": "Wix API Key",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "5451208f-5a7d-4ef6-ae7c-a880e93a86a3",
+              "name": "Wix Site ID",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [448, 96],
+      "id": "0f158a82-257c-49b1-b4cb-8eab039a83fa",
+      "name": "Configurations"
+    },
+    {
+      "parameters": {
+        "triggerOn": "transaction"
+      },
+      "type": "n8n-nodes-base.foxyApiTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 96],
+      "id": "1ddab389-6c78-4022-96ea-2cf13fe00231",
+      "name": "Foxy New Transaction",
+      "webhookId": "",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.services[0].type }}",
+                    "rightValue": "APPOINTMENT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1389f135-2fcf-4b54-8ff1-ba330154505b"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "718459df-3ce0-462e-8141-b97ac6b4e36f",
+                    "leftValue": "={{ $json.services[0].type }}",
+                    "rightValue": "CLASS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [896, 96],
+      "id": "b9f37cf8-fa8a-4dc8-85bd-6be4ad4af257",
+      "name": "Switch Booking Service Type"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.wixapis.com/_api/bookings-service/v2/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Configurations').first().json['Wix API Key'] }}"
+            },
+            {
+              "name": "wix-site-id",
+              "value": "={{ $('Configurations').first().json['Wix Site ID'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"booking\": {\n    \"bookedEntity\": {\n      \"slot\": {\n        \"serviceId\": \"{{ $('Query Service').first().json.services[0].id }}\",\n        \"scheduleId\": \"{{ $('Query Service').first().json.services[0].schedule.id }}\",\n        \"startDate\": \"{{ $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'start_date').value.replace(/a\\.m\\./i, \"AM\").replace(/p\\.m\\./i, \"PM\").toDateTime(`LLLL d, yyyy 'at' h:mm a`).format(`yyyy-MM-dd'T'HH:mm:ss`) }}\",\n        \"endDate\": \"{{ $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'start_date').value.replace(/a\\.m\\./i, \"AM\").replace(/p\\.m\\./i, \"PM\").toDateTime(`LLLL d, yyyy 'at' h:mm a`).plus(+$('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'duration').value.split(' ')[0], $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'duration').value.split(' ')[1]).format(`yyyy-MM-dd'T'HH:mm:ss`) }}\",\n        \"resource\": {\n          \"id\": \"{{ $('Query Resource').first().json.resources[0].id }}\"\n        },\n        \"location\": {\n          \"id\": \"{{ $('Query Service').first().json.services[0].locations[0].business.id }}\",\n          \"locationType\": \"OWNER_BUSINESS\"\n        }\n      }\n    },\n    \"contactDetails\": {\n      \"firstName\": \"{{ $('Foxy New Transaction').item.json.customer_first_name }}\",\n      \"lastName\": \"{{ $('Foxy New Transaction').item.json.customer_last_name }}\",\n      \"email\": \"{{ $('Foxy New Transaction').item.json.customer_email }}\",\n      \"phone\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_phone }}\",\n      \"fullAddress\": {\n        \"country\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_country }}\",\n        \"subdivision\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].region }}\",\n        \"city\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].city }}\",\n        \"postalCode\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_postal_code }}\",\n        \"addressLine\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].address1 }}\",\n        \"addressLine2\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].address2 }}\"\n      },\n      \"countryCode\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_country }}\"\n    },\n    \"status\": \"CONFIRMED\",\n    \"paymentStatus\": \"PAID\",\n    \"selectedPaymentOption\": \"ONLINE\",\n    \"totalParticipants\": 1\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1344, 0],
+      "id": "a5be6ac5-567d-4c99-8b13-acbd0e25479a",
+      "name": "Create Appointment Booking"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.wixapis.com/_api/bookings-service/v2/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Configurations').first().json['Wix API Key'] }}"
+            },
+            {
+              "name": "wix-site-id",
+              "value": "={{ $('Configurations').first().json['Wix Site ID'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"booking\": {\n    \"bookedEntity\": {\n      \"slot\": {\n        \"eventId\": \"{{ $('Query Availability').first().json.timeSlots[0].eventInfo.eventId }}\"\n      }\n    },\n    \"contactDetails\": {\n      \"firstName\": \"{{ $('Foxy New Transaction').item.json.customer_first_name }}\",\n      \"lastName\": \"{{ $('Foxy New Transaction').item.json.customer_last_name }}\",\n      \"email\": \"{{ $('Foxy New Transaction').item.json.customer_email }}\",\n      \"phone\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_phone }}\",\n      \"fullAddress\": {\n        \"country\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_country }}\",\n        \"subdivision\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].region }}\",\n        \"city\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].city }}\",\n        \"postalCode\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_postal_code }}\",\n        \"addressLine\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].address1 }}\",\n        \"addressLine2\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].address2 }}\"\n      },\n      \"countryCode\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:billing_addresses'][0].customer_country }}\"\n    },\n    \"status\": \"CONFIRMED\",\n    \"paymentStatus\": \"PAID\",\n    \"selectedPaymentOption\": \"ONLINE\",\n    \"totalParticipants\": 1\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1344, 192],
+      "id": "afd903e9-e489-4146-b9f0-8feedea16912",
+      "name": "Create Class Booking"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.wixapis.com/_api/service-availability/v2/time-slots/event",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $('Configurations').first().json['Wix API Key'] }}"
+            },
+            {
+              "name": "wix-site-id",
+              "value": "={{ $('Configurations').first().json['Wix Site ID'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"fromLocalDate\": \"{{ $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'start_date').value.replace(/a\\.m\\./i, \"AM\").replace(/p\\.m\\./i, \"PM\").toDateTime(`LLLL d, yyyy 'at' h:mm a`).format(`yyyy-MM-dd'T'HH:mm:ss`) }}\",\n    \"toLocalDate\": \"{{ $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'start_date').value.replace(/a\\.m\\./i, \"AM\").replace(/p\\.m\\./i, \"PM\").toDateTime(`LLLL d, yyyy 'at' h:mm a`).plus(+$('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'duration').value.split(' ')[0], $('Foxy New Transaction').first().json._embedded['fx:items'][0]._embedded['fx:item_options'].find((itemOption) => itemOption.name.toLowerCase() === 'duration').value.split(' ')[1]).format(`yyyy-MM-dd'T'HH:mm:ss`) }}\",\n    \"serviceIds\": [\"{{ $('Query Service').first().json.services[0].id }}\"],\n    \"includeNonBookable\": false,\n    \"cursorPaging\": {\n        \"limit\": 1\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 192],
+      "id": "45094b9e-4c46-42c5-9808-b22c41644331",
+      "name": "Query Availability"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Is Wix Booking": {
+      "main": [
+        [
+          {
+            "node": "Configurations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Resource": {
+      "main": [
+        [
+          {
+            "node": "Create Appointment Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Service": {
+      "main": [
+        [
+          {
+            "node": "Switch Booking Service Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configurations": {
+      "main": [
+        [
+          {
+            "node": "Query Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Foxy New Transaction": {
+      "main": [
+        [
+          {
+            "node": "Is Wix Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Booking Service Type": {
+      "main": [
+        [
+          {
+            "node": "Query Resource",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Query Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Availability": {
+      "main": [
+        [
+          {
+            "node": "Create Class Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0b3c0a3a-48e3-4a43-b944-ffb90efada06",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
+  },
+  "id": "MJCr5TpXwdSFHtFo",
+  "tags": []
+}
