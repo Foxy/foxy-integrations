@@ -121,7 +121,7 @@ FC.onLoad = function () {
                   variantParam +
                   `&price=${price}&quantity_max=${stock}&code=${variantId}&SKU=${encodeURIComponent(
                     sku
-                  )}&weight=${weight}&height=${height}&length=${len}&width=${width}`,
+                  )}&weight=${weight}&height=${height}&length=${len}&width=${width}&isVariant=true`,
               });
             }
           }
