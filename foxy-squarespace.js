@@ -17,7 +17,10 @@ FC.onLoad = function () {
     FC.client.updateMiniCart();
 
     document.querySelectorAll('.sqs-add-to-cart-button').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
         // get product info from elements
         const name =
           document.querySelector('.ProductItem-details-title, .product-title')
@@ -109,8 +112,12 @@ FC.onLoad = function () {
               : selectedVariant.price.decimalValue;
             const stock = selectedVariant.stock.quantity || '';
             const { sku, id: variantId } = selectedVariant;
-            const weight = selectedVariant.shippingWeight.value;
-            const { height, len, width } = selectedVariant.shippingSize;
+            const weight = selectedVariant.shippingWeight?.value ?? '';
+            const {
+              height = '',
+              len = '',
+              width = '',
+            } = selectedVariant.shippingSize ?? {};
 
             // trigger Foxy cart-submit event only if product is in stock
             if (stock !== 0) {
@@ -132,8 +139,12 @@ FC.onLoad = function () {
             : variantData[0].price.decimalValue;
           const stock = variantData[0].stock.quantity || '';
           const { sku, id: variantId } = variantData[0];
-          const weight = variantData[0].shippingWeight.value;
-          const { height, len, width } = variantData[0].shippingSize;
+          const weight = variantData[0].shippingWeight?.value ?? '';
+          const {
+            height = '',
+            len = '',
+            width = '',
+          } = variantData[0].shippingSize ?? {};
 
           // trigger Foxy cart-submit event only if product is in stock
           if (stock !== 0) {
