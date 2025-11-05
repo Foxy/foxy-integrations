@@ -1,0 +1,112 @@
+{
+  "name": "Create Orders in Shippo",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "28bc1bbe-6cae-4d38-bb57-440a01c80848",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "transaction",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [224, 0],
+      "id": "984ad359-073b-4332-9cee-ec3e13e6b90b",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "triggerOn": "transaction"
+      },
+      "type": "n8n-nodes-base.foxyApiTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "id": "d3d9e096-cbf9-426e-aadc-a07a12169979",
+      "name": "Foxy New Transaction",
+      "webhookId": "",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.goshippo.com/orders/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "ShippoToken YOUR_SHIPPO_API_KEY"
+            },
+            {
+              "name": "SHIPPO-API-VERSION",
+              "value": "2018-02-08"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"currency\": \"{{ $('Foxy New Transaction').item.json.currency_code }}\",\n  \"order_number\": \"{{ $('Foxy New Transaction').item.json.id }}\",\n  \"order_status\": \"PAID\",\n  \"placed_at\": \"{{ $('Foxy New Transaction').item.json.transaction_date }}\",\n  \"shipping_cost\": \"{{ $('Foxy New Transaction').item.json.total_shipping }}\",\n  \"shipping_cost_currency\": \"{{ $('Foxy New Transaction').item.json.currency_code }}\",\n  \"shipping_method\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].shipping_service_description }}\",\n  \"subtotal_price\": \"{{ $('Foxy New Transaction').item.json.total_item_price }}\",\n  \"total_price\": \"{{ $('Foxy New Transaction').item.json.total_order }}\",\n  \"total_tax\": \"{{ $('Foxy New Transaction').item.json.total_tax }}\",\n  \"weight\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:items'].reduce((accumulator, currentItem) => {return accumulator + currentItem.weight * currentItem. quantity}, 0) }}\",\n  \"weight_unit\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:items'][0]._embedded['fx:item_category'].default_weight_unit === 'LBS' ? 'lb' : 'kg'}}\",\n  \"to_address\": {\n    \"name\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].first_name }} {{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].last_name }}\",\n    \"company\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].company }}\",\n    \"street1\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].address1 }}\",\n    \"street2\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].address2 }}\",\n    \"city\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].city }}\",\n    \"state\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].region }}\",\n    \"zip\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].postal_code }}\",\n    \"country\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].country }}\",\n    \"phone\": \"{{ $('Foxy New Transaction').item.json._embedded['fx:shipments'][0].phone }}\",\n    \"email\": \"{{ $('Foxy New Transaction').item.json.customer_email }}\"\n  },\n  \"line_items\": {{ JSON.stringify($('Foxy New Transaction').item.json._embedded['fx:items'].map(item => ({\n    \"currency\": $('Foxy New Transaction').item.json.currency_code,\n    \"quantity\": item.quantity,\n    \"sku\": item.code,\n    \"title\": item.name,\n    \"total_price\": item.price * item.quantity,\n    \"variant_title\": item._embedded['fx:item_options']?.map((option) => `${option.name}: ${option.value}`).join(', ') || '',\n    \"weight\": item.weight * item.quantity,\n    \"weight_unit\": item._embedded['fx:item_category'].default_weight_unit === 'LBS' ? 'lb' : 'kg'\n  }))) \n}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [448, 0],
+      "id": "d212075d-b515-4542-be42-9e50bd122916",
+      "name": "Create an Order in Shippo"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Create an Order in Shippo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Foxy New Transaction": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eab0f6ec-acb6-4b80-8e42-5a470e17ce58",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c580f68f8c5662bb01ab08a22eca5077155cb5053c7cf450947b33d8d66818f"
+  },
+  "id": "qhLju9SqqWz8Cscy",
+  "tags": []
+}

@@ -64,6 +64,79 @@ FC.onLoad = function () {
             wixAddBtn.setAttribute('foxy-id', 'add-to-cart');
             wixAddBtn.addEventListener('click', (e) => handleAddToCart(e));
           }
+
+          // Wix Bookings
+          const wixBookingContainer = document.querySelector(
+            '[data-hook="BookingCalendar-wrapper"]'
+          );
+          if (
+            wixBookingContainer &&
+            !wixBookingContainer.hasAttribute('foxy-id')
+          ) {
+            const wixBookingBtn = document.querySelector(
+              '[data-hook="sidebar-cta"]'
+            );
+            if (wixBookingBtn && !wixBookingBtn.hasAttribute('foxy-id')) {
+              wixBookingContainer.setAttribute('foxy-id', 'booking-container');
+              wixBookingBtn.setAttribute('foxy-id', 'booking-btn');
+
+              document
+                .querySelector('[data-hook="service-details"] button')
+                .click();
+
+              wixBookingBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                const name = document.querySelector(
+                  '[data-hook="slot-name"]'
+                )?.textContent;
+                const price = document.querySelector(
+                  '[data-hook="slot-plan-type"]'
+                )?.textContent;
+                const startDate = document.querySelector(
+                  '[data-hook="slot-date-and-time"]'
+                )?.textContent;
+                const location = document.querySelector(
+                  '[data-hook="time-slot-details-location"]'
+                )?.textContent;
+                const staff = document.querySelector(
+                  '[data-hook="time-slot-details-staffMember"]'
+                )?.textContent;
+                const duration = document.querySelector(
+                  '[data-hook="time-slot-details-duration-aria-label"]'
+                )?.textContent;
+                const slug = window.location.pathname.split('/').slice(-1)[0];
+
+                if (
+                  name &&
+                  price &&
+                  startDate &&
+                  location &&
+                  staff &&
+                  duration &&
+                  slug
+                ) {
+                  window.location.href = `https://${
+                    FC.settings.storedomain
+                  }/cart?name=${encodeURIComponent(
+                    name
+                  )}&price=${price}&Start_Date=${encodeURIComponent(
+                    startDate
+                  )}&Location=${encodeURIComponent(
+                    location
+                  )}&Staff=${encodeURIComponent(
+                    staff
+                  )}&Duration=${encodeURIComponent(
+                    duration
+                  )}&Slug=${slug}&quantity=1&quantity_max=1&url=${encodeURIComponent(
+                    window.location.href
+                  )}&empty=true&cart=checkout`;
+                } else {
+                  console.error('Foxy: Some booking info is missing');
+                }
+              });
+            }
+          }
         }
       });
 
@@ -95,7 +168,7 @@ FC.onLoad = function () {
         return;
       }
 
-      const slug = window.location.pathname.split('/').slice(-1) || '';
+      const slug = window.location.pathname.split('/').slice(-1)[0];
       const quantity =
         document.querySelector(
           '[data-hook="number-input-spinner-input"], [data-hook="product-quantity-container"] input'
