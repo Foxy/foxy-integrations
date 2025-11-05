@@ -1,4 +1,4 @@
-// Foxy Customer Portal Content Protection - Attributes v1.6
+// Foxy Customer Portal Content Protection - Attributes v2.0
 var FC = FC || {};
 (function (FC) {
   const DEFAULT_SETTINGS = {
@@ -59,6 +59,13 @@ var FC = FC || {};
     (attributeCustomerFavorite = '[foxy-logic-action="favorite"]'),
     (attributeCustomerUnfavorite = '[foxy-logic-action="unfavorite"]'),
     (attributeCustomerLogout = '[foxy-logic-action="logout"]');
+
+  // Support multiple protected paths (or a single string for backwards compatibility)
+    let protectedPaths = Array.isArray(protectedPath)
+      ? protectedPath.filter(Boolean)
+      : protectedPath
+      ? [protectedPath]
+      : [];
 
   customElements.whenDefined("foxy-customer-portal").then(() => {
     if (portal) {
@@ -260,11 +267,20 @@ var FC = FC || {};
       );
     }
   };
+
+  function escapeForRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function isOnProtectedPath() {
+    return protectedPaths.some(p =>
+      new RegExp("^" + escapeForRegex(p)).test(window.location.pathname)
+    );
+  }
   let updatePage = function () {
-    // Redirect if on a protected path and not authenticated, or on a protected path and no active subs
+    // Redirect if on any protected path and not authenticated, or on a protected path and no active subs
     if (
-      protectedPath != "" &&
-      window.location.pathname.match(new RegExp("^" + protectedPath)) &&
+      protectedPaths.length &&
+      isOnProtectedPath() &&
       (!authenticated || (!activeSubs && redirectIfNoActiveSubscriptions))
     ) {
       window.location.assign(window.location.origin + loginOrSignupPath);
@@ -307,7 +323,6 @@ var FC = FC || {};
           el.innerHTML = pastDueAmount;
         });
     }
-
     let attributesToHide = [
         attributeIfSubscriberByCode,
         attributeIfTransactionByCode,
@@ -461,6 +476,84 @@ var FC = FC || {};
           );
         }
       });
+
+    // ============================================
+    // Attribute value-based conditions (v2.0)
+    // --------------------------------------------
+    // Supports dynamic attributes (non-case-sensitive):
+    //   [foxy-logic-customer-attribute-DYNAMIC-value-includes="VALUE"]
+    //   [foxy-logic-customer-attribute-DYNAMIC-value-not-includes="VALUE"]
+    // Where DYNAMIC is the Foxy attribute name with spaces -> _ and no special chars.
+    // Matches are case-insensitive, and "includes" checks substring containment.
+    (function handleAttributeValueConditions() {
+      // Optimized: no full DOM scan. Build exact selectors from existing customer attribute names.
+      const PREFIX = "foxy-logic-customer-attribute-";
+      const INC_SUFFIX = "-value-includes";
+      const NOT_INC_SUFFIX = "-value-not-includes";
+
+      const sanitize = name =>
+        (name || "")
+          .toString()
+          .toLowerCase()
+          .replace(/\s+/g, "_")
+          .replace(/[^a-z0-9_]/g, ""); // drop special chars
+
+      // Map sanitized attribute name -> string value
+      const attrs = {};
+      Object.keys(customerAttributes || {}).forEach(k => {
+        attrs[sanitize(k)] = (customerAttributes[k]?.value ?? "").toString();
+      });
+
+      const names = Object.keys(attrs);
+      if (!names.length) return; // nothing to resolve
+
+      // Build exact attribute-name selectors for only the customer's attributes
+      const incSelectors = names.map(n => `[${PREFIX}${n}${INC_SUFFIX}]`);
+      const notSelectors = names.map(n => `[${PREFIX}${n}${NOT_INC_SUFFIX}]`);
+
+      const checkSet = (nodeList, isIncludes) => {
+        nodeList.forEach(el => {
+          // Find the exact matching dynamic attribute name on this element
+          const a = Array.from(el.attributes).find(
+            attr =>
+              attr.name.startsWith(PREFIX) &&
+              attr.name.endsWith(isIncludes ? INC_SUFFIX : NOT_INC_SUFFIX)
+          );
+          if (!a) return;
+
+          // Extract the dynamic segment from the attribute name
+          const dyn = a.name.slice(
+            PREFIX.length,
+            a.name.length - (isIncludes ? INC_SUFFIX.length : NOT_INC_SUFFIX.length)
+          );
+          const sDyn = sanitize(dyn);
+
+          const desired = (a.value || "").toLowerCase().trim();
+          const actual = (attrs[sDyn] || "").toLowerCase();
+
+          let shouldShow = false;
+          if (isIncludes) {
+            shouldShow = desired ? actual.includes(desired) : false;
+          } else {
+            // not-includes
+            shouldShow = desired ? !actual.includes(desired) : true;
+          }
+
+          // Target this exact node's rule by including the value in the selector
+          const selector = insertValueIntoAttribute(`[${a.name}]`, a.value);
+          hideCustomAttribute(selector);
+          if (shouldShow) showCustomAttribute(selector, true);
+        });
+      };
+
+      if (incSelectors.length) {
+        checkSet(document.querySelectorAll(incSelectors.join(",")), true);
+      }
+      if (notSelectors.length) {
+        checkSet(document.querySelectorAll(notSelectors.join(",")), false);
+      }
+    })();
+    // ============================================
 
     let portalCSS = `
             ${attributesToHide.join(", ")} {
