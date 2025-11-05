@@ -533,10 +533,10 @@ var FC = FC || {};
 
           let shouldShow = false;
           if (isIncludes) {
-            shouldShow = desired ? actual.includes(desired) : false;
+            shouldShow = desired ? actual === desired : false;
           } else {
             // not-includes
-            shouldShow = desired ? !actual.includes(desired) : true;
+            shouldShow = desired ? actual !== desired : true;
           }
 
           // Target this exact node's rule by including the value in the selector
