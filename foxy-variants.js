@@ -284,55 +284,74 @@ var Foxy = (function () {
       });
     }
 
-    function buildVariantGroupList() {
-      // Get variant group names, any custom sort orders if they exist, and their element design
-      // either radio or select
-      if (!variantGroupElements) return;
+function buildVariantGroupList() {
+  // Get variant group names, any custom sort orders if they exist, and their element design
+  // either radio or select
+  if (!variantGroupElements) return;
 
-      variantGroupElements.forEach(variantGroupElement => {
-        let editorElementGroupName;
-        const cmsVariantGroupName = sanitize(variantGroupElement.getAttribute(foxy_variant_group));
-        const variantOptionsData = getVariantGroupOptions(cmsVariantGroupName);
-        const variantGroupOptions = variantOptionsData.map(option => option.variantOption);
+  variantGroupElements.forEach(variantGroupElement => {
+    let editorElementGroupName;
+    const cmsVariantGroupName = sanitize(variantGroupElement.getAttribute(foxy_variant_group));
+    const variantOptionsData = getVariantGroupOptions(cmsVariantGroupName);
+    const variantGroupOptions = variantOptionsData.map(option => option.variantOption);
 
-        const variantGroupType = variantGroupElementsType(variantGroupElement);
-        const variantOptionDesignElement = variantGroupType === "select" ? "select" : ".w-radio";
-        if (variantOptionDesignElement === "select") {
-          editorElementGroupName = variantGroupElement
-            .querySelector(variantOptionDesignElement)
-            .getAttribute("data-name");
-        } else {
-          editorElementGroupName = variantGroupElement
-            .querySelector(`${variantOptionDesignElement} input[type=radio]`)
-            .getAttribute("data-name");
-        }
+    const variantGroupType = variantGroupElementsType(variantGroupElement);
 
-        const customSortOrder =
-          variantGroupElement
-            .getAttribute(foxy_variant_group_order)
-            ?.trim()
-            .split(/\s*,\s*/) ?? null;
+    // These two are the “template” node and its parent that will be cloned
+    let variantOptionDesign;
+    let variantOptionDesignParent;
 
-        if (variantGroupOptions.length === 0) {
-          variantGroupElement.remove();
-        } else {
-          variantGroups.push({
-            editorElementGroupName,
-            customSortOrder,
-            element: variantGroupElement,
-            options: variantGroupOptions,
-            optionsData: variantOptionsData,
-            name: cmsVariantGroupName,
-            variantGroupType,
-            variantOptionDesign: variantGroupElement.querySelector(variantOptionDesignElement),
-            variantOptionDesignParent: variantGroupElement.querySelector(variantOptionDesignElement)
-              .parentElement,
-          });
-          variantGroupElement.querySelector(variantOptionDesignElement).remove();
-        }
-      });
-      
+    if (variantGroupType === "select") {
+      // For selects, keep current behavior
+      variantOptionDesign = variantGroupElement.querySelector("select");
+      if (!variantOptionDesign) return;
+
+      editorElementGroupName = variantOptionDesign.getAttribute("data-name");
+      variantOptionDesignParent = variantOptionDesign.parentElement;
+    } else if (variantGroupType === "radio") {
+      // For radios, make it generic: use the first radio input and its wrapper
+      const templateRadio = variantGroupElement.querySelector("input[type=radio]");
+      if (!templateRadio) return;
+
+      // Webflow and most builders set data-name on the input
+      editorElementGroupName = templateRadio.getAttribute("data-name");
+
+      // Use the closest label as the option “wrapper” if present,
+      // otherwise just use the input’s parent
+      variantOptionDesign =
+        templateRadio.closest("label") || templateRadio.parentElement;
+
+      if (!variantOptionDesign) return;
+
+      variantOptionDesignParent = variantOptionDesign.parentElement;
     }
+
+    const customSortOrder =
+      variantGroupElement
+        .getAttribute(foxy_variant_group_order)
+        ?.trim()
+        .split(/\s*,\s*/) ?? null;
+
+    if (variantGroupOptions.length === 0) {
+      variantGroupElement.remove();
+    } else {
+      variantGroups.push({
+        editorElementGroupName,
+        customSortOrder,
+        element: variantGroupElement,
+        options: variantGroupOptions,
+        optionsData: variantOptionsData,
+        name: cmsVariantGroupName,
+        variantGroupType,
+        variantOptionDesign,
+        variantOptionDesignParent,
+      });
+
+      // Remove the original template from the DOM to avoid showing a duplicate
+      variantOptionDesign.remove();
+    }
+  });
+}
 
     function variantGroupElementsType(variantGroupElement) {
       // check if the element contains a select tag or a radio tag
