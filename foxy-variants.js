@@ -461,7 +461,7 @@ function buildVariantGroupList() {
 
           const variantOptionClone = variantOptionDesign.cloneNode(true);
           const radioInput = variantOptionClone.querySelector("input[type=radio]");
-          const label = variantOptionClone.querySelector("span[for]");
+          const label = variantOptionClone.querySelector("span");
 
           label.textContent = option;
           label.setAttribute("for", `${option}-${index}`);
