@@ -103,7 +103,7 @@ FC.onLoad = function () {
                   '[data-hook="time-slot-details-staffMember"]'
                 )?.textContent;
                 const duration = document.querySelector(
-                  '[data-hook="time-slot-details-duration-aria-label"]'
+                  '[data-hook="time-slot-details-duration-aria-label"], [data-hook="time-slot-details-duration"]'
                 )?.textContent;
                 const slug = window.location.pathname.split('/').slice(-1)[0];
 
