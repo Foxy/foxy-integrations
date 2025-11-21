@@ -199,7 +199,7 @@ function processInputs(form) {
       }
     }
 
-    if (input.name === "Recur") {
+    if (input.name === "Recur" && input.value) {
       input.name = "sub_frequency";
       input.value = transformRecurToSubFrequency(input.value);
       debugLog("Transformed Recur field to sub_frequency", input.value);
@@ -232,7 +232,7 @@ function processSelects(form) {
     if (select.name === "Recur") {
       select.name = "sub_frequency";
       select.querySelectorAll("option").forEach(option => {
-        option.value = transformRecurToSubFrequency(option.value);
+        if (option.value) option.value = transformRecurToSubFrequency(option.value);
       });
     }
 
