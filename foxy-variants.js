@@ -437,6 +437,43 @@ function buildVariantGroupList() {
       return variantGroupOptions;
     }
 
+    function getVariantLabelElement(root, radioInput) {
+      if (!root) return null;
+
+      // all known "label-ish" selectors, combined
+      const labelCandidates = root.querySelectorAll(
+        [
+          "span", // Webflow and most builders
+          "label",
+          ".framer-text", // Framer
+        ].join(",")
+      );
+
+      // 1) try any that already have non-empty text
+      let labelEl = Array.from(labelCandidates).find(el => el.textContent.trim().length);
+
+      // 2) fallback: walk from the radio's next sibling if needed
+      if (!labelEl && radioInput) {
+        let sib = radioInput.nextElementSibling;
+
+        while (sib) {
+          const textEl =
+            sib.querySelector(".framer-text") ||
+            sib.querySelector("span") ||
+            sib.querySelector("label") ||
+            sib;
+
+          if (textEl && textEl.textContent.trim().length) {
+            labelEl = textEl;
+            break;
+          }
+          sib = sib.nextElementSibling;
+        }
+      }
+
+      return labelEl || null;
+    }
+
     function renderVariantGroups() {
       const style = (node, styles) =>
         Object.keys(styles).forEach(key => (node.style[key] = styles[key]));
@@ -461,10 +498,18 @@ function buildVariantGroupList() {
 
           const variantOptionClone = variantOptionDesign.cloneNode(true);
           const radioInput = variantOptionClone.querySelector("input[type=radio]");
-          const label = variantOptionClone.querySelector("span");
 
-          label.textContent = option;
-          label.setAttribute("for", `${option}-${index}`);
+          const labelEl = getVariantLabelElement(variantOptionClone, radioInput);
+
+          if (labelEl) {
+            labelEl.textContent = option;
+            // Only set "for" on real label/span-like elements
+            if ("htmlFor" in labelEl) {
+              labelEl.htmlFor = `${option}-${index}`;
+            } else {
+              labelEl.setAttribute("for", `${option}-${index}`);
+            }
+          }
 
           radioInput.id = `${option}-${index}`;
           radioInput.name = editorElementGroupName ? editorElementGroupName : name;
