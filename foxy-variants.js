@@ -284,74 +284,76 @@ var Foxy = (function () {
       });
     }
 
-function buildVariantGroupList() {
-  // Get variant group names, any custom sort orders if they exist, and their element design
-  // either radio or select
-  if (!variantGroupElements) return;
+    function buildVariantGroupList() {
+      // Get variant group names, any custom sort orders if they exist, and their element design
+      // either radio or select
+      if (!variantGroupElements) return;
 
-  variantGroupElements.forEach(variantGroupElement => {
-    let editorElementGroupName;
-    const cmsVariantGroupName = sanitize(variantGroupElement.getAttribute(foxy_variant_group));
-    const variantOptionsData = getVariantGroupOptions(cmsVariantGroupName);
-    const variantGroupOptions = variantOptionsData.map(option => option.variantOption);
+      variantGroupElements.forEach(variantGroupElement => {
+        let editorElementGroupName;
+        const cmsVariantGroupName = sanitize(variantGroupElement.getAttribute(foxy_variant_group));
+        const variantOptionsData = getVariantGroupOptions(cmsVariantGroupName);
+        const variantGroupOptions = variantOptionsData.map(option => option.variantOption);
 
-    const variantGroupType = variantGroupElementsType(variantGroupElement);
+        const variantGroupType = variantGroupElementsType(variantGroupElement);
 
-    // These two are the “template” node and its parent that will be cloned
-    let variantOptionDesign;
-    let variantOptionDesignParent;
+        // These two are the “template” node and its parent that will be cloned
+        let variantOptionDesign;
+        let variantOptionDesignParent;
 
-    if (variantGroupType === "select") {
-      // For selects, keep current behavior
-      variantOptionDesign = variantGroupElement.querySelector("select");
-      if (!variantOptionDesign) return;
+        if (variantGroupType === "select") {
+          // For selects, keep current behavior
+          variantOptionDesign = variantGroupElement.querySelector("select");
+          if (!variantOptionDesign) return;
 
-      editorElementGroupName = variantOptionDesign.getAttribute("data-name");
-      variantOptionDesignParent = variantOptionDesign.parentElement;
-    } else if (variantGroupType === "radio") {
-      // For radios, make it generic: use the first radio input and its wrapper
-      const templateRadio = variantGroupElement.querySelector("input[type=radio]");
-      if (!templateRadio) return;
+          editorElementGroupName =
+            variantOptionDesign.getAttribute("data-name") ||
+            variantOptionDesign.getAttribute("name");
+          variantOptionDesignParent = variantOptionDesign.parentElement;
+        } else if (variantGroupType === "radio") {
+          // For radios, make it generic: use the first radio input and its wrapper
+          const templateRadio = variantGroupElement.querySelector("input[type=radio]");
+          if (!templateRadio) return;
 
-      // Webflow and most builders set data-name on the input
-      editorElementGroupName = templateRadio.getAttribute("data-name");
+          // Webflow and most builders set data-name on the input
+          editorElementGroupName = templateRadio.getAttribute("data-name") || templateRadio.getAttribute("name");
 
-      // Use the closest label as the option “wrapper” if present,
-      // otherwise just use the input’s parent
-      variantOptionDesign =
-        templateRadio.closest("label") || templateRadio.parentElement;
+          // Use the closest label as the option “wrapper” if present,
+          // otherwise just use the input’s parent
+          variantOptionDesign =
+            templateRadio.closest("label") || templateRadio.parentElement;
 
-      if (!variantOptionDesign) return;
+          if (!variantOptionDesign) return;
 
-      variantOptionDesignParent = variantOptionDesign.parentElement;
-    }
+          variantOptionDesignParent = variantOptionDesign.parentElement;
+        }
 
-    const customSortOrder =
-      variantGroupElement
-        .getAttribute(foxy_variant_group_order)
-        ?.trim()
-        .split(/\s*,\s*/) ?? null;
+        const customSortOrder =
+          variantGroupElement
+            .getAttribute(foxy_variant_group_order)
+            ?.trim()
+            .split(/\s*,\s*/) ?? null;
 
-    if (variantGroupOptions.length === 0) {
-      variantGroupElement.remove();
-    } else {
-      variantGroups.push({
-        editorElementGroupName,
-        customSortOrder,
-        element: variantGroupElement,
-        options: variantGroupOptions,
-        optionsData: variantOptionsData,
-        name: cmsVariantGroupName,
-        variantGroupType,
-        variantOptionDesign,
-        variantOptionDesignParent,
+        if (variantGroupOptions.length === 0) {
+          variantGroupElement.remove();
+        } else {
+          variantGroups.push({
+            editorElementGroupName,
+            customSortOrder,
+            element: variantGroupElement,
+            options: variantGroupOptions,
+            optionsData: variantOptionsData,
+            name: cmsVariantGroupName,
+            variantGroupType,
+            variantOptionDesign,
+            variantOptionDesignParent,
+          });
+
+          // Remove the original template from the DOM to avoid showing a duplicate
+          variantOptionDesign.remove();
+        }
       });
-
-      // Remove the original template from the DOM to avoid showing a duplicate
-      variantOptionDesign.remove();
     }
-  });
-}
 
     function variantGroupElementsType(variantGroupElement) {
       // check if the element contains a select tag or a radio tag
@@ -528,7 +530,7 @@ function buildVariantGroupList() {
             radioInput.parentElement.classList.add(disableClass);
           }
 
-          const customInput = variantOptionClone.querySelector("div.w-radio-input");
+          const customInput = variantOptionClone.querySelector("div.w-radio-input") || variantOptionClone;
           // Apply any css styles to the current variant option
           customInput ? style(customInput, variantOptionData.styles) : null;
 
