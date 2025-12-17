@@ -132,7 +132,7 @@ var FC = FC || {};
     if (sessionToken) {
       const store =
         portal?.getAttribute("base")?.split("/s/")[0] ??
-        JSON.parse(localStorage.getItem("session")).sso.split("/checkout")[0];
+        new URL(JSON.parse(localStorage.getItem("session")).sso).origin;
       const headers = {
         "Content-Type": "application/json",
         "FOXY-API-VERSION": "1",
