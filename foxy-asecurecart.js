@@ -13,6 +13,7 @@ FC.client.on("ready.done", () => {
   const inputNameMap = {
     ID: "code",
     Describe: "name",
+    describe: "name",
     Price: "price",
     Weight: "weight",
     Qty: "quantity",
