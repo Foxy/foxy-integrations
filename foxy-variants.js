@@ -927,7 +927,6 @@ var Foxy = (function () {
       if (variantGroupsStateChange) {
         finalSelected = getSelectedVariantOptions();
         finalAvailable = getAvailableProductsPerVariantSelection(finalSelected);
-        
       }
 
       disableInvalidOptionsAcrossAllGroups(
@@ -952,6 +951,8 @@ var Foxy = (function () {
       variantGroups.forEach(group => {
         const { name, variantGroupType, element } = group;
         const isChangedGroup = name === lastChangedGroup;
+        const lastChangedValueTrim =
+          typeof lastChangedValue === "string" ? lastChangedValue.trim() : lastChangedValue;
 
         if (variantGroupType === "select") {
           const selectEl = element.querySelector("select");
@@ -965,15 +966,15 @@ var Foxy = (function () {
           options.forEach(opt => {
             if (!opt.value) return;
 
-            const candidate = { ...selectedProductVariants, [name]: opt.value };
-            const canExist = finalAvailable.some(prod => {
-              return Object.entries(candidate).every(([k, val]) => {
-                if (!val) return true;
-                return prod[k] === val;
-              });
-            });
+            const optValue = typeof opt.value === "string" ? opt.value.trim() : opt.value;
+            // Build candidate by applying this option value to the selectedProductVariants
+            const candidate = { ...selectedProductVariants, [name]: optValue };
 
-            const isLastSelected = isChangedGroup && opt.value === lastChangedValue;
+            // Query the full variant set for this candidate (respects inventoryControl)
+            const matchingVariants = getAvailableProductsPerVariantSelection(candidate);
+            const canExist = Array.isArray(matchingVariants) && matchingVariants.length > 0;
+
+            const isLastSelected = isChangedGroup && optValue === lastChangedValueTrim;
 
             if (!canExist && !isLastSelected) {
               if (!opt.classList.contains(disableOptionClass)) {
@@ -995,15 +996,15 @@ var Foxy = (function () {
           const radios = element.querySelectorAll("input[type='radio']");
           radios.forEach(radio => {
             if (!radio.value) return;
-            const candidate = { ...selectedProductVariants, [name]: radio.value };
-            const canExist = finalAvailable.some(prod => {
-              return Object.entries(candidate).every(([k, val]) => {
-                if (!val) return true;
-                return prod[k] === val;
-              });
-            });
 
-            const isLastSelected = isChangedGroup && radio.value === lastChangedValue;
+            const radioValue = typeof radio.value === "string" ? radio.value.trim() : radio.value;
+            const candidate = { ...selectedProductVariants, [name]: radioValue };
+
+            // Query the full variant set for this candidate (respects inventoryControl)
+            const matchingVariants = getAvailableProductsPerVariantSelection(candidate);
+            const canExist = Array.isArray(matchingVariants) && matchingVariants.length > 0;
+
+            const isLastSelected = isChangedGroup && radioValue === lastChangedValueTrim;
 
             if (!canExist && !isLastSelected) {
               if (!radio.parentElement.classList.contains(disableClass)) {
