@@ -13,6 +13,12 @@ FC.onLoad = function () {
     urlObserver.observe(document, { subtree: true, childList: true });
 
     function foxyAddToCart() {
+      // Minicart quantity
+      document
+        .querySelector('[data-foxy-product="cart-quantity"]')
+        ?.firstElementChild.setAttribute('data-fc-id', 'minicart-quantity');
+      FC.client.updateMiniCart();
+
       const foxyForm = document.querySelector('[data-foxy-product="form"]');
 
       if (!foxyForm) return;
@@ -54,8 +60,8 @@ FC.onLoad = function () {
         }
       });
 
+      // Dynamic price display
       const priceEl = document.querySelector('[data-foxy-product="price"]');
-
       if (priceEl) {
         initDynamicPrice(foxyForm, priceEl);
 
