@@ -111,7 +111,7 @@ FC.onLoad = function () {
               ? selectedVariant.salePrice.decimalValue
               : selectedVariant.price.decimalValue;
             const stock = selectedVariant.stock.quantity || '';
-            const { sku, id: variantId } = selectedVariant;
+            const { sku } = selectedVariant;
             const weight = selectedVariant.shippingWeight?.value ?? '';
             const {
               height = '',
@@ -126,9 +126,9 @@ FC.onLoad = function () {
                 url:
                   cartUrl +
                   variantParam +
-                  `&price=${price}&quantity_max=${stock}&code=${variantId}&SKU=${encodeURIComponent(
+                  `&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
                     sku
-                  )}&weight=${weight}&height=${height}&length=${len}&width=${width}&isVariant=true`,
+                  )}&weight=${weight}&height=${height}&length=${len}&width=${width}`,
               });
             }
           }
@@ -138,7 +138,7 @@ FC.onLoad = function () {
             ? variantData[0].salePrice.decimalValue
             : variantData[0].price.decimalValue;
           const stock = variantData[0].stock.quantity || '';
-          const { sku, id: variantId } = variantData[0];
+          const { sku } = variantData[0];
           const weight = variantData[0].shippingWeight?.value ?? '';
           const {
             height = '',
@@ -152,7 +152,7 @@ FC.onLoad = function () {
               data: { cart: 'add' },
               url:
                 cartUrl +
-                `&price=${price}&quantity_max=${stock}&code=${variantId}&SKU=${encodeURIComponent(
+                `&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
                   sku
                 )}&weight=${weight}&height=${height}&length=${len}&width=${width}`,
             });
