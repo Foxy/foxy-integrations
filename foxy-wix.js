@@ -189,7 +189,19 @@ FC.onLoad = function () {
           ?.style.backgroundImage.slice(4, -1)
           .replace(/"/g, '') ||
         '';
+
+      const productParams = Array.from(
+        document.querySelectorAll('[data-hook="info-section-description"] li')
+      ).map((el) => el.textContent.trim());
+      const category =
+        productParams
+          .find((param) => param.toLowerCase().startsWith('category'))
+          ?.split(':')[1]
+          ?.trim() || '';
       const weight =
+        productParams
+          .find((param) => param.toLowerCase().startsWith('weight'))
+          ?.match(/[\d.]+/)[0] ||
         Array.from(
           document.querySelectorAll('[data-hook="info-section-title"]')
         )
@@ -197,7 +209,7 @@ FC.onLoad = function () {
           .find((el) => el.toLowerCase().startsWith('weight'))
           ?.match(/[\d.]+/)[0] ||
         document.querySelector('[data-foxy-product="weight"]')?.textContent ||
-        0;
+        '';
 
       // Subscriptions
       const subContainer = document.querySelector(
@@ -239,6 +251,7 @@ FC.onLoad = function () {
         )}&code=${encodeURIComponent(
           code
         )}&Slug=${slug}&url=${encodeURIComponent(window.location.href)}` +
+        (category ? `&category=${encodeURIComponent(category)}` : '') +
         (weight ? `&weight=${weight}` : '') +
         (subFrequency ? `&sub_frequency=${subFrequency}` : '') +
         (subEndDate ? `&sub_enddate=${subEndDate}` : '');
