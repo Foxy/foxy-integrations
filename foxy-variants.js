@@ -1,8 +1,89 @@
 var FC = FC || {};
 var Weglot = Weglot || {};
+
 var Foxy = (function () {
   // Static properties
   let stylesAdded = false;
+
+  // Instance sequencing for log context
+  let __foxyVariantInstanceSeq = 0;
+
+  // ---------- Logging helpers ----------
+  function describeEl(el) {
+    try {
+      if (!(el instanceof Element)) return null;
+      const id = el.id ? `#${el.id}` : "";
+      const cls =
+        el.classList && el.classList.length
+          ? `.${Array.from(el.classList).slice(0, 3).join(".")}`
+          : "";
+      const foxyId = el.getAttribute("foxy-id");
+      const attr = foxyId ? `[foxy-id="${foxyId}"]` : "";
+      return `<${el.tagName.toLowerCase()}${id}${cls}>${attr}`;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function createLogger(cfg, ctx) {
+    const levels = { error: 0, warn: 1, info: 2, debug: 3, verbose: 4 };
+    const levelName = String(cfg.debugLevel || "info").toLowerCase();
+    const threshold = cfg.debug ? (levels[levelName] ?? 2) : 1; // debug=false => warn+error only
+
+    const prefix = cfg.debugPrefix || "FoxyVariants";
+    const instance = ctx && ctx.instanceId != null ? `#${ctx.instanceId}` : "";
+    const scope = ctx && ctx.scope ? ` ${ctx.scope}` : "";
+    const head = `[${prefix}${instance}${scope}]`;
+
+    const emit = (lvl, msg, data) => {
+      const n = levels[lvl];
+      if (n == null || n > threshold) return;
+
+      const entry = { level: lvl, msg, data, ctx, ts: Date.now() };
+      if (typeof cfg.onLog === "function") {
+        try {
+          cfg.onLog(entry);
+        } catch (_) {}
+      }
+
+      const fn =
+        lvl === "error"
+          ? console.error
+          : lvl === "warn"
+            ? console.warn
+            : lvl === "info"
+              ? console.info
+              : console.log;
+
+      if (data !== undefined) fn(head, msg, data);
+      else fn(head, msg);
+    };
+
+    const group = (title, data) => {
+      if (!cfg.debug) return;
+      if ((levels.debug ?? 3) > threshold) return;
+
+      const g = cfg.debugGroupCollapsed ? console.groupCollapsed : console.group;
+      if (data !== undefined) g(`${head} ${title}`, data);
+      else g(`${head} ${title}`);
+    };
+
+    const groupEnd = () => {
+      if (!cfg.debug) return;
+      if ((levels.debug ?? 3) > threshold) return;
+      console.groupEnd();
+    };
+
+    return {
+      error: (m, d) => emit("error", m, d),
+      warn: (m, d) => emit("warn", m, d),
+      info: (m, d) => emit("info", m, d),
+      debug: (m, d) => emit("debug", m, d),
+      verbose: (m, d) => emit("verbose", m, d),
+      group,
+      groupEnd,
+    };
+  }
 
   function setVariantConfig(newConfig) {
     // Constants and variables
@@ -19,7 +100,20 @@ var Foxy = (function () {
       multiCurrency: false,
       multilingual: false,
       addonsConfig: null,
+
+      // NEW: debugging
+      debug: false,
+      debugLevel: "info", // "error" | "warn" | "info" | "debug" | "verbose"
+      debugPrefix: "FoxyVariants",
+      debugGroupCollapsed: true,
+      onLog: null, // (entry) => void
+
+      // NEW: stability / reuse
+      container: null, // Element to scope queries
+      adapter: null, // ({ container, config, log }) => void
+      forceReinit: false, // reinit even if already inited on same form node
     };
+
     const disableClass = "foxy-disable";
     const disableOptionClass = "foxy-disable-option";
     const foxy_variant_group = "foxy-variant-group";
@@ -27,106 +121,139 @@ var Foxy = (function () {
     const foxy_variant_item = "[foxy-id='variant-item']";
     const foxy_variant_group_name = "foxy-variant-group-name";
     const foxy_template_switch = "[foxy-id='switch']";
+
+    const INIT_ATTR = "data-foxy-variants-init";
+    const TEMPLATE_ATTR = "data-foxy-variant-template";
+    const RENDERED_ATTR = "data-foxy-variant-rendered";
+
     let variantSelectionCompleteProduct = [];
     let variantItems = { serialized: {}, array: [] };
     let variantGroups = [];
     let addonInit = true;
 
     let switchEventListenerSet = false;
+    let changeListenerAttached = false;
 
     // Save first config and update internal config for instance
     const firstConfigDefaults = { ...newConfig };
     setConfig(config, newConfig);
-    // Check container where the instance will get it's data
+
+    const instanceId = ++__foxyVariantInstanceSeq;
+    const log = createLogger(config, { instanceId, scope: "variants" });
+
+    // Check container where the instance will get its data
     let container = setContainer();
 
-    const foxyForm = container.querySelector("[foxy-id='form']");
-    const imageElement = container.querySelector("[foxy-id='image']");
-    const priceElement = container.querySelector("[foxy-id='price']");
-    const inventoryElement = container.querySelector("[foxy-id='inventory']");
-    const quantityElement = foxyForm?.querySelector("input[name='quantity']");
-    const priceAddToCart = foxyForm?.querySelector("input[name='price']");
-    const addToCartQuantityMax = foxyForm?.querySelector("input[name='quantity_max']");
-    const variantGroupElements = foxyForm?.querySelectorAll(`[${foxy_variant_group}]`);
+    let foxyForm = null;
+    let imageElement = null;
+    let priceElement = null;
+    let inventoryElement = null;
+    let quantityElement = null;
+    let priceAddToCart = null;
+    let addToCartQuantityMax = null;
+    let variantGroupElements = null;
     const foxyTemplateSwitch = document.querySelector(foxy_template_switch);
 
-    //Insert disabled class styles
+    log.info("instance created", {
+      instanceId,
+      container: describeEl(container),
+      form: describeEl(foxyForm),
+    });
+
+    // Insert disabled class styles
     if (!stylesAdded) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `<style>
-         .${disableClass} {opacity: 0.5 !important; }  
-          .${disableOptionClass} {color: #808080 !important;} 
-          </style>`
+          .${disableClass} { opacity: 0.5 !important; }
+          .${disableOptionClass} { color: #808080 !important; }
+        </style>`,
       );
       stylesAdded = true;
     }
 
-    function setConfig(config, newConfig) {
-      if (newConfig && typeof newConfig === "object") {
-        for (const key in newConfig) {
-          if (key in config) {
-            config[key] = newConfig[key];
+    function refreshRefs() {
+      // after adapter has mapped data-* -> foxy-* these should exist
+      foxyForm = container.querySelector('[foxy-id="form"]');
+      imageElement = container.querySelector('[foxy-id="image"]');
+      priceElement = container.querySelector('[foxy-id="price"]');
+      inventoryElement = container.querySelector('[foxy-id="inventory"]');
+
+      quantityElement = foxyForm?.querySelector('input[name="quantity"]') || null;
+      priceAddToCart = foxyForm?.querySelector('input[name="price"]') || null;
+      addToCartQuantityMax = foxyForm?.querySelector('input[name="quantity_max"]') || null;
+
+      variantGroupElements = foxyForm?.querySelectorAll("[foxy-variant-group]") || null;
+    }
+
+    function setConfig(configObj, newCfg) {
+      if (newCfg && typeof newCfg === "object") {
+        for (const key in newCfg) {
+          if (key in configObj) {
+            configObj[key] = newCfg[key];
           }
         }
       }
     }
 
     function setContainer() {
-      let container = document;
-      const foxyInstanceContainer = document?.currentScript?.closest("[foxy-id='container']");
-      if (foxyInstanceContainer) container = foxyInstanceContainer;
-      return container;
+      // Priority: config.container -> currentScript closest container -> document
+      if (config.container instanceof Element) return config.container;
+
+      let c = document;
+      const foxyInstanceContainer = document?.currentScript?.closest?.("[foxy-id='container']");
+      if (foxyInstanceContainer) c = foxyInstanceContainer;
+      return c;
     }
 
-    function getTemplateSetFromURL(url, config) {
-      // Extracting the subdomain and subdirectory from the URL
+    function getTemplateSetFromURL(url, cfg) {
       const urlParts = url.split("/");
-      const subdomain = urlParts[2].split(".")[0]; // Assuming subdomain is the first part
-      const subdirectory = urlParts[3]; // Assuming subdirectory is the second part
-      const isTemplateChangeBySubdomain = config.addonsConfig.templateChangeTrigger === "subdomain";
-      const isTemplateChangeBySubdirectory =
-        config.addonsConfig.templateChangeTrigger === "subdirectory";
+      const subdomain = urlParts[2]?.split(".")[0] || "";
+      const subdirectory = urlParts[3] || "";
+      const addons = cfg.addonsConfig;
 
-      // Check if the configuration flags are enabled
-      if (isTemplateChangeBySubdomain) {
-        // Check if the subdomain matches any templateSet
-        const matchingSubdomainSet = config.addonsConfig.templateSets[subdomain];
-        if (matchingSubdomainSet) return subdomain;
+      if (!addons) return null;
+
+      const isBySubdomain = addons.templateChangeTrigger === "subdomain";
+      const isBySubdirectory = addons.templateChangeTrigger === "subdirectory";
+
+      if (isBySubdomain) {
+        const matching = addons.templateSets?.[subdomain];
+        if (matching) return subdomain;
       }
-
-      if (isTemplateChangeBySubdirectory) {
-        // Check if the subdirectory matches any templateSet
-        const matchingSubdirectorySet = config.addonsConfig.templateSets[subdirectory];
-        if (matchingSubdirectorySet) return subdirectory;
+      if (isBySubdirectory) {
+        const matching = addons.templateSets?.[subdirectory];
+        if (matching) return subdirectory;
       }
-
-      // No matching templateSet found
       return null;
     }
 
     function handleAddons() {
+      if (!config.addonsConfig) {
+        log.warn("addons enabled but addonsConfig is missing; skipping addons");
+        return;
+      }
+
       let templateSet = "DEFAULT";
       const newAddonConfig = {
         defaultCurrency: config.defaultCurrency,
         defaultLocale: config.defaultLocale,
       };
-      // Get templateSet from URL
+
       const templateSetFromURL = getTemplateSetFromURL(window.location.href, config);
 
       const isTemplateChangeByCountry = config.addonsConfig.templateChangeTrigger === "country";
       const isTemplateChangeByWeglotJS = config.addonsConfig.templateChangeTrigger === "weglotjs";
 
-      // helper function
       const updateNewConfig = templateSetCode => {
-        const templateSetConfig = config.addonsConfig.templateSets[templateSetCode];
+        const templateSetConfig = config.addonsConfig.templateSets?.[templateSetCode];
         if (templateSetConfig) {
           const { currency, locale } = templateSetConfig;
           newAddonConfig.defaultCurrency = currency;
           newAddonConfig.defaultLocale = locale;
           templateSet = templateSetCode;
 
-          const translation = config.addonsConfig.translations[templateSetCode];
+          const translation = config.addonsConfig.translations?.[templateSetCode];
           if (translation) {
             const { selectUnavailableLabel, inventoryDefaultLabel } = translation;
             newAddonConfig.selectUnavailableLabel = selectUnavailableLabel;
@@ -142,14 +269,13 @@ var Foxy = (function () {
           templateSet = "DEFAULT";
         }
       };
-      // Handlers
-      const handleWeglotLanguageChange = (newLang, prevLang) => {
+
+      const handleWeglotLanguageChange = newLang => {
+        log.info("Weglot language change", { newLang });
         updateNewConfig(newLang);
         removeVariantOptions();
         addonInit = false;
-        // Set config with newConfig
         setConfig(config, newAddonConfig);
-        // Update Foxy Template Set Function
         updateTemplateSet(templateSet, true);
       };
 
@@ -157,6 +283,7 @@ var Foxy = (function () {
         const element = e.target;
         const templateSetCode = element.getAttribute("foxy-template");
         if (templateSetCode) {
+          log.info("template switcher click", { templateSetCode });
           addonInit = false;
           removeVariantOptions();
           updateNewConfig(templateSetCode);
@@ -166,28 +293,26 @@ var Foxy = (function () {
       };
 
       if (isTemplateChangeByCountry) {
-        // Customer country by IP
-        const country = FC.json.shipping_address.country.toLowerCase();
-        updateNewConfig(country);
+        try {
+          const country = FC.json.shipping_address.country.toLowerCase();
+          updateNewConfig(country);
+        } catch (_) {
+          log.warn("country-based template change requested but FC.json shipping country missing");
+        }
       }
 
-      // Handle Weglot Integration
-      if (isTemplateChangeByWeglotJS) {
+      if (isTemplateChangeByWeglotJS && typeof Weglot?.getCurrentLang === "function") {
         updateNewConfig(Weglot.getCurrentLang());
-        // Event listener
-        Weglot.on("languageChanged", handleWeglotLanguageChange);
+        if (typeof Weglot?.on === "function") {
+          Weglot.on("languageChanged", handleWeglotLanguageChange);
+        }
       }
 
-      // Subdomain or subdirectory
       if (templateSetFromURL) updateNewConfig(templateSetFromURL);
 
-      // Set config with newConfig
       setConfig(config, newAddonConfig);
-
-      // Update Foxy Template Set Function
       updateTemplateSet(templateSet);
 
-      // Set event handler for template set switcher if it exists
       if (!switchEventListenerSet && foxyTemplateSwitch) {
         foxyTemplateSwitch?.addEventListener("click", handleTemplateSwitcher);
         switchEventListenerSet = true;
@@ -195,56 +320,160 @@ var Foxy = (function () {
     }
 
     function updateTemplateSet(templateSet, initVariantLogic = false) {
-      const existingTemplateSet = FC.json.template_set || "DEFAULT";
+      const existingTemplateSet = FC.json?.template_set || "DEFAULT";
       if (existingTemplateSet !== templateSet) {
+        log.info("requesting template_set change", { from: existingTemplateSet, to: templateSet });
         FC.client.request(`https://${FC.settings.storedomain}/cart?template_set=${templateSet}`);
       }
       if (initVariantLogic) init();
     }
 
     function init() {
-      if ((config.multiCurrency || config.multilingual) && addonInit) {
-        const existingOnLoad = typeof FC.onLoad == "function" ? FC.onLoad : function () {};
+      log.group("init()");
+      try {
+        refreshRefs();
 
-        FC.onLoad = function () {
-          existingOnLoad();
-          addonInit = false;
-          FC.client.on("ready.done", handleAddons).on("ready.done", init);
-        };
-        return;
+        if (!foxyForm) {
+          log.warn("no form found; init aborted", { container: describeEl(container) });
+          return;
+        }
+
+        // Adapter hook (builder mapping) - runs before we read the DOM
+        if (typeof config.adapter === "function") {
+          log.debug("adapter start");
+          try {
+            config.adapter({ container, config, log });
+          } catch (err) {
+            log.error("adapter failed", err);
+          }
+          log.debug("adapter end");
+        }
+
+        // Idempotent init per form node
+        const already = foxyForm.getAttribute(INIT_ATTR) === "1";
+        if (already && !config.forceReinit) {
+          log.info("form already initialized; skipping", { form: describeEl(foxyForm) });
+          return;
+        }
+        if (already && config.forceReinit) {
+          log.warn("forceReinit enabled; destroying previous render first");
+          destroy();
+        }
+
+        // Addons path
+        if ((config.multiCurrency || config.multilingual) && addonInit) {
+          const existingOnLoad = typeof FC.onLoad == "function" ? FC.onLoad : function () {};
+          FC.onLoad = function () {
+            existingOnLoad();
+            addonInit = false;
+            FC.client.on("ready.done", handleAddons).on("ready.done", init);
+          };
+          log.info("addons mode: deferring init until FC ready.done");
+          return;
+        }
+
+        buildVariantList();
+        log.debug("variantItems built", {
+          count: variantItems.array.length,
+          sampleKeys: variantItems.array[0] ? Object.keys(variantItems.array[0]) : [],
+        });
+
+        buildVariantGroupList();
+        log.debug("variantGroups built", {
+          count: variantGroups.length,
+          names: variantGroups.map(g => g.name),
+          types: variantGroups.map(g => g.variantGroupType),
+        });
+
+        renderVariantGroups();
+        log.info("render complete");
+
+        setDefaults();
+        addPrice();
+        setInventory();
+
+        // Handle selected variants if foxy form is set
+        if (!changeListenerAttached) {
+          foxyForm.addEventListener("change", handleVariantSelection);
+          changeListenerAttached = true;
+          log.info("change listener attached", { form: describeEl(foxyForm) });
+        }
+
+        // Mark initialized
+        foxyForm.setAttribute(INIT_ATTR, "1");
+        log.info("init done");
+      } catch (err) {
+        log.error("init failed", err);
+      } finally {
+        log.groupEnd();
       }
+    }
 
-      // Build variant list info into variable
-      buildVariantList();
-      // Build variant group list info into variable
-      buildVariantGroupList();
-      // Build variant/radio options
-      renderVariantGroups();
+    function destroy() {
+      log.group("destroy()");
+      try {
+        if (!foxyForm) return;
 
-      // Set quantity + variant input defaults
-      setDefaults();
+        // Remove listener
+        if (changeListenerAttached) {
+          foxyForm.removeEventListener("change", handleVariantSelection);
+          changeListenerAttached = false;
+        }
 
-      addPrice();
+        // Remove rendered clones
+        const rendered = foxyForm.querySelectorAll(`[${RENDERED_ATTR}="1"]`);
+        rendered.forEach(n => n.remove());
 
-      setInventory();
+        // Clear init marker
+        foxyForm.removeAttribute(INIT_ATTR);
 
-      // Handle selected variants if foxy form is set
-      foxyForm?.addEventListener("change", handleVariantSelection);
+        // Reset internal state (so a future init rebuilds cleanly)
+        variantSelectionCompleteProduct = [];
+        variantItems = { serialized: {}, array: [] };
+        variantGroups = [];
+
+        log.info("destroy complete", { removedRendered: rendered.length });
+      } catch (err) {
+        log.error("destroy failed", err);
+      } finally {
+        log.groupEnd();
+      }
     }
 
     function setDefaults() {
       if (quantityElement) {
-        quantityElement.setAttribute("value", "1");
         quantityElement.setAttribute("min", "1");
+        // Do not hard-force value each time; it breaks user input on rerenders
+        if (!quantityElement.value) quantityElement.value = "1";
       }
+
+      // Idempotent isVariant hidden field
+      const existing = foxyForm.querySelector(`input[type="hidden"][name="isVariant"]`);
+      const value = variantItems.array.length ? "true" : "false";
+      if (existing) {
+        existing.value = value;
+      } else {
+        foxyForm.insertAdjacentHTML(
+          "beforeend",
+          `<input type="hidden" name="isVariant" value="${value}" />`,
+        );
+      }
+
+      log.debug("defaults set", {
+        isVariant: value,
+        quantity: quantityElement ? quantityElement.value : null,
+      });
     }
 
     function buildVariantList() {
       const variantList = container.querySelectorAll(foxy_variant_item);
+      log.debug("buildVariantList()", { found: variantList.length });
 
       if (!variantList.length) return;
 
-      variantList.forEach(variantItem => {
+      variantItems = { serialized: {}, array: [] };
+
+      variantList.forEach((variantItem, idx) => {
         const variant = Object.values(variantItem.attributes).reduce((acc, currAttr) => {
           const { name, value } = currAttr;
 
@@ -253,69 +482,89 @@ var Foxy = (function () {
             const currency = sanitize(config.defaultCurrency);
 
             if (!acc[key]) {
-              // Handle multi-currency scenario
               if (config.multiCurrency && key === `price-${currency}`) {
                 acc["price"] = value.trim();
                 return acc;
               }
 
-              if (config.multiCurrency && key.includes("price") && key !== `price-${currency}`)
+              if (config.multiCurrency && key.includes("price") && key !== `price-${currency}`) {
                 return acc;
+              }
 
               acc[key === "sku" ? "code" : key] = value.trim();
             }
-            return acc;
           }
           return acc;
         }, {});
 
-        variantItems.serialized[variant?.code ?? variant.name] = filterEmpty(variant);
-        variantItems.array.push(filterEmpty(variant));
+        const clean = filterEmpty(variant);
+        variantItems.serialized[clean?.code ?? clean.name] = clean;
+        variantItems.array.push(clean);
+
+        if (idx === 0) log.verbose("sample variant parsed", clean);
       });
     }
 
     function buildVariantGroupList() {
-      // Get variant group names, any custom sort orders if they exist, and their element design
-      // either radio or select
       if (!variantGroupElements) return;
+
+      variantGroups = [];
 
       variantGroupElements.forEach(variantGroupElement => {
         let editorElementGroupName;
         const cmsVariantGroupName = sanitize(variantGroupElement.getAttribute(foxy_variant_group));
+
         const variantOptionsData = getVariantGroupOptions(cmsVariantGroupName);
-        const variantGroupOptions = variantOptionsData.map(option => option.variantOption);
+        const variantGroupOptions = variantOptionsData.map(o => o.variantOption);
 
         const variantGroupType = variantGroupElementsType(variantGroupElement);
 
-        // These two are the “template” node and its parent that will be cloned
         let variantOptionDesign;
         let variantOptionDesignParent;
 
+        // Prefer already-marked templates
         if (variantGroupType === "select") {
-          // For selects, keep current behavior
-          variantOptionDesign = variantGroupElement.querySelector("select");
-          if (!variantOptionDesign) return;
+          const templateSelect =
+            variantGroupElement.querySelector(`select[${TEMPLATE_ATTR}="1"]`) ||
+            variantGroupElement.querySelector(`select:not([${RENDERED_ATTR}="1"])`);
+
+          if (!templateSelect) return;
 
           editorElementGroupName =
-            variantOptionDesign.getAttribute("data-name") ||
-            variantOptionDesign.getAttribute("name");
-          variantOptionDesignParent = variantOptionDesign.parentElement;
+            templateSelect.getAttribute("data-name") || templateSelect.getAttribute("name");
+
+          variantOptionDesign = templateSelect;
+          variantOptionDesignParent = templateSelect.parentElement;
+
+          // Mark + neutralize template
+          variantOptionDesign.setAttribute(TEMPLATE_ATTR, "1");
+          variantOptionDesign.style.display = "none";
+          variantOptionDesign.required = false;
+          variantOptionDesign.disabled = true;
         } else if (variantGroupType === "radio") {
-          // For radios, make it generic: use the first radio input and its wrapper
-          const templateRadio = variantGroupElement.querySelector("input[type=radio]");
+          // Find a radio not inside a rendered clone
+          const radios = Array.from(variantGroupElement.querySelectorAll("input[type=radio]"));
+          const templateRadio =
+            variantGroupElement.querySelector(`[${TEMPLATE_ATTR}="1"] input[type=radio]`) ||
+            radios.find(r => !r.closest(`[${RENDERED_ATTR}="1"]`));
+
           if (!templateRadio) return;
 
-          // Webflow and most builders set data-name on the input
-          editorElementGroupName = templateRadio.getAttribute("data-name") || templateRadio.getAttribute("name");
+          editorElementGroupName =
+            templateRadio.getAttribute("data-name") || templateRadio.getAttribute("name");
 
-          // Use the closest label as the option “wrapper” if present,
-          // otherwise just use the input’s parent
-          variantOptionDesign =
-            templateRadio.closest("label") || templateRadio.parentElement;
-
+          variantOptionDesign = templateRadio.closest("label") || templateRadio.parentElement;
           if (!variantOptionDesign) return;
 
           variantOptionDesignParent = variantOptionDesign.parentElement;
+
+          // Mark + neutralize template wrapper + input
+          variantOptionDesign.setAttribute(TEMPLATE_ATTR, "1");
+          variantOptionDesign.style.display = "none";
+          templateRadio.required = false;
+          templateRadio.disabled = true;
+        } else {
+          return;
         }
 
         const customSortOrder =
@@ -324,8 +573,16 @@ var Foxy = (function () {
             ?.trim()
             .split(/\s*,\s*/) ?? null;
 
+        log.debug("group detected", {
+          group: cmsVariantGroupName,
+          type: variantGroupType,
+          options: variantOptionsData.length,
+          element: describeEl(variantGroupElement),
+        });
+
         if (variantGroupOptions.length === 0) {
           variantGroupElement.remove();
+          log.info("group removed (no options)", { group: cmsVariantGroupName });
         } else {
           variantGroups.push({
             editorElementGroupName,
@@ -339,37 +596,38 @@ var Foxy = (function () {
             variantOptionDesignParent,
           });
 
-          // Remove the original template from the DOM to avoid showing a duplicate
-          variantOptionDesign.remove();
+          log.info("group registered", {
+            name: cmsVariantGroupName,
+            type: variantGroupType,
+            options: variantGroupOptions.length,
+            customSort: !!customSortOrder,
+          });
         }
       });
     }
 
     function variantGroupElementsType(variantGroupElement) {
-      // check if the element contains a select tag or a radio tag
       const select = variantGroupElement.querySelector("select");
       const radio = variantGroupElement.querySelector("input[type=radio]");
       if (select) return "select";
       if (radio) return "radio";
+      return null;
     }
 
     function getVariantGroupOptions(groupName) {
       const variantGroupOptions = [];
       variantItems.array.forEach(variantItem => {
         const variantOption = variantItem[groupName]?.trim();
-        // Filter the variantItem for keys with the groupName plus a "-", slice it off and use the rest as they key for the variantGroupOPtions object
+
         const variantItemStyles = Object.fromEntries(
           Object.entries(variantItem)
-            .filter(([key, value]) => {
-              if (key.includes(`${groupName}-`) && value) return true;
-            })
-            .map(([key, value]) => [key.replace(`${groupName}-`, ""), value])
+            .filter(([key, value]) => key.includes(`${groupName}-`) && value)
+            .map(([key, value]) => [key.replace(`${groupName}-`, ""), value]),
         );
 
-        // Only add variant option to array if it is not already in the array
         if (
           variantOption &&
-          !variantGroupOptions.some(option => option.variantOption === variantOption)
+          !variantGroupOptions.some(opt => opt.variantOption === variantOption)
         ) {
           variantGroupOptions.push({
             inventory: variantItem.inventory,
@@ -390,38 +648,28 @@ var Foxy = (function () {
 
       const compareFn = (a, b) => {
         if (sortBy === "price") {
-          const priceA = a.price;
-          const priceB = b.price;
-
+          const priceA = Number(a.price);
+          const priceB = Number(b.price);
           return sortOrder === "descending" ? priceB - priceA : priceA - priceB;
-        } else if (sortBy === "label") {
-          const labelA = a.label;
-          const labelB = b.label;
-
-          if (sortOrder === "descending") {
-            return labelB.localeCompare(labelA);
-          } else {
-            return labelA.localeCompare(labelB);
-          }
         }
-        // If sortBy is not "Price" or "Label", return 0 to maintain the original order
+        if (sortBy === "label") {
+          const labelA = String(a.label || "");
+          const labelB = String(b.label || "");
+          return sortOrder === "descending"
+            ? labelB.localeCompare(labelA)
+            : labelA.localeCompare(labelB);
+        }
         return 0;
       };
 
       if (sortBy) {
         variantGroupOptions.sort(compareFn);
       } else {
-        // Default sorting
         variantGroupOptions.sort((a, b) => {
-          const labelA = a.variantOption;
-          const labelB = b.variantOption;
-
-          if (sortOrder === "descending") {
-            return labelB.localeCompare(labelA);
-          } else if (sortOrder === "ascending") {
-            return labelA.localeCompare(labelB);
-          }
-          // If sortOrder is not specified, return 0 to maintain original order
+          const labelA = String(a.variantOption || "");
+          const labelB = String(b.variantOption || "");
+          if (sortOrder === "descending") return labelB.localeCompare(labelA);
+          if (sortOrder === "ascending") return labelA.localeCompare(labelB);
           return 0;
         });
       }
@@ -432,22 +680,12 @@ var Foxy = (function () {
     function getVariantLabelElement(root, radioInput) {
       if (!root) return null;
 
-      // all known "label-ish" selectors, combined
-      const labelCandidates = root.querySelectorAll(
-        [
-          "span", // Webflow and most builders
-          "label",
-          ".framer-text", // Framer
-        ].join(",")
-      );
+      const labelCandidates = root.querySelectorAll(["span", "label", ".framer-text"].join(","));
 
-      // 1) try any that already have non-empty text
       let labelEl = Array.from(labelCandidates).find(el => el.textContent.trim().length);
 
-      // 2) fallback: walk from the radio's next sibling if needed
       if (!labelEl && radioInput) {
         let sib = radioInput.nextElementSibling;
-
         while (sib) {
           const textEl =
             sib.querySelector(".framer-text") ||
@@ -467,8 +705,12 @@ var Foxy = (function () {
     }
 
     function renderVariantGroups() {
+      if (!variantGroups.length) return;
+
+      log.group("renderVariantGroups()", { groups: variantGroups.length });
+
       const style = (node, styles) =>
-        Object.keys(styles).forEach(key => (node.style[key] = styles[key]));
+        Object.keys(styles || {}).forEach(key => (node.style[key] = styles[key]));
 
       const addRadioOptions = variantGroup => {
         const {
@@ -481,57 +723,58 @@ var Foxy = (function () {
           variantOptionDesign,
           variantOptionDesignParent,
         } = variantGroup;
+
         const variantOptions = customSortOrder ? customSortOrder : options;
 
         variantOptions.forEach((option, index) => {
-          const variantOptionData = optionsData.find(
-            optionData => optionData.variantOption === option
-          );
+          const variantOptionData = optionsData.find(od => od.variantOption === option);
 
           const variantOptionClone = variantOptionDesign.cloneNode(true);
-          const radioInput = variantOptionClone.querySelector("input[type=radio]");
+          variantOptionClone.style.display = ""; // ensure visible
+          variantOptionClone.setAttribute(RENDERED_ATTR, "1");
 
+          const radioInput = variantOptionClone.querySelector("input[type=radio]");
           const labelEl = getVariantLabelElement(variantOptionClone, radioInput);
 
           if (labelEl) {
             labelEl.textContent = option;
-            // Only set "for" on real label/span-like elements
-            if ("htmlFor" in labelEl) {
-              labelEl.htmlFor = `${option}-${index}`;
-            } else {
-              labelEl.setAttribute("for", `${option}-${index}`);
-            }
+            if ("htmlFor" in labelEl) labelEl.htmlFor = `${option}-${index}`;
+            else labelEl.setAttribute("for", `${option}-${index}`);
           }
 
           radioInput.id = `${option}-${index}`;
           radioInput.name = editorElementGroupName ? editorElementGroupName : name;
-
           radioInput.value = option;
           radioInput.setAttribute(foxy_variant_group_name, name);
           radioInput.required = true;
+          radioInput.disabled = false;
 
-          // Add disabled class to options that don't have inventory
           if (
             config.inventoryControl &&
             variantGroups.length === 1 &&
-            !Number(variantOptionData.inventory)
+            !Number(variantOptionData?.inventory)
           ) {
             radioInput.disabled = true;
             radioInput.parentElement.classList.add(disableClass);
           }
 
-          const customInput = variantOptionClone.querySelector("div.w-radio-input") || variantOptionClone;
-          // Apply any css styles to the current variant option
-          customInput ? style(customInput, variantOptionData.styles) : null;
+          // Apply custom styles to which element: webflow, framer or parent so far
+          const customInput =
+            variantOptionClone.querySelector("div.w-radio-input") ||
+            radioInput ||
+            variantOptionClone;
+          if (customInput) style(customInput, variantOptionData?.styles);
 
-          // Add radio to variant group container containing parent
           if (variantOptionDesignParent?.getAttribute(foxy_variant_group)) {
             element.append(variantOptionClone);
           } else {
             variantOptionDesignParent.append(variantOptionClone);
           }
         });
+
+        log.debug("rendered group", { name, type: "radio", rendered: variantOptions.length });
       };
+
       const addSelectOptions = variantGroup => {
         const {
           editorElementGroupName,
@@ -545,115 +788,108 @@ var Foxy = (function () {
         } = variantGroup;
 
         const variantOptions = customSortOrder ? customSortOrder : options;
-        let variantSelect = variantOptionDesign.cloneNode(true);
-        variantSelect.required = true;
-        variantSelect.name = editorElementGroupName ? editorElementGroupName : name;
 
+        let variantSelect = variantOptionDesign.cloneNode(true);
+        variantSelect.style.display = ""; // ensure visible
+        variantSelect.setAttribute(RENDERED_ATTR, "1");
+
+        variantSelect.required = true;
+        variantSelect.disabled = false;
+        variantSelect.name = editorElementGroupName ? editorElementGroupName : name;
         variantSelect.setAttribute(foxy_variant_group_name, name);
 
+        // reset options (clone includes whatever builder had)
+        while (variantSelect.options.length) variantSelect.remove(0);
+
+        // default option
+        variantSelect.add(new Option("Select…", ""));
+        variantSelect.options[0].disabled = true;
+        variantSelect.options[0].selected = true;
+
         variantOptions.forEach(option => {
-          const variantOptionData = optionsData.find(
-            optionData => optionData.variantOption === option
-          );
+          const variantOptionData = optionsData.find(od => od.variantOption === option);
           let selectOption = new Option(option, option);
-          // Add disabled class to options that don't have inventory
-          // when variant group is the only one
+
           if (
             config.inventoryControl &&
             variantGroups.length === 1 &&
-            !Number(variantOptionData.inventory)
+            !Number(variantOptionData?.inventory)
           ) {
-            let unavailableText;
-            if (config.selectUnavailableLabel)
-              unavailableText = `(${config.selectUnavailableLabel})`;
-            selectOption = new Option(`${option} ${unavailableText}`, option);
+            const unavailableText = config.selectUnavailableLabel
+              ? ` (${config.selectUnavailableLabel})`
+              : "";
+            selectOption = new Option(`${option}${unavailableText}`, option);
             selectOption.disabled = true;
           }
 
           variantSelect.add(selectOption);
         });
 
-        // Add select to variant group container
         if (variantOptionDesignParent.getAttribute(foxy_variant_group)) {
           element.append(variantSelect);
         } else {
           variantOptionDesignParent.append(variantSelect);
         }
+
+        log.debug("rendered group", { name, type: "select", rendered: variantOptions.length });
       };
 
-      // No variant groups early return
-      if (!variantGroups.length) return;
-
-      variantGroups.forEach(variantGroup => {
-        // Add select or radio to variant group container
-        if (variantGroup.variantGroupType === "select") {
-          addSelectOptions(variantGroup);
-        } else {
-          addRadioOptions(variantGroup);
-        }
-      });
+      try {
+        variantGroups.forEach(variantGroup => {
+          if (variantGroup.variantGroupType === "select") addSelectOptions(variantGroup);
+          else addRadioOptions(variantGroup);
+        });
+      } finally {
+        log.groupEnd();
+      }
     }
 
+    // Used by addons flow; now also removes rendered clones
     function removeVariantOptions() {
-      if (!variantGroups.length) return;
-      // Iterate through each variant group element
-      variantGroups.forEach(variantGroup => {
-        const { variantOptionDesignParent } = variantGroup;
+      if (!foxyForm) return;
 
-        // If variant group type is radio, remove all radio inputs except the first one
-        // known issue that if the first one is selected on re rendering all will have that style applied
-        if (variantGroup.variantGroupType === "radio") {
-          const radioInputs = variantOptionDesignParent.querySelectorAll("input[type=radio]");
-          for (let i = 1; i < radioInputs.length; i++) {
-            radioInputs[i].parentNode.remove(); // Remove the parent element of the radio input
-          }
-        }
+      // Remove clones we added
+      const rendered = foxyForm.querySelectorAll(`[${RENDERED_ATTR}="1"]`);
+      rendered.forEach(n => n.remove());
 
-        // If variant group type is select, remove all options except the first one
-        if (variantGroup.variantGroupType === "select") {
-          const selectOptions = variantOptionDesignParent.querySelectorAll("option");
-          for (let i = 1; i < selectOptions.length; i++) {
-            selectOptions[i].remove();
-          }
-        }
-      });
-
-      // Reset variantSelectionCompleteProduct, variantItems, and variantGroups
+      // Reset internal state
       variantSelectionCompleteProduct = [];
       variantItems = { serialized: {}, array: [] };
       variantGroups = [];
+
+      log.info("removed rendered variant options", { removed: rendered.length });
     }
 
     function addPrice() {
-      //--- Product doesn't have variants or it's just 1---
+      if (!priceElement || !priceAddToCart) {
+        log.verbose("addPrice skipped (missing priceElement or price input)");
+      }
+
       if (variantItems.array.length === 1) {
         const variantPrice = variantItems.array[0].price;
         if (priceElement) {
           priceElement.textContent = moneyFormat(
             config.defaultLocale,
             config.defaultCurrency,
-            variantPrice
+            variantPrice,
           );
           priceElement.classList.remove("w-dyn-bind-empty");
         }
-        if (priceAddToCart) {
-          priceAddToCart.value = parseFloat(variantPrice);
-        }
+        if (priceAddToCart) priceAddToCart.value = parseFloat(variantPrice);
+        return;
       }
 
       if (!variantItems.array.length) {
-        // Case: no variants—try to use the priceElement's existing text, if valid.
         if (priceElement && priceElement.textContent) {
           const numericPrice = Number(priceElement.textContent);
           if (!isNaN(numericPrice)) {
             priceElement.textContent = moneyFormat(
               config.defaultLocale,
               config.defaultCurrency,
-              numericPrice
+              numericPrice,
             );
             priceElement.classList.remove("w-dyn-bind-empty");
           } else {
-            // No valid price to display.
             priceElement.textContent = "";
             priceElement.classList.add("w-dyn-bind-empty");
           }
@@ -661,61 +897,59 @@ var Foxy = (function () {
         return;
       }
 
-      //--- Product has variants---
-      if (variantItems.array.length > 1) {
-        // Variants that affect price
-        const sortedPrices = variantItems.array
-          .map(variant => Number(variant.price))
-          .sort((a, b) => a - b);
+      // multiple variants
+      const sortedPrices = variantItems.array
+        .map(v => Number(v.price))
+        .filter(n => !Number.isNaN(n))
+        .sort((a, b) => a - b);
 
-        if (sortedPrices[0] !== sortedPrices[sortedPrices.length - 1]) {
-          if (config.priceDisplay === "low") {
-            if (priceElement)
-              priceElement.textContent = moneyFormat(
-                config.defaultLocale,
-                config.defaultCurrency,
-                sortedPrices[0]
-              );
-            priceElement?.classList.remove("w-dyn-bind-empty");
-            return;
-          }
-          if (config.priceDisplay === "high") {
-            if (priceElement)
-              priceElement.textContent = moneyFormat(
-                config.defaultLocale,
-                config.defaultCurrency,
-                sortedPrices[sortedPrices.length - 1]
-              );
-            priceElement?.classList.remove("w-dyn-bind-empty");
-            return;
-          }
+      if (!sortedPrices.length) return;
 
-          const priceText = `${moneyFormat(
-            config.defaultLocale,
-            config.defaultCurrency,
-            sortedPrices[0]
-          )}–${moneyFormat(
-            config.defaultLocale,
-            config.defaultCurrency,
-            sortedPrices[sortedPrices.length - 1]
-          )}`;
-          if (priceElement) priceElement.textContent = priceText;
+      const low = sortedPrices[0];
+      const high = sortedPrices[sortedPrices.length - 1];
+
+      if (low !== high) {
+        if (config.priceDisplay === "low") {
+          if (priceElement)
+            priceElement.textContent = moneyFormat(
+              config.defaultLocale,
+              config.defaultCurrency,
+              low,
+            );
           priceElement?.classList.remove("w-dyn-bind-empty");
-        } else {
-          // Variants that don't affect price
-          const price = moneyFormat(config.defaultLocale, config.defaultCurrency, sortedPrices[0]);
-          // if priceElement exists, update it
-          priceElement?.classList.remove("w-dyn-bind-empty");
-          if (priceElement) priceElement.textContent = price;
-          if (priceAddToCart) priceAddToCart.value = parseFloat(sortedPrices[0]);
+          return;
         }
+        if (config.priceDisplay === "high") {
+          if (priceElement)
+            priceElement.textContent = moneyFormat(
+              config.defaultLocale,
+              config.defaultCurrency,
+              high,
+            );
+          priceElement?.classList.remove("w-dyn-bind-empty");
+          return;
+        }
+
+        const priceText = `${moneyFormat(
+          config.defaultLocale,
+          config.defaultCurrency,
+          low,
+        )}–${moneyFormat(config.defaultLocale, config.defaultCurrency, high)}`;
+
+        if (priceElement) priceElement.textContent = priceText;
+        priceElement?.classList.remove("w-dyn-bind-empty");
+      } else {
+        const price = moneyFormat(config.defaultLocale, config.defaultCurrency, low);
+        priceElement?.classList.remove("w-dyn-bind-empty");
+        if (priceElement) priceElement.textContent = price;
+        if (priceAddToCart) priceAddToCart.value = parseFloat(low);
       }
     }
 
     function setInventory(isVariantsSelectionDone) {
-      // Variant selection complete
+      if (!foxyForm) return;
+
       if (isVariantsSelectionDone) {
-        // return early if inventory control is disabled
         if (!config.inventoryControl) return;
 
         const quantity = quantityElement?.value ?? 1;
@@ -726,32 +960,35 @@ var Foxy = (function () {
             : variantSelectionCompleteProduct?.inventory;
 
         if (Number(quantity) > Number(inventory)) {
-          quantityElement.value = 1;
+          if (quantityElement) quantityElement.value = 1;
         }
 
         if (inventoryElement) {
-          // Update inventory element if ti exists
           if (inventory === undefined) {
             inventoryElement.textContent = "0";
-            submitButton.disabled = true;
-            submitButton.classList.add(disableClass);
+            if (submitButton) {
+              submitButton.disabled = true;
+              submitButton.classList.add(disableClass);
+            }
             return;
           }
 
           if (Number(quantity) <= Number(inventory)) {
             inventoryElement.textContent = inventory;
-            submitButton.disabled = false;
-            submitButton.classList.remove(disableClass);
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.classList.remove(disableClass);
+            }
             return;
           }
         }
         return;
       }
 
-      // First render or variant selection not complete
       if (variantItems.array.length === 1) {
-        if (config.inventoryControl)
+        if (config.inventoryControl && addToCartQuantityMax) {
           addToCartQuantityMax.value = variantItems.array[0]?.inventory ?? 0;
+        }
         return;
       }
 
@@ -760,38 +997,67 @@ var Foxy = (function () {
           inventoryElement.textContent = config.inventoryDefaultLabel;
           inventoryElement.classList.remove("w-dyn-bind-empty");
         }
-        return;
       }
     }
 
     function handleVariantSelection(e) {
       const targetElement = e.target;
+
+      log.verbose("change event", {
+        target: describeEl(targetElement),
+        name: targetElement?.getAttribute?.("name"),
+        value: targetElement?.value,
+        inVariantGroup: !!targetElement?.closest?.(`div[${foxy_variant_group}]`),
+        groupNameAttr: targetElement?.getAttribute?.(foxy_variant_group_name),
+      });
+
+      if (!targetElement) return;
+
+      const isVariantRadio =
+        targetElement.matches &&
+        targetElement.matches(`input[type="radio"][${foxy_variant_group_name}]`);
+
+      const isVariantSelect =
+        targetElement.matches && targetElement.matches(`select[${foxy_variant_group_name}]`);
+
+      if (!isVariantRadio && !isVariantSelect) {
+        // ignore quantity/text/etc
+        return;
+      }
+
       const currentVariantSelection = targetElement.value;
       if (!currentVariantSelection) return;
 
-      if (!targetElement.closest(`div[foxy-variant-group]`)) return;
+      const variantSelectionGroup = sanitize(targetElement.getAttribute(foxy_variant_group_name));
 
-      const variantSelectionGroup = sanitize(targetElement.getAttribute("foxy-variant-group-name"));
+      if (!variantSelectionGroup) {
+        log.warn("variant change without group name", { target: describeEl(targetElement) });
+        return;
+      }
+
+      log.debug("variant selection", {
+        group: variantSelectionGroup,
+        value: currentVariantSelection,
+      });
 
       removeDisabledStyleVariantGroupOptions(targetElement, false);
-
       updateVariantOptions(variantSelectionGroup, currentVariantSelection, targetElement);
 
       const selectedProductVariants = getSelectedVariantOptions();
       const finalAvailable = getAvailableProductsPerVariantSelection(selectedProductVariants);
+
       updateProductInfo(finalAvailable, selectedProductVariants);
     }
 
     function removeDisabledStyleVariantGroupOptions(currentVariantSelectionElement, resetChoices) {
       const { nodeName } = currentVariantSelectionElement;
-      // Remove disabled class from current selections
-      // if resetChoices then this removal is coming from a variant options update with variantGroupsStateChange
+
       if (nodeName === "INPUT") {
         currentVariantSelectionElement.parentElement.classList.remove(disableClass);
 
         if (resetChoices) {
           const variantGroupContainer = currentVariantSelectionElement.closest(
-            `[${foxy_variant_group}]`
+            `[${foxy_variant_group}]`,
           );
           variantGroupContainer
             .querySelectorAll(`.${disableClass}`)
@@ -799,10 +1065,9 @@ var Foxy = (function () {
         }
       } else if (nodeName === "SELECT") {
         currentVariantSelectionElement
-          .querySelectorAll(`select option.${disableOptionClass}`)
+          .querySelectorAll(`option.${disableOptionClass}`)
           .forEach(option => {
             option.classList.remove(disableOptionClass);
-            // Get the option textContent split it by the unavailable text and remove it
             const unavailableText = ` (${config.selectUnavailableLabel})`;
             const optionText = option.textContent.split(unavailableText)[0];
             option.textContent = optionText;
@@ -811,30 +1076,24 @@ var Foxy = (function () {
     }
 
     function getSelectedVariantOptions() {
-      // Save the selected product variants
       const selectedProductVariants = {};
+
       foxyForm
         .querySelectorAll(
-          `div[${foxy_variant_group}] input:checked, div[${foxy_variant_group}] select[required]:valid option:checked,div[${foxy_variant_group}] option:checked`
+          `div[${foxy_variant_group}] input[type="radio"][${foxy_variant_group_name}]:checked,
+           div[${foxy_variant_group}] select[${foxy_variant_group_name}]:valid`,
         )
-        .forEach(variant => {
-          // If option selected is default option.value === "", return early
-          if (!variant.value) return;
-          if (variant.nodeName === "OPTION") {
-            selectedProductVariants[
-              sanitize(variant.parentElement.getAttribute(foxy_variant_group_name))
-            ] = variant.value;
-            return;
-          }
-          selectedProductVariants[sanitize(variant.getAttribute(foxy_variant_group_name))] =
-            variant.value;
+        .forEach(el => {
+          if (!el.value) return;
+          selectedProductVariants[sanitize(el.getAttribute(foxy_variant_group_name))] = el.value;
         });
+
       return selectedProductVariants;
     }
 
     function getAvailableProductsPerVariantSelection(
       selectedProductVariants,
-      restrictedMatch = false
+      restrictedMatch = false,
     ) {
       const ifIsInventoryControlEnabled = inventory =>
         config.inventoryControl ? Number(inventory) > 0 : true;
@@ -847,20 +1106,13 @@ var Foxy = (function () {
       });
 
       if (userHasChosenAllGroups && !restrictedMatch) {
-        return variantItems.array.filter(variant => {
-          // If inventoryControl is on, skip zero or negative
-          return ifIsInventoryControlEnabled(variant.inventory);
-        });
+        return variantItems.array.filter(variant => ifIsInventoryControlEnabled(variant.inventory));
       }
 
       return variantItems.array.filter(variant => {
-        if (!ifIsInventoryControlEnabled(variant.inventory)) {
-          return false;
-        }
+        if (!ifIsInventoryControlEnabled(variant.inventory)) return false;
         for (const key of chosenKeys) {
-          if (variant[key] !== selectedProductVariants[key]) {
-            return false;
-          }
+          if (variant[key] !== selectedProductVariants[key]) return false;
         }
         return true;
       });
@@ -869,7 +1121,7 @@ var Foxy = (function () {
     function updateVariantOptions(
       variantSelectionGroup,
       currentVariantSelection,
-      currentVariantSelectionElement
+      currentVariantSelectionElement,
     ) {
       const selectedProductVariants = getSelectedVariantOptions();
       const availableProducts = getAvailableProductsPerVariantSelection(selectedProductVariants);
@@ -879,24 +1131,27 @@ var Foxy = (function () {
         const { name, variantGroupType, element } = group;
         const currentValue = selectedProductVariants[name] || "";
 
-        // Skip reset for the last selected group
         if (!currentValue || name === variantSelectionGroup) return;
 
-        const availableProducts = getAvailableProductsPerVariantSelection(
+        const availableRestricted = getAvailableProductsPerVariantSelection(
           selectedProductVariants,
-          true
+          true,
         );
-        const stillValid = availableProducts.some(prod => prod[name] === currentValue);
+        const stillValid = availableRestricted.some(prod => prod[name] === currentValue);
+
         if (!stillValid) {
-          
           selectedProductVariants[name] = "";
           variantGroupsStateChange = true;
 
           if (variantGroupType === "select") {
-            const selectEl = element.querySelector("select");
+            const selectEl =
+              element.querySelector(`select[${RENDERED_ATTR}="1"]`) ||
+              element.querySelector("select");
             if (selectEl) selectEl.selectedIndex = 0;
           } else if (variantGroupType === "radio") {
-            const radios = element.querySelectorAll("input[type='radio']");
+            const radios = element.querySelectorAll(
+              `input[type='radio'][${foxy_variant_group_name}]`,
+            );
             radios.forEach(radio => {
               if (radio.checked) {
                 radio.checked = false;
@@ -914,6 +1169,7 @@ var Foxy = (function () {
 
       let finalSelected = selectedProductVariants;
       let finalAvailable = availableProducts;
+
       if (variantGroupsStateChange) {
         finalSelected = getSelectedVariantOptions();
         finalAvailable = getAvailableProductsPerVariantSelection(finalSelected);
@@ -923,20 +1179,19 @@ var Foxy = (function () {
         finalSelected,
         finalAvailable,
         variantSelectionGroup,
-        currentVariantSelection
+        currentVariantSelection,
       );
 
       if (variantGroupsStateChange && currentVariantSelectionElement) {
-        
         removeDisabledStyleVariantGroupOptions(currentVariantSelectionElement, true);
       }
     }
 
     function disableInvalidOptionsAcrossAllGroups(
       selectedProductVariants,
-      finalAvailable,
+      _finalAvailable,
       lastChangedGroup,
-      lastChangedValue
+      lastChangedValue,
     ) {
       variantGroups.forEach(group => {
         const { name, variantGroupType, element } = group;
@@ -945,7 +1200,9 @@ var Foxy = (function () {
           typeof lastChangedValue === "string" ? lastChangedValue.trim() : lastChangedValue;
 
         if (variantGroupType === "select") {
-          const selectEl = element.querySelector("select");
+          const selectEl =
+            element.querySelector(`select[${RENDERED_ATTR}="1"]`) ||
+            element.querySelector("select");
           if (!selectEl) return;
 
           const options = Array.from(selectEl.options);
@@ -957,53 +1214,44 @@ var Foxy = (function () {
             if (!opt.value) return;
 
             const optValue = typeof opt.value === "string" ? opt.value.trim() : opt.value;
-            // Build candidate by applying this option value to the selectedProductVariants
             const candidate = { ...selectedProductVariants, [name]: optValue };
 
-            // Query the full variant set for this candidate (respects inventoryControl)
             const matchingVariants = getAvailableProductsPerVariantSelection(candidate);
             const canExist = Array.isArray(matchingVariants) && matchingVariants.length > 0;
 
             const isLastSelected = isChangedGroup && optValue === lastChangedValueTrim;
 
             if (!canExist && !isLastSelected) {
-              if (!opt.classList.contains(disableOptionClass)) {
-                opt.classList.add(disableOptionClass);
-              }
+              opt.classList.add(disableOptionClass);
               if (unavailableText && !opt.textContent.includes(unavailableText)) {
                 opt.textContent += unavailableText;
               }
             } else {
-              if (opt.classList.contains(disableOptionClass)) {
-                opt.classList.remove(disableOptionClass);
-              }
+              opt.classList.remove(disableOptionClass);
               if (unavailableText && opt.textContent.includes(unavailableText)) {
                 opt.textContent = opt.textContent.replace(unavailableText, "");
               }
             }
           });
         } else if (variantGroupType === "radio") {
-          const radios = element.querySelectorAll("input[type='radio']");
+          const radios = element.querySelectorAll(
+            `input[type='radio'][${foxy_variant_group_name}]`,
+          );
           radios.forEach(radio => {
             if (!radio.value) return;
 
             const radioValue = typeof radio.value === "string" ? radio.value.trim() : radio.value;
             const candidate = { ...selectedProductVariants, [name]: radioValue };
 
-            // Query the full variant set for this candidate (respects inventoryControl)
             const matchingVariants = getAvailableProductsPerVariantSelection(candidate);
             const canExist = Array.isArray(matchingVariants) && matchingVariants.length > 0;
 
             const isLastSelected = isChangedGroup && radioValue === lastChangedValueTrim;
 
             if (!canExist && !isLastSelected) {
-              if (!radio.parentElement.classList.contains(disableClass)) {
-                radio.parentElement.classList.add(disableClass);
-              }
+              radio.parentElement.classList.add(disableClass);
             } else {
-              if (radio.parentElement.classList.contains(disableClass)) {
-                radio.parentElement.classList.remove(disableClass);
-              }
+              radio.parentElement.classList.remove(disableClass);
             }
           });
         }
@@ -1012,89 +1260,119 @@ var Foxy = (function () {
 
     function updateProductInfo(availableProductsPerVariant, selectedProductVariants) {
       const isVariantsSelectionDone = isVariantsSelectionComplete();
+
+      log.debug("updateProductInfo()", {
+        selectionComplete: isVariantsSelectionDone,
+        selected: selectedProductVariants,
+        availableCount: Array.isArray(availableProductsPerVariant)
+          ? availableProductsPerVariant.length
+          : 0,
+      });
+
       if (isVariantsSelectionDone) {
-        // Find Selected Product Variant Total Information
         variantSelectionCompleteProduct = availableProductsPerVariant.find(product => {
-          let isProduct = [];
-          Object.keys(selectedProductVariants).forEach(key => {
-            product[key] === selectedProductVariants[key]
-              ? isProduct.push(true)
-              : isProduct.push(false);
-          });
-          return isProduct.every(productCheck => productCheck === true);
+          return Object.keys(selectedProductVariants).every(
+            key => product[key] === selectedProductVariants[key],
+          );
         });
 
-        // Update Hidden Add to Cart Inputs with Variant Data and
-        //DOM customer facing elements with product info
+        if (!variantSelectionCompleteProduct) {
+          log.warn("selection complete but no matching variant found", {
+            selected: selectedProductVariants,
+          });
+          return;
+        }
+
+        log.info("final variant matched", {
+          code: variantSelectionCompleteProduct.code,
+          price: variantSelectionCompleteProduct.price,
+          inventory: variantSelectionCompleteProduct.inventory,
+        });
+
         Object.keys(variantSelectionCompleteProduct).forEach(key => {
           const inputToUpdate = foxyForm.querySelector(`input[type='hidden'][name="${key}"]`);
-          if (inputToUpdate) inputToUpdate.value = variantSelectionCompleteProduct[key];
-          const foxyElement = container.querySelector(`[foxy-id="${key}"]`);
+          if (inputToUpdate) {
+            inputToUpdate.value = variantSelectionCompleteProduct[key];
+            log.verbose("hidden input updated", {
+              key,
+              value: variantSelectionCompleteProduct[key],
+            });
+          }
 
+          const foxyElement = container.querySelector(`[foxy-id="${key}"]`);
           const restrictedMatch = ["inventory", "price", "image"].includes(key);
-          if (foxyElement && !restrictedMatch) foxyElement.textContent = variantSelectionCompleteProduct[key];
+
+          if (foxyElement && !restrictedMatch) {
+            foxyElement.textContent = variantSelectionCompleteProduct[key];
+          }
 
           switch (key) {
             case "inventory":
-              if (!config.inventoryControl) {
-                break;
-              }
-              // Update max quantity
-              foxyForm.querySelector(`input[name="quantity_max"]`).value =
-                variantSelectionCompleteProduct[key];
-              // Update max quantity element
+              if (!config.inventoryControl) break;
+
+              const qMax = foxyForm.querySelector(`input[name="quantity_max"]`);
+              if (qMax) qMax.value = variantSelectionCompleteProduct[key];
+
               quantityElement?.setAttribute("max", variantSelectionCompleteProduct[key]);
-              // Update inventory element
               setInventory(isVariantsSelectionDone);
               break;
-            case "price":{
-              if (priceElement)
+
+            case "price": {
+              if (priceElement) {
                 priceElement.textContent = moneyFormat(
                   config.defaultLocale,
                   config.defaultCurrency,
-                  variantSelectionCompleteProduct[key]
+                  variantSelectionCompleteProduct[key],
                 );
+              }
+
+              if (priceAddToCart) {
                 const numericValue = parseFloat(variantSelectionCompleteProduct[key]);
-                let decimalPlaces = numericValue.toString().includes(".")
-                  ? numericValue.toString().split(".")[1].length
+                let decimalPlaces = String(numericValue).includes(".")
+                  ? String(numericValue).split(".")[1].length
                   : 0;
 
                 if (config.pricePrecision && config.pricePrecision > decimalPlaces) {
                   decimalPlaces = config.pricePrecision;
                 }
 
-                priceAddToCart.value = parseFloat(variantSelectionCompleteProduct[key]).toFixed(decimalPlaces);
-                break;
+                priceAddToCart.value = parseFloat(variantSelectionCompleteProduct[key]).toFixed(
+                  decimalPlaces,
+                );
               }
+              break;
+            }
 
             case "image":
-              // Remove srcset from primary image element
               imageElement?.setAttribute("srcset", "");
               imageElement?.setAttribute("src", variantSelectionCompleteProduct[key]);
               break;
           }
         });
+
         return;
       }
-      // Not variant selection complete
-      addPrice();
 
+      // Not complete
+      addPrice();
       setInventory();
     }
 
-    // Utils
-
     function isVariantsSelectionComplete() {
-      if (foxyForm.querySelectorAll("[foxy-variant-group] [required]:invalid").length === 0) {
-        return true;
-      }
-      return false;
+      // Only consider rendered controls (ignore hidden templates we disabled)
+      const invalid = foxyForm.querySelectorAll(
+        `div[${foxy_variant_group}] [${RENDERED_ATTR}="1"][required]:invalid,
+         div[${foxy_variant_group}] select[${RENDERED_ATTR}="1"][required]:invalid,
+         div[${foxy_variant_group}] input[type="radio"][${foxy_variant_group_name}][required]:invalid`,
+      );
+
+      return invalid.length === 0;
     }
 
     function moneyFormat(locale, currency, number) {
       const numericValue = parseFloat(number);
-      let decimalPlaces = numericValue.toString().includes(".")
-        ? numericValue.toString().split(".")[1].length
+      let decimalPlaces = String(numericValue).includes(".")
+        ? String(numericValue).split(".")[1].length
         : 0;
 
       if (config.pricePrecision && config.pricePrecision > decimalPlaces) {
@@ -1121,11 +1399,153 @@ var Foxy = (function () {
     // Access to methods
     return {
       init,
-      setConfig,
+      destroy,
+      setConfig: cfg => setConfig(config, cfg),
+      getConfig: () => ({ ...config }),
+      _log: log, // optional: expose logger for debugging
     };
   }
+
+  //init for regular sites
+  function init(cfg) {
+    const instance = setVariantConfig(cfg);
+    instance.init();
+    return instance;
+  }
+
+  // ---------- SPA / builder auto-init ----------
+  // Scans for forms and initializes them. Useful when routing doesn't reload the page.
+  function variantsAutoInit(cfg) {
+    const controllerId = ++__foxyVariantInstanceSeq;
+    const tmpCfg = {
+      debug: false,
+      debugLevel: "info",
+      debugPrefix: "FoxyVariants",
+      debugGroupCollapsed: true,
+      ...cfg,
+    };
+
+    const log = createLogger(tmpCfg, { instanceId: controllerId, scope: "auto" });
+
+    const initializedForms = new WeakSet();
+    const instancesByForm = new WeakMap();
+
+    let scanScheduled = false;
+    let stopped = false;
+
+    const isRelevantNode = node => {
+      if (!(node instanceof Element)) return false;
+      return (
+        node.matches?.('[foxy-id="form"], [foxy-id="variant-item"], [foxy-variant-group]') ||
+        node.querySelector?.('[foxy-id="form"], [foxy-id="variant-item"], [foxy-variant-group]')
+      );
+    };
+
+    const scan = () => {
+      if (stopped) return;
+      scanScheduled = false;
+
+      const forms = Array.from(document.querySelectorAll('[foxy-id="form"]'));
+      log.debug("scan()", { forms: forms.length });
+
+      forms.forEach(form => {
+        if (initializedForms.has(form) && !tmpCfg.forceReinit) return;
+
+        const container = form.closest?.('[foxy-id="container"]') || document;
+
+        const instance = setVariantConfig({
+          ...tmpCfg,
+          container,
+        });
+
+        // Ensure we init the specific form we found (container may have multiples)
+        // Instance init uses container.querySelector('[foxy-id="form"]'), so confirm it matches:
+        const found = container.querySelector('[foxy-id="form"]');
+        if (found !== form) {
+          // If mismatch, scope to the form's immediate parent to make it unique
+          instance.setConfig({ container: form.parentElement || container });
+        }
+
+        instance.init();
+        initializedForms.add(form);
+        instancesByForm.set(form, instance);
+      });
+    };
+
+    const scheduleScan = () => {
+      if (scanScheduled || stopped) return;
+      scanScheduled = true;
+      setTimeout(scan, 0);
+    };
+
+    const mo = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        for (const n of m.addedNodes) {
+          if (isRelevantNode(n)) {
+            log.debug("mutation relevant (added)", { node: describeEl(n) });
+            scheduleScan();
+            return;
+          }
+        }
+        for (const n of m.removedNodes) {
+          if (isRelevantNode(n)) {
+            log.debug("mutation relevant (removed)", { node: describeEl(n) });
+            scheduleScan();
+            return;
+          }
+        }
+      }
+    });
+
+    // History patching for SPAs
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
+
+    const onRoute = () => {
+      log.debug("route change", { path: location.pathname, hash: location.hash });
+      scheduleScan();
+    };
+
+    history.pushState = function () {
+      const r = origPush.apply(this, arguments);
+      onRoute();
+      return r;
+    };
+    history.replaceState = function () {
+      const r = origReplace.apply(this, arguments);
+      onRoute();
+      return r;
+    };
+
+    window.addEventListener("popstate", onRoute);
+    window.addEventListener("hashchange", onRoute);
+
+    mo.observe(document.documentElement, { subtree: true, childList: true });
+
+    // initial scan
+    scheduleScan();
+
+    return {
+      rescan: () => scheduleScan(),
+      stop: () => {
+        stopped = true;
+        try {
+          mo.disconnect();
+        } catch (_) {}
+        window.removeEventListener("popstate", onRoute);
+        window.removeEventListener("hashchange", onRoute);
+        history.pushState = origPush;
+        history.replaceState = origReplace;
+        log.info("auto-init stopped");
+      },
+      getInstanceForForm: formEl => instancesByForm.get(formEl),
+    };
+  }
+
   // Function factory to handle several instances
   return {
     setVariantConfig,
+    init,
+    variantsAutoInit,
   };
 })(FC, Weglot);
