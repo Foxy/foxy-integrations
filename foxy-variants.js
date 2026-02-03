@@ -1432,26 +1432,61 @@ var Foxy = (function () {
     const initializedForms = new WeakSet();
     const instancesByForm = new WeakMap();
 
+    // Per-form observer (mirrors your “variantGroupObserver” trigger behavior)
+    const variantGroupObserverByForm = new WeakMap();
+
     let scanScheduled = false;
     let stopped = false;
 
-    const isRelevantNode = node => {
-      if (!(node instanceof Element)) return false;
-      return (
-        node.matches?.('[foxy-id="form"], [foxy-id="variant-item"], [foxy-variant-group]') ||
-        node.querySelector?.('[foxy-id="form"], [foxy-id="variant-item"], [foxy-variant-group]')
-      );
+    // If true, next scan will re-init even if already initialized.
+    let forceNextScan = false;
+
+    // Find forms to init. Prefer [data-foxy-product="form"], but also allow [foxy-id="form"].
+    const getForms = () => {
+      const forms = new Set();
+      document.querySelectorAll('[data-foxy-product="form"]').forEach(f => forms.add(f));
+      document.querySelectorAll('[foxy-id="form"]').forEach(f => forms.add(f));
+      return Array.from(forms).filter(n => n instanceof Element);
+    };
+
+    const attachVariantGroupObserver = form => {
+      if (!(form instanceof Element)) return;
+      if (variantGroupObserverByForm.has(form)) return;
+
+      const observer = new MutationObserver(mutations => {
+        // Re-init if a node with data-foxy-variant-group is removed (or contains one)
+        const isVariantGroupRemoved = mutations.some(mutation =>
+          Array.from(mutation.removedNodes).some(
+            node =>
+              node instanceof HTMLElement &&
+              (node.hasAttribute("data-foxy-variant-group") ||
+                node.querySelector?.("[data-foxy-variant-group]")),
+          ),
+        );
+
+        if (isVariantGroupRemoved) {
+          log.debug("variant group removed -> force rescan");
+          scheduleScan({ force: true });
+        }
+      });
+
+      observer.observe(form, { subtree: true, childList: true });
+      variantGroupObserverByForm.set(form, observer);
     };
 
     const scan = () => {
       if (stopped) return;
       scanScheduled = false;
 
-      const forms = Array.from(document.querySelectorAll('[foxy-id="form"]'));
-      log.debug("scan()", { forms: forms.length });
+      const forms = getForms();
+      log.debug("scan()", { forms: forms.length, forceNextScan });
 
       forms.forEach(form => {
-        if (initializedForms.has(form) && !tmpCfg.forceReinit) return;
+        attachVariantGroupObserver(form);
+
+        const shouldSkip = initializedForms.has(form) && !tmpCfg.forceReinit && !forceNextScan;
+
+        if (shouldSkip) return;
 
         const container = form.closest?.('[foxy-id="container"]') || document;
 
@@ -1460,11 +1495,9 @@ var Foxy = (function () {
           container,
         });
 
-        // Ensure we init the specific form we found (container may have multiples)
-        // Instance init uses container.querySelector('[foxy-id="form"]'), so confirm it matches:
-        const found = container.querySelector('[foxy-id="form"]');
+        // Ensure we init the specific form we found
+        const found = container.querySelector('[data-foxy-product="form"], [foxy-id="form"]');
         if (found !== form) {
-          // If mismatch, scope to the form's immediate parent to make it unique
           instance.setConfig({ container: form.parentElement || container });
         }
 
@@ -1472,72 +1505,87 @@ var Foxy = (function () {
         initializedForms.add(form);
         instancesByForm.set(form, instance);
       });
+
+      forceNextScan = false;
     };
 
-    const scheduleScan = () => {
-      if (scanScheduled || stopped) return;
+    const scheduleScan = ({ force = false } = {}) => {
+      if (stopped) return;
+      if (force) forceNextScan = true;
+      if (scanScheduled) return;
+
       scanScheduled = true;
       setTimeout(scan, 0);
     };
 
+    // Global observer: kicks scans when a form appears/re-renders in the DOM
     const mo = new MutationObserver(mutations => {
       for (const m of mutations) {
         for (const n of m.addedNodes) {
-          if (isRelevantNode(n)) {
-            log.debug("mutation relevant (added)", { node: describeEl(n) });
-            scheduleScan();
+          if (!(n instanceof Element)) continue;
+
+          // If a form (or something containing it) is added, rescan
+          if (
+            n.matches?.('[data-foxy-product="form"], [foxy-id="form"]') ||
+            n.querySelector?.('[data-foxy-product="form"], [foxy-id="form"]')
+          ) {
+            log.debug("form added -> force scan");
+            scheduleScan({ force: true });
             return;
           }
         }
+
+        // Optional: if a form is removed, force scan as well (helps in some SPAs)
         for (const n of m.removedNodes) {
-          if (isRelevantNode(n)) {
-            log.debug("mutation relevant (removed)", { node: describeEl(n) });
-            scheduleScan();
+          if (!(n instanceof Element)) continue;
+          if (
+            n.matches?.('[data-foxy-product="form"], [foxy-id="form"]') ||
+            n.querySelector?.('[data-foxy-product="form"], [foxy-id="form"]')
+          ) {
+            log.debug("form removed -> force scan");
+            scheduleScan({ force: true });
             return;
           }
         }
       }
     });
 
-    // History patching for SPAs
-    const origPush = history.pushState;
-    const origReplace = history.replaceState;
-
-    const onRoute = () => {
-      log.debug("route change", { path: location.pathname, hash: location.hash });
-      scheduleScan();
-    };
-
-    history.pushState = function () {
-      const r = origPush.apply(this, arguments);
-      onRoute();
-      return r;
-    };
-    history.replaceState = function () {
-      const r = origReplace.apply(this, arguments);
-      onRoute();
-      return r;
-    };
-
-    window.addEventListener("popstate", onRoute);
-    window.addEventListener("hashchange", onRoute);
+    // URL observer: re-init on SPA pathname change (same approach as your shared code)
+    let previousUrl = location.pathname;
+    const urlObserver = new MutationObserver(() => {
+      if (location.pathname !== previousUrl) {
+        previousUrl = location.pathname;
+        log.debug("pathname changed -> force scan", { pathname: previousUrl });
+        scheduleScan({ force: true });
+      }
+    });
+    urlObserver.observe(document.body, { subtree: true, childList: true });
 
     mo.observe(document.documentElement, { subtree: true, childList: true });
 
     // initial scan
-    scheduleScan();
+    scheduleScan({ force: true });
 
     return {
-      rescan: () => scheduleScan(),
+      rescan: () => scheduleScan({ force: true }),
       stop: () => {
         stopped = true;
+
         try {
           mo.disconnect();
         } catch (_) {}
-        window.removeEventListener("popstate", onRoute);
-        window.removeEventListener("hashchange", onRoute);
-        history.pushState = origPush;
-        history.replaceState = origReplace;
+        try {
+          urlObserver.disconnect();
+        } catch (_) {}
+
+        // Disconnect per-form observers
+        try {
+          getForms().forEach(form => {
+            const o = variantGroupObserverByForm.get(form);
+            if (o) o.disconnect();
+          });
+        } catch (_) {}
+
         log.info("auto-init stopped");
       },
       getInstanceForForm: formEl => instancesByForm.get(formEl),
