@@ -83,6 +83,11 @@ FC.onLoad = function () {
               document
                 .querySelector('[data-hook="service-details"] button')
                 .click();
+              setTimeout(() => {
+                document.querySelector(
+                  '[data-hook="service-details"] button'
+                ).style = 'display: none';
+              }, 0);
 
               wixBookingBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -99,13 +104,48 @@ FC.onLoad = function () {
                 const location = document.querySelector(
                   '[data-hook="time-slot-details-location"]'
                 )?.textContent;
-                const staff = document.querySelector(
-                  '[data-hook="time-slot-details-staffMember"]'
-                )?.textContent;
                 const duration = document.querySelector(
                   '[data-hook="time-slot-details-duration-aria-label"], [data-hook="time-slot-details-duration"]'
                 )?.textContent;
                 const slug = window.location.pathname.split('/').slice(-1)[0];
+                const staff = document.querySelector(
+                  '[data-hook="dropdown-staffMember"]'
+                )
+                  ? document.querySelector(
+                      '[data-hook="dropdown-staffMember"] [data-hook="dropdown-base-text"]'
+                    )?.textContent
+                  : document.querySelector(
+                      '[data-hook="time-slot-details-staffMember"]'
+                    )?.textContent;
+
+                const preferenceEls = Array.from(
+                  document.querySelectorAll(
+                    '[data-hook="slot-preferences-wrapper"] [data-hook="dropdown-custom"]'
+                  )
+                );
+                const preferences = preferenceEls.map((el) => {
+                  const name = el
+                    .querySelector('[data-hook="dropdown-label"]')
+                    .textContent.replace('*', '')
+                    .trim();
+                  const value = el.querySelector(
+                    '[data-hook="dropdown-base-text"]'
+                  ).textContent;
+
+                  if (!name || !value) {
+                    return;
+                  }
+
+                  return `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+                });
+
+                if (
+                  preferenceEls.length > 0 &&
+                  !preferences.some((preference) => Boolean(preference))
+                ) {
+                  alert('Please select an option for each preference');
+                  return;
+                }
 
                 if (
                   name &&
@@ -116,21 +156,25 @@ FC.onLoad = function () {
                   duration &&
                   slug
                 ) {
-                  window.location.href = `https://${
-                    FC.settings.storedomain
-                  }/cart?name=${encodeURIComponent(
-                    name
-                  )}&price=${price}&Start_Date=${encodeURIComponent(
-                    startDate
-                  )}&Location=${encodeURIComponent(
-                    location
-                  )}&Staff=${encodeURIComponent(
-                    staff
-                  )}&Duration=${encodeURIComponent(
-                    duration
-                  )}&Slug=${slug}&quantity=1&quantity_max=1&url=${encodeURIComponent(
-                    window.location.href
-                  )}&empty=true&cart=checkout`;
+                  window.location.href =
+                    `https://${
+                      FC.settings.storedomain
+                    }/cart?name=${encodeURIComponent(
+                      name
+                    )}&price=${price}&Start_Date=${encodeURIComponent(
+                      startDate
+                    )}&Location=${encodeURIComponent(
+                      location
+                    )}&Staff=${encodeURIComponent(
+                      staff
+                    )}&Duration=${encodeURIComponent(
+                      duration
+                    )}&Slug=${slug}&quantity=1&quantity_max=1&url=${encodeURIComponent(
+                      window.location.href
+                    )}&empty=true&cart=checkout` +
+                    (preferenceEls.length > 0
+                      ? `&${preferences.join('&')}`
+                      : '');
                 } else {
                   console.error('Foxy: Some booking info is missing');
                 }
@@ -189,7 +233,19 @@ FC.onLoad = function () {
           ?.style.backgroundImage.slice(4, -1)
           .replace(/"/g, '') ||
         '';
+
+      const productParams = Array.from(
+        document.querySelectorAll('[data-hook="info-section-description"] li')
+      ).map((el) => el.textContent.trim());
+      const category =
+        productParams
+          .find((param) => param.toLowerCase().startsWith('category'))
+          ?.split(':')[1]
+          ?.trim() || '';
       const weight =
+        productParams
+          .find((param) => param.toLowerCase().startsWith('weight'))
+          ?.match(/[\d.]+/)[0] ||
         Array.from(
           document.querySelectorAll('[data-hook="info-section-title"]')
         )
@@ -197,7 +253,7 @@ FC.onLoad = function () {
           .find((el) => el.toLowerCase().startsWith('weight'))
           ?.match(/[\d.]+/)[0] ||
         document.querySelector('[data-foxy-product="weight"]')?.textContent ||
-        0;
+        '';
 
       // Subscriptions
       const subContainer = document.querySelector(
@@ -239,6 +295,7 @@ FC.onLoad = function () {
         )}&code=${encodeURIComponent(
           code
         )}&Slug=${slug}&url=${encodeURIComponent(window.location.href)}` +
+        (category ? `&category=${encodeURIComponent(category)}` : '') +
         (weight ? `&weight=${weight}` : '') +
         (subFrequency ? `&sub_frequency=${subFrequency}` : '') +
         (subEndDate ? `&sub_enddate=${subEndDate}` : '');
