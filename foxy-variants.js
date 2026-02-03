@@ -112,6 +112,7 @@ var Foxy = (function () {
       container: null, // Element to scope queries
       adapter: null, // ({ container, config, log }) => void
       forceReinit: false, // reinit even if already inited on same form node
+      syncOnAnyChange: true, // schedule sync on any form change
     };
 
     const disableClass = "foxy-disable";
