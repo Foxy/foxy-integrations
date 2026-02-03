@@ -1026,6 +1026,26 @@ var Foxy = (function () {
       }, 0);
     }
 
+        function handleVariantSelection(e) {
+          const targetElement = e.target;
+          const currentVariantSelection = targetElement.value;
+          if (!currentVariantSelection) return;
+
+          if (!targetElement.closest(`div[foxy-variant-group]`)) return;
+
+          const variantSelectionGroup = sanitize(
+            targetElement.getAttribute("foxy-variant-group-name"),
+          );
+
+          removeDisabledStyleVariantGroupOptions(targetElement, false);
+
+          updateVariantOptions(variantSelectionGroup, currentVariantSelection, targetElement);
+
+          const selectedProductVariants = getSelectedVariantOptions();
+          const finalAvailable = getAvailableProductsPerVariantSelection(selectedProductVariants);
+          updateProductInfo(finalAvailable, selectedProductVariants);
+        }
+
     function handleAnyFormChange(e) {
       const t = e.target;
       if (!t) return;
