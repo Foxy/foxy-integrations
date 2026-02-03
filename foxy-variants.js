@@ -132,7 +132,8 @@ var Foxy = (function () {
     let addonInit = true;
 
     let switchEventListenerSet = false;
-    let changeListenerAttached = false;
+    let anyChangeListenerAttached = false;
+    let syncScheduled = false;
 
     // Save first config and update internal config for instance
     const firstConfigDefaults = { ...newConfig };
@@ -331,13 +332,6 @@ var Foxy = (function () {
     function init() {
       log.group("init()");
       try {
-        refreshRefs();
-
-        if (!foxyForm) {
-          log.warn("no form found; init aborted", { container: describeEl(container) });
-          return;
-        }
-
         // Adapter hook (builder mapping) - runs before we read the DOM
         if (typeof config.adapter === "function") {
           log.debug("adapter start");
@@ -348,7 +342,12 @@ var Foxy = (function () {
           }
           log.debug("adapter end");
         }
+        refreshRefs();
 
+        if (!foxyForm) {
+          log.warn("no form found; init aborted", { container: describeEl(container) });
+          return;
+        }
         // Idempotent init per form node
         const already = foxyForm.getAttribute(INIT_ATTR) === "1";
         if (already && !config.forceReinit) {
@@ -393,10 +392,13 @@ var Foxy = (function () {
         setInventory();
 
         // Handle selected variants if foxy form is set
-        if (!changeListenerAttached) {
-          foxyForm.addEventListener("change", handleVariantSelection);
-          changeListenerAttached = true;
-          log.info("change listener attached", { form: describeEl(foxyForm) });
+        if (!anyChangeListenerAttached) {
+          // Use both input + change to catch Framer behaviors; keep it simple and idempotent via scheduleDerivedSync
+          foxyForm.addEventListener("input", handleAnyFormChange);
+          foxyForm.addEventListener("change", handleAnyFormChange);
+
+          anyChangeListenerAttached = true;
+          log.info("form listeners attached (input+change)", { form: describeEl(foxyForm) });
         }
 
         // Mark initialized
@@ -415,9 +417,10 @@ var Foxy = (function () {
         if (!foxyForm) return;
 
         // Remove listener
-        if (changeListenerAttached) {
-          foxyForm.removeEventListener("change", handleVariantSelection);
-          changeListenerAttached = false;
+        if (anyChangeListenerAttached) {
+          foxyForm.removeEventListener("input", handleAnyFormChange);
+          foxyForm.removeEventListener("change", handleAnyFormChange);
+          anyChangeListenerAttached = false;
         }
 
         // Remove rendered clones
@@ -1000,53 +1003,49 @@ var Foxy = (function () {
       }
     }
 
-    function handleVariantSelection(e) {
-      const targetElement = e.target;
+    function scheduleDerivedSync(reason, sourceEl) {
+      if (!config.syncOnAnyChange) return;
+      if (syncScheduled) return;
 
-      log.verbose("change event", {
-        target: describeEl(targetElement),
-        name: targetElement?.getAttribute?.("name"),
-        value: targetElement?.value,
-        inVariantGroup: !!targetElement?.closest?.(`div[${foxy_variant_group}]`),
-        groupNameAttr: targetElement?.getAttribute?.(foxy_variant_group_name),
-      });
+      syncScheduled = true;
 
-      if (!targetElement) return;
+      // Use setTimeout(0) to run after React/Framer applies its render for the change
+      setTimeout(() => {
+        syncScheduled = false;
+
+        // Re-acquire refs in case Framer replaced inputs
+        refreshRefs();
+        if (!foxyForm) return;
+
+        log.verbose("derived sync run", { reason, source: describeEl(sourceEl) });
+
+        // Only re-apply derived fields based on current selection
+        const selected = getSelectedVariantOptions();
+        const available = getAvailableProductsPerVariantSelection(selected);
+        updateProductInfo(available, selected);
+      }, 0);
+    }
+
+    function handleAnyFormChange(e) {
+      const t = e.target;
+      if (!t) return;
 
       const isVariantRadio =
-        targetElement.matches &&
-        targetElement.matches(`input[type="radio"][${foxy_variant_group_name}]`);
+        t.matches && t.matches(`input[type="radio"][${foxy_variant_group_name}]`);
+      const isVariantSelect = t.matches && t.matches(`select[${foxy_variant_group_name}]`);
 
-      const isVariantSelect =
-        targetElement.matches && targetElement.matches(`select[${foxy_variant_group_name}]`);
+      // Keep your existing behavior for variant controls (disabling invalid options etc.)
+      if (isVariantRadio || isVariantSelect) {
+        handleVariantSelection(e);
 
-      if (!isVariantRadio && !isVariantSelect) {
-        // ignore quantity/text/etc
+        // But still schedule a post-render re-apply so React can’t wipe code/price
+        scheduleDerivedSync("variant change", t);
         return;
       }
 
-      const currentVariantSelection = targetElement.value;
-      if (!currentVariantSelection) return;
-
-      const variantSelectionGroup = sanitize(targetElement.getAttribute(foxy_variant_group_name));
-
-      if (!variantSelectionGroup) {
-        log.warn("variant change without group name", { target: describeEl(targetElement) });
-        return;
-      }
-
-      log.debug("variant selection", {
-        group: variantSelectionGroup,
-        value: currentVariantSelection,
-      });
-
-      removeDisabledStyleVariantGroupOptions(targetElement, false);
-      updateVariantOptions(variantSelectionGroup, currentVariantSelection, targetElement);
-
-      const selectedProductVariants = getSelectedVariantOptions();
-      const finalAvailable = getAvailableProductsPerVariantSelection(selectedProductVariants);
-
-      updateProductInfo(finalAvailable, selectedProductVariants);
+      // Non-variant field changes (quantity, add-ons, other inputs)
+      // Don’t run disable/availability logic; just re-apply derived fields if selection is complete.
+      scheduleDerivedSync("non-variant change", t);
     }
 
     function removeDisabledStyleVariantGroupOptions(currentVariantSelectionElement, resetChoices) {
