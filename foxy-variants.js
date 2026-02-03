@@ -542,35 +542,499 @@ var Foxy = (function () {
       });
     }
 
-    // ... everything else in your script remains unchanged ...
-    // NOTE: I’m not altering your variant logic below; only the listener attach/detach was changed.
-
     function buildVariantGroupList() {
-      /* unchanged */
+      if (!variantGroupElements) return;
+
+      variantGroups = [];
+
+      variantGroupElements.forEach(variantGroupElement => {
+        let editorElementGroupName;
+        const cmsVariantGroupName = sanitize(variantGroupElement.getAttribute(foxy_variant_group));
+
+        const variantOptionsData = getVariantGroupOptions(cmsVariantGroupName);
+        const variantGroupOptions = variantOptionsData.map(o => o.variantOption);
+
+        const variantGroupType = variantGroupElementsType(variantGroupElement);
+
+        let variantOptionDesign;
+        let variantOptionDesignParent;
+
+        // Prefer already-marked templates
+        if (variantGroupType === "select") {
+          const templateSelect =
+            variantGroupElement.querySelector(`select[${TEMPLATE_ATTR}="1"]`) ||
+            variantGroupElement.querySelector(`select:not([${RENDERED_ATTR}="1"])`);
+
+          if (!templateSelect) return;
+
+          editorElementGroupName =
+            templateSelect.getAttribute("data-name") || templateSelect.getAttribute("name");
+
+          variantOptionDesign = templateSelect;
+          variantOptionDesignParent = templateSelect.parentElement;
+
+          // Mark + neutralize template
+          variantOptionDesign.setAttribute(TEMPLATE_ATTR, "1");
+          variantOptionDesign.style.display = "none";
+          variantOptionDesign.required = false;
+          variantOptionDesign.disabled = true;
+        } else if (variantGroupType === "radio") {
+          // Find a radio not inside a rendered clone
+          const radios = Array.from(variantGroupElement.querySelectorAll("input[type=radio]"));
+          const templateRadio =
+            variantGroupElement.querySelector(`[${TEMPLATE_ATTR}="1"] input[type=radio]`) ||
+            radios.find(r => !r.closest(`[${RENDERED_ATTR}="1"]`));
+
+          if (!templateRadio) return;
+
+          editorElementGroupName =
+            templateRadio.getAttribute("data-name") || templateRadio.getAttribute("name");
+
+          variantOptionDesign = templateRadio.closest("label") || templateRadio.parentElement;
+          if (!variantOptionDesign) return;
+
+          variantOptionDesignParent = variantOptionDesign.parentElement;
+
+          // Mark + neutralize template wrapper + input
+          variantOptionDesign.setAttribute(TEMPLATE_ATTR, "1");
+          variantOptionDesign.style.display = "none";
+          templateRadio.required = false;
+          templateRadio.disabled = true;
+        } else {
+          return;
+        }
+
+        const customSortOrder =
+          variantGroupElement
+            .getAttribute(foxy_variant_group_order)
+            ?.trim()
+            .split(/\s*,\s*/) ?? null;
+
+        log.debug("group detected", {
+          group: cmsVariantGroupName,
+          type: variantGroupType,
+          options: variantOptionsData.length,
+          element: describeEl(variantGroupElement),
+        });
+
+        if (variantGroupOptions.length === 0) {
+          variantGroupElement.remove();
+          log.info("group removed (no options)", { group: cmsVariantGroupName });
+        } else {
+          variantGroups.push({
+            editorElementGroupName,
+            customSortOrder,
+            element: variantGroupElement,
+            options: variantGroupOptions,
+            optionsData: variantOptionsData,
+            name: cmsVariantGroupName,
+            variantGroupType,
+            variantOptionDesign,
+            variantOptionDesignParent,
+          });
+
+          log.info("group registered", {
+            name: cmsVariantGroupName,
+            type: variantGroupType,
+            options: variantGroupOptions.length,
+            customSort: !!customSortOrder,
+          });
+        }
+      });
     }
+
     function variantGroupElementsType(variantGroupElement) {
-      /* unchanged */
+      const select = variantGroupElement.querySelector("select");
+      const radio = variantGroupElement.querySelector("input[type=radio]");
+      if (select) return "select";
+      if (radio) return "radio";
+      return null;
     }
+
     function getVariantGroupOptions(groupName) {
-      /* unchanged */
+      const variantGroupOptions = [];
+      variantItems.array.forEach(variantItem => {
+        const variantOption = variantItem[groupName]?.trim();
+
+        const variantItemStyles = Object.fromEntries(
+          Object.entries(variantItem)
+            .filter(([key, value]) => key.includes(`${groupName}-`) && value)
+            .map(([key, value]) => [key.replace(`${groupName}-`, ""), value]),
+        );
+
+        if (
+          variantOption &&
+          !variantGroupOptions.some(opt => opt.variantOption === variantOption)
+        ) {
+          variantGroupOptions.push({
+            inventory: variantItem.inventory,
+            label: variantItem.label,
+            price: variantItem.price,
+            variantOption,
+            styles: variantItemStyles,
+          });
+        }
+      });
+
+      sortOptions(variantGroupOptions);
+      return variantGroupOptions;
     }
+
     function sortOptions(variantGroupOptions) {
-      /* unchanged */
+      const { sortBy, sortOrder } = config;
+
+      const compareFn = (a, b) => {
+        if (sortBy === "price") {
+          const priceA = Number(a.price);
+          const priceB = Number(b.price);
+          return sortOrder === "descending" ? priceB - priceA : priceA - priceB;
+        }
+        if (sortBy === "label") {
+          const labelA = String(a.label || "");
+          const labelB = String(b.label || "");
+          return sortOrder === "descending"
+            ? labelB.localeCompare(labelA)
+            : labelA.localeCompare(labelB);
+        }
+        return 0;
+      };
+
+      if (sortBy) {
+        variantGroupOptions.sort(compareFn);
+      } else {
+        variantGroupOptions.sort((a, b) => {
+          const labelA = String(a.variantOption || "");
+          const labelB = String(b.variantOption || "");
+          if (sortOrder === "descending") return labelB.localeCompare(labelA);
+          if (sortOrder === "ascending") return labelA.localeCompare(labelB);
+          return 0;
+        });
+      }
+
+      return variantGroupOptions;
     }
+
     function getVariantLabelElement(root, radioInput) {
-      /* unchanged */
+      if (!root) return null;
+
+      const labelCandidates = root.querySelectorAll(["span", "label", ".framer-text"].join(","));
+
+      let labelEl = Array.from(labelCandidates).find(el => el.textContent.trim().length);
+
+      if (!labelEl && radioInput) {
+        let sib = radioInput.nextElementSibling;
+        while (sib) {
+          const textEl =
+            sib.querySelector(".framer-text") ||
+            sib.querySelector("span") ||
+            sib.querySelector("label") ||
+            sib;
+
+          if (textEl && textEl.textContent.trim().length) {
+            labelEl = textEl;
+            break;
+          }
+          sib = sib.nextElementSibling;
+        }
+      }
+
+      return labelEl || null;
     }
+
     function renderVariantGroups() {
-      /* unchanged */
+      if (!variantGroups.length) return;
+
+      log.group("renderVariantGroups()", { groups: variantGroups.length });
+
+      const style = (node, styles) =>
+        Object.keys(styles || {}).forEach(key => (node.style[key] = styles[key]));
+
+      const addRadioOptions = variantGroup => {
+        const {
+          editorElementGroupName,
+          element,
+          name,
+          options,
+          optionsData,
+          customSortOrder,
+          variantOptionDesign,
+          variantOptionDesignParent,
+        } = variantGroup;
+
+        const variantOptions = customSortOrder ? customSortOrder : options;
+
+        variantOptions.forEach((option, index) => {
+          const variantOptionData = optionsData.find(od => od.variantOption === option);
+
+          const variantOptionClone = variantOptionDesign.cloneNode(true);
+          variantOptionClone.style.display = ""; // ensure visible
+          variantOptionClone.setAttribute(RENDERED_ATTR, "1");
+
+          const radioInput = variantOptionClone.querySelector("input[type=radio]");
+          const labelEl = getVariantLabelElement(variantOptionClone, radioInput);
+
+          if (labelEl) {
+            labelEl.textContent = option;
+            if ("htmlFor" in labelEl) labelEl.htmlFor = `${option}-${index}`;
+            else labelEl.setAttribute("for", `${option}-${index}`);
+          }
+
+          radioInput.id = `${option}-${index}`;
+          radioInput.name = editorElementGroupName ? editorElementGroupName : name;
+          radioInput.value = option;
+          radioInput.setAttribute(foxy_variant_group_name, name);
+          radioInput.required = true;
+          radioInput.disabled = false;
+
+          if (
+            config.inventoryControl &&
+            variantGroups.length === 1 &&
+            !Number(variantOptionData?.inventory)
+          ) {
+            radioInput.disabled = true;
+            radioInput.parentElement.classList.add(disableClass);
+          }
+
+          // Apply custom styles to which element: webflow, framer or parent so far
+          const customInput =
+            variantOptionClone.querySelector("div.w-radio-input") ||
+            radioInput ||
+            variantOptionClone;
+          if (customInput) style(customInput, variantOptionData?.styles);
+
+          if (variantOptionDesignParent?.getAttribute(foxy_variant_group)) {
+            element.append(variantOptionClone);
+          } else {
+            variantOptionDesignParent.append(variantOptionClone);
+          }
+        });
+
+        log.debug("rendered group", { name, type: "radio", rendered: variantOptions.length });
+      };
+
+      const addSelectOptions = variantGroup => {
+        const {
+          editorElementGroupName,
+          element,
+          name,
+          options,
+          optionsData,
+          customSortOrder,
+          variantOptionDesign,
+          variantOptionDesignParent,
+        } = variantGroup;
+
+        const variantOptions = customSortOrder ? customSortOrder : options;
+
+        let variantSelect = variantOptionDesign.cloneNode(true);
+        variantSelect.style.display = ""; // ensure visible
+        variantSelect.setAttribute(RENDERED_ATTR, "1");
+
+        variantSelect.required = true;
+        variantSelect.disabled = false;
+        variantSelect.name = editorElementGroupName ? editorElementGroupName : name;
+        variantSelect.setAttribute(foxy_variant_group_name, name);
+
+        // reset options (clone includes whatever builder had)
+        while (variantSelect.options.length) variantSelect.remove(0);
+
+        // default option
+        variantSelect.add(new Option("Select…", ""));
+        variantSelect.options[0].disabled = true;
+        variantSelect.options[0].selected = true;
+
+        variantOptions.forEach(option => {
+          const variantOptionData = optionsData.find(od => od.variantOption === option);
+          let selectOption = new Option(option, option);
+
+          if (
+            config.inventoryControl &&
+            variantGroups.length === 1 &&
+            !Number(variantOptionData?.inventory)
+          ) {
+            const unavailableText = config.selectUnavailableLabel
+              ? ` (${config.selectUnavailableLabel})`
+              : "";
+            selectOption = new Option(`${option}${unavailableText}`, option);
+            selectOption.disabled = true;
+          }
+
+          variantSelect.add(selectOption);
+        });
+
+        if (variantOptionDesignParent.getAttribute(foxy_variant_group)) {
+          element.append(variantSelect);
+        } else {
+          variantOptionDesignParent.append(variantSelect);
+        }
+
+        log.debug("rendered group", { name, type: "select", rendered: variantOptions.length });
+      };
+
+      try {
+        variantGroups.forEach(variantGroup => {
+          if (variantGroup.variantGroupType === "select") addSelectOptions(variantGroup);
+          else addRadioOptions(variantGroup);
+        });
+      } finally {
+        log.groupEnd();
+      }
     }
+
+    // Used by addons flow; now also removes rendered clones
     function removeVariantOptions() {
-      /* unchanged */
+      if (!foxyForm) return;
+
+      // Remove clones we added
+      const rendered = foxyForm.querySelectorAll(`[${RENDERED_ATTR}="1"]`);
+      rendered.forEach(n => n.remove());
+
+      // Reset internal state
+      variantSelectionCompleteProduct = [];
+      variantItems = { serialized: {}, array: [] };
+      variantGroups = [];
+
+      log.info("removed rendered variant options", { removed: rendered.length });
     }
+
     function addPrice() {
-      /* unchanged */
+      if (!priceElement || !priceAddToCart) {
+        log.verbose("addPrice skipped (missing priceElement or price input)");
+      }
+
+      if (variantItems.array.length === 1) {
+        const variantPrice = variantItems.array[0].price;
+        if (priceElement) {
+          priceElement.textContent = moneyFormat(
+            config.defaultLocale,
+            config.defaultCurrency,
+            variantPrice,
+          );
+          priceElement.classList.remove("w-dyn-bind-empty");
+        }
+        if (priceAddToCart) priceAddToCart.value = parseFloat(variantPrice);
+        return;
+      }
+
+      if (!variantItems.array.length) {
+        if (priceElement && priceElement.textContent) {
+          const numericPrice = Number(priceElement.textContent);
+          if (!isNaN(numericPrice)) {
+            priceElement.textContent = moneyFormat(
+              config.defaultLocale,
+              config.defaultCurrency,
+              numericPrice,
+            );
+            priceElement.classList.remove("w-dyn-bind-empty");
+          } else {
+            priceElement.textContent = "";
+            priceElement.classList.add("w-dyn-bind-empty");
+          }
+        }
+        return;
+      }
+
+      // multiple variants
+      const sortedPrices = variantItems.array
+        .map(v => Number(v.price))
+        .filter(n => !Number.isNaN(n))
+        .sort((a, b) => a - b);
+
+      if (!sortedPrices.length) return;
+
+      const low = sortedPrices[0];
+      const high = sortedPrices[sortedPrices.length - 1];
+
+      if (low !== high) {
+        if (config.priceDisplay === "low") {
+          if (priceElement)
+            priceElement.textContent = moneyFormat(
+              config.defaultLocale,
+              config.defaultCurrency,
+              low,
+            );
+          priceElement?.classList.remove("w-dyn-bind-empty");
+          return;
+        }
+        if (config.priceDisplay === "high") {
+          if (priceElement)
+            priceElement.textContent = moneyFormat(
+              config.defaultLocale,
+              config.defaultCurrency,
+              high,
+            );
+          priceElement?.classList.remove("w-dyn-bind-empty");
+          return;
+        }
+
+        const priceText = `${moneyFormat(
+          config.defaultLocale,
+          config.defaultCurrency,
+          low,
+        )}–${moneyFormat(config.defaultLocale, config.defaultCurrency, high)}`;
+
+        if (priceElement) priceElement.textContent = priceText;
+        priceElement?.classList.remove("w-dyn-bind-empty");
+      } else {
+        const price = moneyFormat(config.defaultLocale, config.defaultCurrency, low);
+        priceElement?.classList.remove("w-dyn-bind-empty");
+        if (priceElement) priceElement.textContent = price;
+        if (priceAddToCart) priceAddToCart.value = parseFloat(low);
+      }
     }
+
     function setInventory(isVariantsSelectionDone) {
-      /* unchanged */
+      if (!foxyForm) return;
+
+      if (isVariantsSelectionDone) {
+        if (!config.inventoryControl) return;
+
+        const quantity = quantityElement?.value ?? 1;
+        const submitButton = foxyForm.querySelector("input[type=submit], button[type=submit]");
+        const inventory =
+          variantItems.array.length === 1
+            ? variantItems.array[0]?.inventory
+            : variantSelectionCompleteProduct?.inventory;
+
+        if (Number(quantity) > Number(inventory)) {
+          if (quantityElement) quantityElement.value = 1;
+        }
+
+        if (inventoryElement) {
+          if (inventory === undefined) {
+            inventoryElement.textContent = "0";
+            if (submitButton) {
+              submitButton.disabled = true;
+              submitButton.classList.add(disableClass);
+            }
+            return;
+          }
+
+          if (Number(quantity) <= Number(inventory)) {
+            inventoryElement.textContent = inventory;
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.classList.remove(disableClass);
+            }
+            return;
+          }
+        }
+        return;
+      }
+
+      if (variantItems.array.length === 1) {
+        if (config.inventoryControl && addToCartQuantityMax) {
+          addToCartQuantityMax.value = variantItems.array[0]?.inventory ?? 0;
+        }
+        return;
+      }
+
+      if (variantItems.array.length > 1) {
+        if (inventoryElement) {
+          inventoryElement.textContent = config.inventoryDefaultLabel;
+          inventoryElement.classList.remove("w-dyn-bind-empty");
+        }
+      }
     }
 
     function scheduleDerivedSync(reason, sourceEl) {
@@ -579,15 +1043,16 @@ var Foxy = (function () {
 
       syncScheduled = true;
       const milliseconds = 30;
-
       setTimeout(() => {
         syncScheduled = false;
 
+        // Re-acquire refs in case Framer replaced inputs
         refreshRefs();
         if (!foxyForm) return;
 
         log.verbose("derived sync run", { reason, source: describeEl(sourceEl) });
 
+        // Only re-apply derived fields based on current selection
         const selected = getSelectedVariantOptions();
         const available = getAvailableProductsPerVariantSelection(selected);
         updateProductInfo(available, selected);
