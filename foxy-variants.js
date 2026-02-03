@@ -993,7 +993,7 @@ var Foxy = (function () {
       if (syncScheduled) return;
 
       syncScheduled = true;
-
+      const milliseconds = 30;
       // Use setTimeout(0) to run after React/Framer applies its render for the change
       setTimeout(() => {
         syncScheduled = false;
@@ -1008,7 +1008,7 @@ var Foxy = (function () {
         const selected = getSelectedVariantOptions();
         const available = getAvailableProductsPerVariantSelection(selected);
         updateProductInfo(available, selected);
-      }, 15);
+      }, milliseconds);
     }
 
     function handleVariantSelection(e) {
