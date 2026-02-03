@@ -397,6 +397,7 @@ var Foxy = (function () {
           // Use both input + change to catch Framer behaviors; keep it simple and idempotent via scheduleDerivedSync
           foxyForm.addEventListener("input", handleAnyFormChange);
           foxyForm.addEventListener("change", handleAnyFormChange);
+          foxyForm.addEventListener("focusout", handleAnyFormChange, true);
 
           anyChangeListenerAttached = true;
           log.info("form listeners attached (input+change)", { form: describeEl(foxyForm) });
@@ -1007,28 +1008,26 @@ var Foxy = (function () {
         const selected = getSelectedVariantOptions();
         const available = getAvailableProductsPerVariantSelection(selected);
         updateProductInfo(available, selected);
-      }, 0);
+      }, 15);
     }
 
-        function handleVariantSelection(e) {
-          const targetElement = e.target;
-          const currentVariantSelection = targetElement.value;
-          if (!currentVariantSelection) return;
+    function handleVariantSelection(e) {
+      const targetElement = e.target;
+      const currentVariantSelection = targetElement.value;
+      if (!currentVariantSelection) return;
 
-          if (!targetElement.closest(`div[foxy-variant-group]`)) return;
+      if (!targetElement.closest(`div[foxy-variant-group]`)) return;
 
-          const variantSelectionGroup = sanitize(
-            targetElement.getAttribute("foxy-variant-group-name"),
-          );
+      const variantSelectionGroup = sanitize(targetElement.getAttribute("foxy-variant-group-name"));
 
-          removeDisabledStyleVariantGroupOptions(targetElement, false);
+      removeDisabledStyleVariantGroupOptions(targetElement, false);
 
-          updateVariantOptions(variantSelectionGroup, currentVariantSelection, targetElement);
+      updateVariantOptions(variantSelectionGroup, currentVariantSelection, targetElement);
 
-          const selectedProductVariants = getSelectedVariantOptions();
-          const finalAvailable = getAvailableProductsPerVariantSelection(selectedProductVariants);
-          updateProductInfo(finalAvailable, selectedProductVariants);
-        }
+      const selectedProductVariants = getSelectedVariantOptions();
+      const finalAvailable = getAvailableProductsPerVariantSelection(selectedProductVariants);
+      updateProductInfo(finalAvailable, selectedProductVariants);
+    }
 
     function handleAnyFormChange(e) {
       const t = e.target;
