@@ -449,23 +449,6 @@ var Foxy = (function () {
         // Do not hard-force value each time; it breaks user input on rerenders
         if (!quantityElement.value) quantityElement.value = "1";
       }
-
-      // Idempotent isVariant hidden field
-      const existing = foxyForm.querySelector(`input[type="hidden"][name="isVariant"]`);
-      const value = variantItems.array.length ? "true" : "false";
-      if (existing) {
-        existing.value = value;
-      } else {
-        foxyForm.insertAdjacentHTML(
-          "beforeend",
-          `<input type="hidden" name="isVariant" value="${value}" />`,
-        );
-      }
-
-      log.debug("defaults set", {
-        isVariant: value,
-        quantity: quantityElement ? quantityElement.value : null,
-      });
     }
 
     function buildVariantList() {
