@@ -1149,6 +1149,8 @@ var Foxy = (function () {
       const t = e.target;
       if (!t) return;
 
+      log.debug("form event", { type: e.type, target: describeEl(e.target) });
+
       const isVariantRadio =
         t.matches && t.matches(`input[type="radio"][${foxy_variant_group_name}]`);
       const isVariantSelect = t.matches && t.matches(`select[${foxy_variant_group_name}]`);
