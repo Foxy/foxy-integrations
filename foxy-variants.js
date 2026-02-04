@@ -38,6 +38,9 @@ var Foxy = (function () {
       container: null, // Element to scope queries
       adapter: null, // ({ container, config, log }) => void
       forceReinit: false, // reinit even if already inited on same form node
+      syncOnAnyChange: true,
+      persistSelection: false,
+      persistSelectionKey: ({ pageKey, productKey }) => `foxyVariants:sel:${pageKey}:${productKey}`,
     };
 
     const disableClass = "foxy-disable";
@@ -233,6 +236,7 @@ var Foxy = (function () {
       } finally {
         __persistRestoring = false;
       }
+      persistSelectionNow("after-restore");
     }
 
     function refreshRefs() {
@@ -275,22 +279,19 @@ var Foxy = (function () {
 
       const prev = __foxyFormListeners.get(foxyForm);
       if (prev) {
-        // Prefer aborting if we attached with AbortController
         if (prev.abort && typeof prev.abort.abort === "function") {
           prev.abort.abort();
         } else if (prev.handler) {
           foxyForm.removeEventListener("input", prev.handler);
           foxyForm.removeEventListener("change", prev.handler);
           foxyForm.removeEventListener("focusout", prev.handler, true);
-          foxyForm.removeEventListener("submit", prev.onSubmit);
+          if (prev.onSubmit) foxyForm.removeEventListener("submit", prev.onSubmit);
         }
         __foxyFormListeners.delete(foxyForm);
       }
 
       let abort = null;
-      if (typeof AbortController !== "undefined") {
-        abort = new AbortController();
-      }
+      if (typeof AbortController !== "undefined") abort = new AbortController();
 
       const handler = handleAnyFormChange;
       const onSubmit = () => persistSelectionNow("submit");
@@ -308,10 +309,7 @@ var Foxy = (function () {
         foxyForm.addEventListener("submit", onSubmit);
       }
 
-      __foxyFormListeners.set(foxyForm, { abort, handler, instanceId });
       __foxyFormListeners.set(foxyForm, { abort, handler, onSubmit, instanceId });
-
-      log.info("form listeners attached/replaced", { form: describeEl(foxyForm) });
     }
 
     // Remove listeners, but only if this instance owns them
@@ -323,11 +321,15 @@ var Foxy = (function () {
 
       if (state.abort && typeof state.abort.abort === "function") {
         state.abort.abort();
-      } else if (state.handler) {
-        foxyForm.removeEventListener("input", state.handler);
-        foxyForm.removeEventListener("change", state.handler);
-        foxyForm.removeEventListener("focusout", state.handler, true);
-        foxyForm.removeEventListener("submit", prev.onSubmit);
+      } else {
+        if (state.handler) {
+          foxyForm.removeEventListener("input", state.handler);
+          foxyForm.removeEventListener("change", state.handler);
+          foxyForm.removeEventListener("focusout", state.handler, true);
+        }
+        if (state.onSubmit) {
+          foxyForm.removeEventListener("submit", state.onSubmit);
+        }
       }
 
       __foxyFormListeners.delete(foxyForm);
