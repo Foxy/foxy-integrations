@@ -8,85 +8,8 @@ var Foxy = (function () {
   // Instance sequencing for log context
   let __foxyVariantInstanceSeq = 0;
 
-  // NEW: one listener set per actual <form> element (prevents duplicates across re-inits/instances)
+  //one listener set per actual <form> element (prevents duplicates across re-inits/instances)
   const __foxyFormListeners = new WeakMap();
-
-  // ---------- Logging helpers ----------
-  function describeEl(el) {
-    try {
-      if (!(el instanceof Element)) return null;
-      const id = el.id ? `#${el.id}` : "";
-      const cls =
-        el.classList && el.classList.length
-          ? `.${Array.from(el.classList).slice(0, 3).join(".")}`
-          : "";
-      const foxyId = el.getAttribute("foxy-id");
-      const attr = foxyId ? `[foxy-id="${foxyId}"]` : "";
-      return `<${el.tagName.toLowerCase()}${id}${cls}>${attr}`;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function createLogger(cfg, ctx) {
-    const levels = { error: 0, warn: 1, info: 2, debug: 3, verbose: 4 };
-    const levelName = String(cfg.debugLevel || "info").toLowerCase();
-    const threshold = cfg.debug ? (levels[levelName] ?? 2) : 1; // debug=false => warn+error only
-
-    const prefix = cfg.debugPrefix || "FoxyVariants";
-    const instance = ctx && ctx.instanceId != null ? `#${ctx.instanceId}` : "";
-    const scope = ctx && ctx.scope ? ` ${ctx.scope}` : "";
-    const head = `[${prefix}${instance}${scope}]`;
-
-    const emit = (lvl, msg, data) => {
-      const n = levels[lvl];
-      if (n == null || n > threshold) return;
-
-      const entry = { level: lvl, msg, data, ctx, ts: Date.now() };
-      if (typeof cfg.onLog === "function") {
-        try {
-          cfg.onLog(entry);
-        } catch (_) {}
-      }
-
-      const fn =
-        lvl === "error"
-          ? console.error
-          : lvl === "warn"
-            ? console.warn
-            : lvl === "info"
-              ? console.info
-              : console.log;
-
-      if (data !== undefined) fn(head, msg, data);
-      else fn(head, msg);
-    };
-
-    const group = (title, data) => {
-      if (!cfg.debug) return;
-      if ((levels.debug ?? 3) > threshold) return;
-
-      const g = cfg.debugGroupCollapsed ? console.groupCollapsed : console.group;
-      if (data !== undefined) g(`${head} ${title}`, data);
-      else g(`${head} ${title}`);
-    };
-
-    const groupEnd = () => {
-      if (!cfg.debug) return;
-      if ((levels.debug ?? 3) > threshold) return;
-      console.groupEnd();
-    };
-
-    return {
-      error: (m, d) => emit("error", m, d),
-      warn: (m, d) => emit("warn", m, d),
-      info: (m, d) => emit("info", m, d),
-      debug: (m, d) => emit("debug", m, d),
-      verbose: (m, d) => emit("verbose", m, d),
-      group,
-      groupEnd,
-    };
-  }
 
   function setVariantConfig(newConfig) {
     // Constants and variables
@@ -115,7 +38,6 @@ var Foxy = (function () {
       container: null, // Element to scope queries
       adapter: null, // ({ container, config, log }) => void
       forceReinit: false, // reinit even if already inited on same form node
-      syncOnAnyChange: true, // schedule sync on any form change
     };
 
     const disableClass = "foxy-disable";
@@ -176,6 +98,143 @@ var Foxy = (function () {
       stylesAdded = true;
     }
 
+    let __persistRestoring = false;
+
+    function getPageKey() {
+      // ignore hash on purpose (sidecart hash shouldn't create a new key)
+      return `${location.pathname}${location.search}`;
+    }
+
+    function getProductKey() {
+      // Best: set this yourself in the adapter: form.setAttribute('data-foxy-product-key', 'some-stable-id')
+      return (
+        foxyForm?.getAttribute("data-foxy-product-key") ||
+        foxyForm?.getAttribute("data-product-id") ||
+        container?.querySelector("input[name]")?.value?.trim() ||
+        variantItems?.array?.[0]?.code ||
+        "unknown"
+      );
+    }
+
+    function getPersistStorage() {
+      try {
+        return window.sessionStorage; // default: per-tab, avoids long-lived stale restores
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function getPersistKey() {
+      if (!config.persistSelection) return null;
+      const pageKey = getPageKey();
+      const productKey = getProductKey();
+      try {
+        return config.persistSelectionKey({ pageKey, productKey });
+      } catch (_) {
+        // fallback if user-provided function errors
+        return `foxyVariants:sel:${pageKey}:${productKey}`;
+      }
+    }
+
+    function persistSelectionNow(reason) {
+      if (!config.persistSelection) return;
+      if (__persistRestoring) return;
+
+      const storage = getPersistStorage();
+      const key = getPersistKey();
+      if (!storage || !key) return;
+
+      try {
+        const selected = getSelectedVariantOptions();
+        const payload = {
+          v: 1,
+          ts: Date.now(),
+          selected,
+          quantity: quantityElement?.value || null,
+          reason: reason || null,
+        };
+        storage.setItem(key, JSON.stringify(payload));
+        log.debug("persistSelection saved", { key, selected });
+      } catch (err) {
+        log.warn("persistSelection save failed", err);
+      }
+    }
+
+    function readPersistedSelection() {
+      const storage = getPersistStorage();
+      const key = getPersistKey();
+      if (!storage || !key) return null;
+
+      try {
+        const raw = storage.getItem(key);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== "object") return null;
+        return data;
+      } catch (err) {
+        log.warn("persistSelection read failed", err);
+        return null;
+      }
+    }
+
+    function applyPersistedSelectionIfAny() {
+      if (!config.persistSelection) return;
+
+      const data = readPersistedSelection();
+      const selected = data?.selected;
+      if (!selected || typeof selected !== "object") return;
+
+      // Must run AFTER renderVariantGroups() and refreshRefs()
+      __persistRestoring = true;
+      try {
+        // Apply in group order (important for dependent disabling logic)
+        variantGroups.forEach(group => {
+          const groupName = group.name;
+          const desired = selected[groupName];
+          if (!desired) return;
+
+          if (group.variantGroupType === "select") {
+            const selectEl =
+              group.element.querySelector(`select[${RENDERED_ATTR}="1"]`) ||
+              group.element.querySelector("select");
+            if (!selectEl) return;
+
+            // Only apply if option exists and isn't disabled
+            const opt = Array.from(selectEl.options).find(o => o.value === desired);
+            if (!opt || opt.disabled) return;
+
+            selectEl.value = desired;
+            // Drive your normal logic (disables invalids, updates price/code/image)
+            handleVariantSelection({ target: selectEl });
+          }
+
+          if (group.variantGroupType === "radio") {
+            const radios = Array.from(
+              group.element.querySelectorAll(`input[type="radio"][${foxy_variant_group_name}]`),
+            );
+            const radioEl = radios.find(r => (r.value || "").trim() === String(desired).trim());
+            if (!radioEl) return;
+
+            // If it's currently disabled by your rules, skip restoring it
+            if (radioEl.disabled || radioEl.parentElement?.classList?.contains(disableClass))
+              return;
+
+            radioEl.checked = true;
+            handleVariantSelection({ target: radioEl });
+          }
+        });
+
+        // Re-sync derived fields after restoring (helps when Framer overwrote inputs)
+        scheduleDerivedSync("restore selection", foxyForm);
+
+        // Persist the *final* state (in case some restored choices were invalid and got cleared)
+        persistSelectionNow("after-restore");
+        log.info("persistSelection restored", { selected });
+      } finally {
+        __persistRestoring = false;
+      }
+    }
+
     function refreshRefs() {
       // after adapter has mapped data-* -> foxy-* these should exist
       foxyForm = container.querySelector('[foxy-id="form"]');
@@ -210,7 +269,7 @@ var Foxy = (function () {
       return c;
     }
 
-    // NEW: Attach (or replace) listeners once per form element
+    //Attach (or replace) listeners once per form element
     function attachOrReplaceFormListeners() {
       if (!foxyForm) return;
 
@@ -223,6 +282,7 @@ var Foxy = (function () {
           foxyForm.removeEventListener("input", prev.handler);
           foxyForm.removeEventListener("change", prev.handler);
           foxyForm.removeEventListener("focusout", prev.handler, true);
+          foxyForm.removeEventListener("submit", prev.onSubmit);
         }
         __foxyFormListeners.delete(foxyForm);
       }
@@ -233,24 +293,28 @@ var Foxy = (function () {
       }
 
       const handler = handleAnyFormChange;
+      const onSubmit = () => persistSelectionNow("submit");
 
       if (abort) {
         const base = { signal: abort.signal };
         foxyForm.addEventListener("input", handler, base);
         foxyForm.addEventListener("change", handler, base);
         foxyForm.addEventListener("focusout", handler, { ...base, capture: true });
+        foxyForm.addEventListener("submit", onSubmit, base);
       } else {
         foxyForm.addEventListener("input", handler);
         foxyForm.addEventListener("change", handler);
         foxyForm.addEventListener("focusout", handler, true);
+        foxyForm.addEventListener("submit", onSubmit);
       }
 
       __foxyFormListeners.set(foxyForm, { abort, handler, instanceId });
+      __foxyFormListeners.set(foxyForm, { abort, handler, onSubmit, instanceId });
 
       log.info("form listeners attached/replaced", { form: describeEl(foxyForm) });
     }
 
-    // NEW: Remove listeners, but only if this instance owns them
+    // Remove listeners, but only if this instance owns them
     function detachFormListenersIfOwned() {
       if (!foxyForm) return;
 
@@ -263,6 +327,7 @@ var Foxy = (function () {
         foxyForm.removeEventListener("input", state.handler);
         foxyForm.removeEventListener("change", state.handler);
         foxyForm.removeEventListener("focusout", state.handler, true);
+        foxyForm.removeEventListener("submit", prev.onSubmit);
       }
 
       __foxyFormListeners.delete(foxyForm);
@@ -450,11 +515,13 @@ var Foxy = (function () {
         renderVariantGroups();
         log.info("render complete");
 
+        applyPersistedSelectionIfAny();
+
         setDefaults();
         addPrice();
         setInventory();
 
-        // NEW: attach/replace listeners (prevents duplicates across instances/reinits)
+        //attach/replace listeners (prevents duplicates across instances/reinits)
         attachOrReplaceFormListeners();
 
         // Mark initialized
@@ -472,7 +539,7 @@ var Foxy = (function () {
       try {
         if (!foxyForm) return;
 
-        // NEW: Remove listeners only if this instance owns them
+        //Remove listeners only if this instance owns them
         detachFormListenersIfOwned();
 
         // Remove rendered clones
@@ -881,7 +948,6 @@ var Foxy = (function () {
       }
     }
 
-    // Used by addons flow; now also removes rendered clones
     function removeVariantOptions() {
       if (!foxyForm) return;
 
@@ -1089,12 +1155,15 @@ var Foxy = (function () {
       if (isVariantRadio || isVariantSelect) {
         handleVariantSelection(e);
 
+        persistSelectionNow("variant change");
+
         // But still schedule a post-render re-apply so React can’t wipe code/price
         scheduleDerivedSync("variant change", t);
         return;
       }
 
       // Non-variant field changes (quantity, add-ons, other inputs)
+      persistSelectionNow("non-variant change");
       // Don’t run disable/availability logic; just re-apply derived fields if selection is complete.
       scheduleDerivedSync("non-variant change", t);
     }
@@ -1394,8 +1463,14 @@ var Foxy = (function () {
             }
 
             case "image":
-              imageElement?.setAttribute("srcset", "");
-              imageElement?.setAttribute("src", variantSelectionCompleteProduct[key]);
+              if (imageElement) {
+                const currentSrc = imageElement.getAttribute("src");
+                const newSrc = variantSelectionCompleteProduct[key];
+                if (currentSrc !== newSrc) {
+                  imageElement.setAttribute("srcset", "");
+                  imageElement.setAttribute("src", newSrc);
+                }
+              }
               break;
           }
         });
@@ -1472,6 +1547,9 @@ var Foxy = (function () {
       debugLevel: "info",
       debugPrefix: "FoxyVariants",
       debugGroupCollapsed: true,
+      syncOnAnyChange: true, // schedule sync on any form change
+      persistSelection: false,
+      persistSelectionKey: ({ pageKey, productKey }) => `foxyVariants:sel:${pageKey}:${productKey}`,
       ...cfg,
     };
 
@@ -1640,6 +1718,83 @@ var Foxy = (function () {
     };
   }
 
+   // ---------- Logging helpers ----------
+  function describeEl(el) {
+    try {
+      if (!(el instanceof Element)) return null;
+      const id = el.id ? `#${el.id}` : "";
+      const cls =
+        el.classList && el.classList.length
+          ? `.${Array.from(el.classList).slice(0, 3).join(".")}`
+          : "";
+      const foxyId = el.getAttribute("foxy-id");
+      const attr = foxyId ? `[foxy-id="${foxyId}"]` : "";
+      return `<${el.tagName.toLowerCase()}${id}${cls}>${attr}`;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function createLogger(cfg, ctx) {
+    const levels = { error: 0, warn: 1, info: 2, debug: 3, verbose: 4 };
+    const levelName = String(cfg.debugLevel || "info").toLowerCase();
+    const threshold = cfg.debug ? (levels[levelName] ?? 2) : 1; // debug=false => warn+error only
+
+    const prefix = cfg.debugPrefix || "FoxyVariants";
+    const instance = ctx && ctx.instanceId != null ? `#${ctx.instanceId}` : "";
+    const scope = ctx && ctx.scope ? ` ${ctx.scope}` : "";
+    const head = `[${prefix}${instance}${scope}]`;
+
+    const emit = (lvl, msg, data) => {
+      const n = levels[lvl];
+      if (n == null || n > threshold) return;
+
+      const entry = { level: lvl, msg, data, ctx, ts: Date.now() };
+      if (typeof cfg.onLog === "function") {
+        try {
+          cfg.onLog(entry);
+        } catch (_) {}
+      }
+
+      const fn =
+        lvl === "error"
+          ? console.error
+          : lvl === "warn"
+            ? console.warn
+            : lvl === "info"
+              ? console.info
+              : console.log;
+
+      if (data !== undefined) fn(head, msg, data);
+      else fn(head, msg);
+    };
+
+    const group = (title, data) => {
+      if (!cfg.debug) return;
+      if ((levels.debug ?? 3) > threshold) return;
+
+      const g = cfg.debugGroupCollapsed ? console.groupCollapsed : console.group;
+      if (data !== undefined) g(`${head} ${title}`, data);
+      else g(`${head} ${title}`);
+    };
+
+    const groupEnd = () => {
+      if (!cfg.debug) return;
+      if ((levels.debug ?? 3) > threshold) return;
+      console.groupEnd();
+    };
+
+    return {
+      error: (m, d) => emit("error", m, d),
+      warn: (m, d) => emit("warn", m, d),
+      info: (m, d) => emit("info", m, d),
+      debug: (m, d) => emit("debug", m, d),
+      verbose: (m, d) => emit("verbose", m, d),
+      group,
+      groupEnd,
+    };
+  }
+  
   // Function factory to handle several instances
   return {
     setVariantConfig,
