@@ -1548,7 +1548,7 @@ var Foxy = (function () {
       debugPrefix: "FoxyVariants",
       debugGroupCollapsed: true,
       syncOnAnyChange: true, // schedule sync on any form change
-      persistSelection: false,
+      persistSelection: true,
       persistSelectionKey: ({ pageKey, productKey }) => `foxyVariants:sel:${pageKey}:${productKey}`,
       ...cfg,
     };
