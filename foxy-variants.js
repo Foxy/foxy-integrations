@@ -1161,8 +1161,6 @@ var Foxy = (function () {
 
         persistSelectionNow("variant change");
 
-        // But still schedule a post-render re-apply so React can’t wipe code/price
-        scheduleDerivedSync("variant change", t);
         return;
       }
 
