@@ -19,56 +19,73 @@ FC.onLoad = function () {
         ?.firstElementChild.setAttribute('data-fc-id', 'minicart-quantity');
       FC.client.updateMiniCart();
 
-      const foxyForm = document.querySelector('[data-foxy-product="form"]');
+      // Add-to-cart form
+      const foxyFormEls = document.querySelectorAll(
+        '[data-foxy-product="form"]'
+      );
 
-      if (!foxyForm) return;
+      if (foxyFormEls.length === 0) return;
 
-      foxyForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+      foxyFormEls.forEach((foxyForm) => {
+        foxyForm.addEventListener('submit', (e) => {
+          e.preventDefault();
 
-        const formData = new FormData(e.target);
-        const formValues = Object.fromEntries(formData.entries());
-        const { name, price, cart, ...params } = formValues;
-        const image =
-          document.querySelector('[data-foxy-product="image"] img')?.src ||
-          foxyForm.querySelector('img')?.src ||
-          '';
+          const formData = new FormData(e.target);
+          const formValues = Object.fromEntries(formData.entries());
+          const { name, price, cart, ...params } = formValues;
+          const image =
+            (foxyFormEls.length === 1
+              ? document.querySelector('[data-foxy-product="image"] img')?.src
+              : foxyForm.querySelector('[data-foxy-product="image"] img')
+                  ?.src) ||
+            foxyForm.querySelector('img')?.src ||
+            '';
 
-        if (!name || !price) {
-          console.error('Foxy: Cannot find product name or price');
-          return;
-        }
+          if (!name || !price) {
+            console.error('Foxy: Cannot find product name or price');
+            return;
+          }
 
-        const cartUrl =
-          `https://${FC.settings.storedomain}/cart?name=${encodeURIComponent(
-            name
-          )}&price=${price}` +
-          Object.entries({ ...params, image })
-            .map(
-              ([key, value]) =>
-                `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`
-            )
-            .join('');
+          const cartUrl =
+            `https://${FC.settings.storedomain}/cart?name=${encodeURIComponent(
+              name
+            )}&price=${price}` +
+            Object.entries({ ...params, image })
+              .map(
+                ([key, value]) =>
+                  `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+              )
+              .join('');
 
-        if (cart === 'checkout') {
-          window.location.href = `${cartUrl}&cart=checkout`;
-        } else {
-          FC.client.event('cart-submit').trigger({
-            data: { cart: 'add' },
-            url: cartUrl,
-          });
+          if (
+            cart === 'checkout' ||
+            FC.json.config.template_config?.cart_type === undefined ||
+            FC.json.config.template_config.cart_type === 'fullpage'
+          ) {
+            window.location.href = `${cartUrl}&cart=checkout`;
+          } else if (FC.json.config.template_config.cart_type === 'custom') {
+            FC.client.request(cartUrl).done(() => FC[FC.json.context].render());
+          } else {
+            FC.client.event('cart-submit').trigger({
+              data: { cart: 'add' },
+              url: cartUrl,
+            });
+          }
+        });
+
+        // Dynamic price display
+        const priceEl =
+          foxyFormEls.length === 1
+            ? document.querySelector('[data-foxy-product="price"]')
+            : foxyForm.querySelector('[data-foxy-product="price"]');
+        if (priceEl) {
+          initDynamicPrice(foxyForm, priceEl);
+
+          foxyForm.addEventListener('change', () =>
+            initDynamicPrice(foxyForm, priceEl)
+          );
         }
       });
-
-      // Dynamic price display
-      const priceEl = document.querySelector('[data-foxy-product="price"]');
-      if (priceEl) {
-        initDynamicPrice(foxyForm, priceEl);
-
-        foxyForm.addEventListener('change', () =>
-          initDynamicPrice(foxyForm, priceEl)
-        );
-      }
     }
 
     function initDynamicPrice(foxyForm, priceEl) {
