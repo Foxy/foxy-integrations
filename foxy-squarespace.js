@@ -111,7 +111,7 @@ FC.onLoad = function () {
               ? selectedVariant.salePrice.decimalValue
               : selectedVariant.price.decimalValue;
             const stock = selectedVariant.stock.quantity || '';
-            const { sku } = selectedVariant;
+            const { sku, id: variantId } = selectedVariant;
             const weight = selectedVariant.shippingWeight?.value ?? '';
             const {
               height = '',
@@ -128,7 +128,7 @@ FC.onLoad = function () {
                   variantParam +
                   `&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
                     sku
-                  )}&weight=${weight}&height=${height}&length=${len}&width=${width}`,
+                  )}&weight=${weight}&height=${height}&length=${len}&width=${width}&variant_id=${variantId}`,
               });
             }
           }
@@ -138,7 +138,7 @@ FC.onLoad = function () {
             ? variantData[0].salePrice.decimalValue
             : variantData[0].price.decimalValue;
           const stock = variantData[0].stock.quantity || '';
-          const { sku } = variantData[0];
+          const { sku, id: variantId } = variantData[0];
           const weight = variantData[0].shippingWeight?.value ?? '';
           const {
             height = '',
@@ -154,7 +154,7 @@ FC.onLoad = function () {
                 cartUrl +
                 `&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
                   sku
-                )}&weight=${weight}&height=${height}&length=${len}&width=${width}`,
+                )}&weight=${weight}&height=${height}&length=${len}&width=${width}&variant_id=${variantId}`,
             });
           }
         }
