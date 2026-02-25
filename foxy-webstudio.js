@@ -60,7 +60,7 @@
     if (location.href !== previousUrl) {
       previousUrl = location.href;
       clearTimeout(urlChangeTimer);
-      urlChangeTimer = setTimeout(onPageReady, 350);
+      urlChangeTimer = setTimeout(onPageReady, 150);
     }
   });
 
