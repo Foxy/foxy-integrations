@@ -1566,6 +1566,30 @@ var Foxy = (function () {
       return Object.entries(obj).reduce((a, [k, v]) => (v ? ((a[k] = v), a) : a), {});
     }
 
+    function getCartActionFromTriggerEl(el) {
+      if (!(el instanceof Element)) return null;
+
+      const trigger = el.closest?.(
+        'input[foxy-id="add-to-cart"], input[foxy-id="buy-it-now"], button[foxy-id="add-to-cart"], button[foxy-id="buy-it-now"]',
+      );
+      if (!trigger) return null;
+
+      const foxyId = trigger.getAttribute("foxy-id");
+      if (foxyId === "add-to-cart") return "add";
+      if (foxyId === "buy-it-now") return "checkout";
+      return null;
+    }
+
+    function applyCartActionToForm(form, action) {
+      if (!form || !action) return;
+
+      const cartInput = form.querySelector('input[name="cart"]');
+      if (!cartInput) return;
+
+      cartInput.value = action;
+      log.debug("cart action set", { action, form: describeEl(form) });
+    }
+
     // Access to methods
     return {
       init,
@@ -1576,29 +1600,7 @@ var Foxy = (function () {
     };
   }
 
-  function getCartActionFromTriggerEl(el) {
-    if (!(el instanceof Element)) return null;
 
-    const trigger = el.closest?.(
-      'input[foxy-id="add-to-cart"], input[foxy-id="buy-it-now"], button[foxy-id="add-to-cart"], button[foxy-id="buy-it-now"]',
-    );
-    if (!trigger) return null;
-
-    const foxyId = trigger.getAttribute("foxy-id");
-    if (foxyId === "add-to-cart") return "add";
-    if (foxyId === "buy-it-now") return "checkout";
-    return null;
-  }
-
-  function applyCartActionToForm(form, action) {
-    if (!form || !action) return;
-
-    const cartInput = form.querySelector('input[name="cart"]');
-    if (!cartInput) return;
-
-    cartInput.value = action;
-    log.debug("cart action set", { action, form: describeEl(form) });
-  }
 
   //init for regular sites
   function init(cfg) {
