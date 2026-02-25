@@ -309,21 +309,27 @@ var Foxy = (function () {
         const form = trigger.form || trigger.closest("form");
         if (form !== foxyForm) return;
 
-        // set hidden cart input (add vs checkout)
+        // Always set the cart action field
         lastClickedCartAction = action;
         applyCartActionToForm(foxyForm, action);
+
+        // Only bypass SPA/router interception for checkout (buy-it-now)
+        if (action !== "checkout") return;
 
         e.preventDefault();
         e.stopPropagation();
         if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
-        // run native validation (since form.submit() skips it)
+        // form.submit() skips constraint validation, so validate manually first
         if (typeof foxyForm.reportValidity === "function" && !foxyForm.reportValidity()) {
-          log.debug("form invalid; abort native submit");
+          log.debug("form invalid; abort checkout submit");
           return;
         }
 
-        // IMPORTANT: bypass router submit interception
+        // Persist since submit handler won't fire with form.submit()
+        persistSelectionNow("submit");
+
+        // Native submit bypasses router "submit" interception
         foxyForm.submit();
       };
 
@@ -1614,8 +1620,6 @@ var Foxy = (function () {
     };
   }
 
-
-
   //init for regular sites
   function init(cfg) {
     const instance = setVariantConfig(cfg);
@@ -1803,7 +1807,7 @@ var Foxy = (function () {
     };
   }
 
-   // ---------- Logging helpers ----------
+  // ---------- Logging helpers ----------
   function describeEl(el) {
     try {
       if (!(el instanceof Element)) return null;
@@ -1879,7 +1883,7 @@ var Foxy = (function () {
       groupEnd,
     };
   }
-  
+
   // Function factory to handle several instances
   return {
     setVariantConfig,
