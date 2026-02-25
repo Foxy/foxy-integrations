@@ -286,6 +286,7 @@ var Foxy = (function () {
           foxyForm.removeEventListener("change", prev.handler);
           foxyForm.removeEventListener("focusout", prev.handler, true);
           if (prev.onSubmit) foxyForm.removeEventListener("submit", prev.onSubmit);
+          if (prev.onClick) foxyForm.removeEventListener("click", prev.onClick);
         }
         __foxyFormListeners.delete(foxyForm);
       }
@@ -294,22 +295,64 @@ var Foxy = (function () {
       if (typeof AbortController !== "undefined") abort = new AbortController();
 
       const handler = handleAnyFormChange;
-      const onSubmit = () => persistSelectionNow("submit");
+
+      // Keeps a fallback for browsers / cases where submitter isn't available
+      let lastClickedCartAction = null;
+
+      const onClick = e => {
+        const action = getCartActionFromTriggerEl(e.target);
+        if (!action) return;
+
+        // Ensure this click belongs to THIS form instance
+        const trigger = e.target.closest('[foxy-id="add-to-cart"], [foxy-id="buy-it-now"]');
+        if (!trigger) return;
+        const form = trigger.form || trigger.closest("form");
+        if (form !== foxyForm) return;
+
+        lastClickedCartAction = action;
+        applyCartActionToForm(foxyForm, action);
+      };
+
+      const onSubmit = e => {
+        // Prefer the actual submitter (modern browsers)
+        let action = null;
+
+        if (e && e.submitter) {
+          action = getCartActionFromTriggerEl(e.submitter);
+        }
+
+        // Fallback if submit happened without submitter support
+        if (!action) action = lastClickedCartAction;
+
+        if (action) {
+          applyCartActionToForm(foxyForm, action);
+        }
+
+        persistSelectionNow("submit");
+      };
 
       if (abort) {
         const base = { signal: abort.signal };
         foxyForm.addEventListener("input", handler, base);
         foxyForm.addEventListener("change", handler, base);
         foxyForm.addEventListener("focusout", handler, { ...base, capture: true });
+        foxyForm.addEventListener("click", onClick, base);
         foxyForm.addEventListener("submit", onSubmit, base);
       } else {
         foxyForm.addEventListener("input", handler);
         foxyForm.addEventListener("change", handler);
         foxyForm.addEventListener("focusout", handler, true);
+        foxyForm.addEventListener("click", onClick);
         foxyForm.addEventListener("submit", onSubmit);
       }
 
-      __foxyFormListeners.set(foxyForm, { abort, handler, onSubmit, instanceId });
+      __foxyFormListeners.set(foxyForm, {
+        abort,
+        handler,
+        onClick,
+        onSubmit,
+        instanceId,
+      });
     }
 
     // Remove listeners, but only if this instance owns them
@@ -1531,6 +1574,30 @@ var Foxy = (function () {
       getConfig: () => ({ ...config }),
       _log: log, // optional: expose logger for debugging
     };
+  }
+
+  function getCartActionFromTriggerEl(el) {
+    if (!(el instanceof Element)) return null;
+
+    const trigger = el.closest?.(
+      'input[foxy-id="add-to-cart"], input[foxy-id="buy-it-now"], button[foxy-id="add-to-cart"], button[foxy-id="buy-it-now"]',
+    );
+    if (!trigger) return null;
+
+    const foxyId = trigger.getAttribute("foxy-id");
+    if (foxyId === "add-to-cart") return "add";
+    if (foxyId === "buy-it-now") return "checkout";
+    return null;
+  }
+
+  function applyCartActionToForm(form, action) {
+    if (!form || !action) return;
+
+    const cartInput = form.querySelector('input[name="cart"]');
+    if (!cartInput) return;
+
+    cartInput.value = action;
+    log.debug("cart action set", { action, form: describeEl(form) });
   }
 
   //init for regular sites
