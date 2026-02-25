@@ -303,14 +303,28 @@ var Foxy = (function () {
         const action = getCartActionFromTriggerEl(e.target);
         if (!action) return;
 
-        // Ensure this click belongs to THIS form instance
         const trigger = e.target.closest('[foxy-id="add-to-cart"], [foxy-id="buy-it-now"]');
         if (!trigger) return;
+
         const form = trigger.form || trigger.closest("form");
         if (form !== foxyForm) return;
 
+        // set hidden cart input (add vs checkout)
         lastClickedCartAction = action;
         applyCartActionToForm(foxyForm, action);
+
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+
+        // run native validation (since form.submit() skips it)
+        if (typeof foxyForm.reportValidity === "function" && !foxyForm.reportValidity()) {
+          log.debug("form invalid; abort native submit");
+          return;
+        }
+
+        // IMPORTANT: bypass router submit interception
+        foxyForm.submit();
       };
 
       const onSubmit = e => {
