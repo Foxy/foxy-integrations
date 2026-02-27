@@ -235,7 +235,9 @@ FC.onLoad = function () {
         '';
 
       const productParams = Array.from(
-        document.querySelectorAll('[data-hook="info-section-description"] li')
+        document.querySelectorAll(
+          '[data-hook="info-section-description"] li, [data-hook="description-wrapper"] li'
+        )
       ).map((el) => el.textContent.trim());
       const category =
         productParams
