@@ -1,6 +1,8 @@
 var FC = FC || {};
 FC.onLoad = function () {
   FC.client.on('ready.done', function () {
+    const foxyConfig = window.foxyConfig || {};
+
     // modify mini-cart links
     document
       .querySelectorAll('.sqs-custom-cart')
@@ -103,9 +105,18 @@ FC.onLoad = function () {
         if (stock !== 0) {
           FC.client.event('cart-submit').trigger({
             data: { cart: 'add' },
-            url: `${cartUrl}&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
-              sku
-            )}&weight=${weight}&height=${height}&length=${len}&width=${width}&variant_id=${variantId}&${new URLSearchParams(Object.entries(options)).toString()}`,
+            url:
+              `${cartUrl}&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
+                sku
+              )}&weight=${weight}&height=${height}&length=${len}&width=${width}&variant_id=${variantId}&${new URLSearchParams(Object.entries(options)).toString()}` +
+              (Object.hasOwn(foxyConfig, 'params')
+                ? Object.entries(foxyConfig.params)
+                    .map(
+                      ([key, value]) =>
+                        `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+                    )
+                    .join('')
+                : ''),
           });
         } else {
           console.error('Foxy: no stock available');
