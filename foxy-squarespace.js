@@ -1,6 +1,6 @@
 var FC = FC || {};
 FC.onLoad = function () {
-  FC.client.on('ready.done', function () {
+  FC.client.on('ready.done', async function () {
     const foxyConfig = window.foxyConfig || {};
 
     // modify mini-cart links
@@ -17,6 +17,18 @@ FC.onLoad = function () {
       .forEach((qty) => qty.setAttribute('data-fc-id', 'minicart-quantity'));
 
     FC.client.updateMiniCart();
+
+    let pageJson;
+    if (foxyConfig.useSquarespaceCategory) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('format', 'json');
+        const response = await fetch(url.href);
+        pageJson = await response.json();
+      } catch (error) {
+        console.error(error);
+      }
+    }
 
     document.querySelectorAll('.sqs-add-to-cart-button').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -40,8 +52,21 @@ FC.onLoad = function () {
           document.querySelector(
             '.ProductItem-gallery-slides-item-image, .product-gallery-slides-item-image, .pdp-gallery-slides-image'
           )?.src || '';
+
+        if (foxyConfig.useSquarespaceCategory && !pageJson) {
+          console.error('Foxy: invalid page json');
+          alert(
+            'Something went wrong. Please refresh the page. If the issue persists, please contact the store.'
+          );
+          return;
+        }
+
         const category =
-          document.querySelector('input[name="foxy-category"]')?.value || '';
+          document.querySelector('input[name="foxy-category"]')?.value ||
+          (foxyConfig.useSquarespaceCategory
+            ? pageJson.nestedCategories?.itemCategories[0]?.shortSlug
+            : '') ||
+          '';
 
         const cartUrl = `https://${
           FC.settings.storedomain
@@ -93,7 +118,7 @@ FC.onLoad = function () {
         const price = selectedVariant.onSale
           ? selectedVariant.salePrice.decimalValue
           : selectedVariant.price.decimalValue;
-        const stock = selectedVariant.stock.quantity || '';
+        const stock = selectedVariant.stock.quantity ?? '';
         const { sku, id: variantId } = selectedVariant;
         const weight = selectedVariant.shippingWeight?.value ?? '';
         const {
