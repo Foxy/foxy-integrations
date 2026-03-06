@@ -38,7 +38,7 @@
     category: "gift_card",
 
     // Currency symbol shown in buttons and custom input
-    currency: "€",
+    currency: "$",
 
     // Predefined amounts shown as selectable buttons
     amounts: [50, 100, 150, 200, 300, 500],
@@ -57,9 +57,6 @@
     // Show the Myself / Someone else toggle
     showRecipientToggle: true,
     recipientOptions: ["Myself", "Someone else"],
-
-    // Always show an email field
-    requireEmail: true,
 
     // Show the optional message textarea for "someone else"
     showMessageField: true,
