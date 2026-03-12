@@ -30,7 +30,11 @@ FC.onLoad = function () {
       }
     }
 
-    document.querySelectorAll('.sqs-add-to-cart-button').forEach((btn) => {
+    document.querySelectorAll('.sqs-add-to-cart-button').forEach((sqsBtn) => {
+      // Clone and replace Squarespace add-to-cart button
+      const btn = sqsBtn.cloneNode(true);
+      sqsBtn.parentNode.replaceChild(btn, sqsBtn);
+
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
