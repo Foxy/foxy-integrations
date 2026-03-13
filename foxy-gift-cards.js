@@ -7,8 +7,8 @@
  *   <script src="foxy-giftcard.js"></script>
  *   <script>
  *     FoxyGiftCard.init({
- *       el: '#gift-card-form',
- *       store: 'foxythreads-webstudio',
+ *       element: '#gift-card-form',
+ *       subdomain: 'foxythreads-webstudio.foxycart.com',
  *     });
  *   </script>
  */
@@ -22,29 +22,41 @@
   // ────────────────────────────────────────────────────────
   // DEFAULT CONFIG
   // ────────────────────────────────────────────────────────
-  var DEFAULTS = {
+  const DEFAULTS = {
     // Mount point (CSS selector or DOM element)
-    el: "#foxy-giftcard",
+    element: "#foxy-giftcard",
 
-    // Foxy Cart store subdomain (e.g. 'mystore' → mystore.foxycart.com/cart)
-    store: "",
-
-    // Full cart URL override — takes priority over `store` if set
-    cartUrl: "",
+    // Store domain — your Foxy subdomain or custom domain.
+    // Examples: 'mystore.foxycart.com', 'shop.mybrand.com'
+    // The library appends /cart automatically.
+    subdomain: "",
 
     // Product hidden fields sent to Foxy
     productName: "Gift Card",
     codePrefix: "gift_card",
     category: "gift_card",
 
-    // Currency symbol shown in buttons and custom input
-    currency: "$",
+    // Main gift card SKU from the Foxy admin.
+    // When set, the default product code becomes: {codePrefix}_{giftCardCode}
+    // Individual amount overrides (see `amounts`) take priority.
+    giftCardCode: "",
 
-    // Predefined amounts shown as selectable buttons
+    // Template set code — if set, adds a hidden `template_set` input to the form.
+    templateSet: "",
+
+    // Currency symbol shown in buttons and custom input
+    currency: "€",
+
+    // Predefined amounts shown as selectable buttons.
+    // Each entry can be:
+    //   - A plain number:  100
+    //   - A string with a code override:  '50{c:gift_card_50}'
+    //     The number before the brace is the display amount,
+    //     and the value inside {c:...} is the exact product code sent to Foxy.
     amounts: [50, 100, 150, 200, 300, 500],
 
-    // Which amount gets a "Popular" badge (null to disable)
-    popularAmount: 100,
+    // Which amount gets a highlighted badge (null to disable)
+    highlightedAmount: 100,
 
     // Pre-selected amount on load
     defaultAmount: 50,
@@ -56,13 +68,39 @@
 
     // Show the Myself / Someone else toggle
     showRecipientToggle: true,
-    recipientOptions: ["Myself", "Someone else"],
 
     // Show the optional message textarea for "someone else"
     showMessageField: true,
 
-    // Submit button label
-    submitText: "Add to Cart",
+    // All user-facing strings — override any to localise or customise.
+    labels: {
+      // Amount section
+      amountHeading: "Choose an amount",
+      customAmountButton: "Enter a custom amount",
+      customAmountPlaceholder: "Enter amount",
+      highlightedBadge: "Popular",
+
+      // Recipient section
+      recipientHeading: "Who is this for?",
+      recipientMyself: "Myself",
+      recipientSomeoneElse: "Someone else",
+
+      // Email
+      emailLabel: "Recipient email",
+      emailPlaceholder: "Where should we send the voucher?",
+
+      // Someone-else fields
+      shiptoLabel: "Recipient's name",
+      shiptoPlaceholder: "Who is receiving this gift?",
+      fromLabel: "Your name",
+      fromPlaceholder: "Who is sending this gift?",
+      messageLabel: "Message",
+      messageLabelNote: "(optional)",
+      messagePlaceholder: "Add a personal note...",
+
+      // Submit
+      submitText: "Add to Cart",
+    },
 
     // Visual theme — every property is optional to override
     theme: {
@@ -91,9 +129,9 @@
   // HELPERS
   // ────────────────────────────────────────────────────────
   function merge(target, source) {
-    var out = {};
-    for (var k in target) if (target.hasOwnProperty(k)) out[k] = target[k];
-    for (var k in source)
+    const out = {};
+    for (const k in target) if (target.hasOwnProperty(k)) out[k] = target[k];
+    for (const k in source)
       if (source.hasOwnProperty(k)) {
         if (
           source[k] &&
@@ -112,7 +150,7 @@
   }
 
   function esc(s) {
-    var d = document.createElement("div");
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
@@ -120,23 +158,62 @@
     return (ctx || document).querySelector(sel);
   }
   function $$(sel, ctx) {
-    return [].slice.call((ctx || document).querySelectorAll(sel));
+    return [...(ctx || document).querySelectorAll(sel)];
+  }
+
+  /**
+   * Build a cart URL from the subdomain config.
+   * Uses the URL Web API for safe, standards-based URL construction.
+   * Accepts 'mystore.foxycart.com' or 'https://mystore.foxycart.com'.
+   */
+  function buildCartUrl(subdomain) {
+    const raw = subdomain.replace(/\/+$/, "");
+    const base = raw.startsWith("http") ? raw : "https://" + raw;
+    const url = new URL("/cart", base);
+    return url.href;
+  }
+
+  /**
+   * Parse an amount entry.
+   * Input can be a plain number (100) or a string with code override ('50{c:gift_card_50}').
+   * Returns { amount: Number, codeOverride: String|null }
+   */
+  function parseAmount(entry) {
+    if (typeof entry === "number") {
+      return { amount: entry, codeOverride: null };
+    }
+    const str = String(entry);
+    const match = str.match(/^(\d+(?:\.\d+)?)\{c:([^}]+)\}$/);
+    if (match) {
+      return { amount: parseFloat(match[1]), codeOverride: match[2] };
+    }
+    return { amount: parseFloat(str), codeOverride: null };
+  }
+
+  /**
+   * Build the product code for a given amount.
+   * Priority: amount codeOverride > codePrefix + giftCardCode > codePrefix + amount
+   */
+  function buildCode(cfg, amount, codeOverride) {
+    if (codeOverride) return codeOverride;
+    if (cfg.giftCardCode) return cfg.codePrefix + "_" + cfg.giftCardCode;
+    return cfg.codePrefix + "_" + amount;
   }
 
   // ────────────────────────────────────────────────────────
   // ICONS
   // ────────────────────────────────────────────────────────
-  var ICON_PERSON =
+  const ICON_PERSON =
     '<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 17.5c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
-  var ICON_PEOPLE =
-    '<svg viewBox="0 0 20 20" fill="none"><path d="M14.5 17.5c0-2.5-2-4.5-5-4.5s-5 2-5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9.5" cy="7.5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M13 9a2.5 2.5 0 100-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 13c1.5.5 2.5 1.8 2.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  const ICON_GIFT =
+    '<svg viewBox="0 0 20 20" fill="none"><rect x="2" y="9" width="16" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="5" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 5v13" stroke="currentColor" stroke-width="1.5"/><path d="M10 5c0 0-1.5-1-3-2s-3.5-.5-3 1 2.5 2 6 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 5c0 0 1.5-1 3-2s3.5-.5 3 1-2.5 2-6 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   // ────────────────────────────────────────────────────────
   // STYLESHEET
   // ────────────────────────────────────────────────────────
   function buildStyles(cfg, scope) {
-    var t = cfg.theme;
-    var s = "." + scope;
+    const t = cfg.theme;
+    const s = "." + scope;
 
     return [
       // ── Base reset & font ──
@@ -151,7 +228,7 @@
       "}",
 
       // ── Card wrapper — outer border, padding, and entrance animation ──
-      s + " .gc-form-card {",
+      s + " .foxy-gc-form-card {",
       "  max-width: 560px;",
       "  margin: 0 auto;",
       "  background: " + t.surface + ";",
@@ -159,17 +236,17 @@
       "  border-radius: " + t.radius + ";",
       "  padding: 40px 36px 36px;",
       "  position: relative;",
-      "  animation: gcSlideIn .5s ease forwards;",
+      "  animation: foxyGcSlideIn .5s ease forwards;",
       "  opacity: 0;",
       "  transition: border-color .3s, box-shadow .3s;",
       "}",
-      s + " .gc-form-card:hover {",
+      s + " .foxy-gc-form-card:hover {",
       "  border-color: #ccc;",
       "  box-shadow: 0 8px 32px rgba(0,0,0,.06);",
       "}",
 
       // ── Amount buttons grid — 3-column layout for preset prices ──
-      s + " .gc-amount-grid {",
+      s + " .foxy-gc-amount-grid {",
       "  display: grid;",
       "  grid-template-columns: repeat(3, 1fr);",
       "  gap: 10px;",
@@ -177,7 +254,7 @@
       "}",
 
       // ── Individual amount button — border highlight on hover/select ──
-      s + " .gc-amount-button {",
+      s + " .foxy-gc-amount-button {",
       "  position: relative;",
       "  padding: 14px 8px;",
       "  border: 2px solid " + t.border + ";",
@@ -191,21 +268,21 @@
       "  transition: all .2s;",
       "  text-align: center;",
       "}",
-      s + " .gc-amount-button:hover {",
+      s + " .foxy-gc-amount-button:hover {",
       "  border-color: " + t.accent + ";",
       "  background: " + t.accentSubtle + ";",
       "}",
 
       // ── Selected state for amount button — accent border + ring ──
-      s + " .gc-amount-button--selected {",
+      s + " .foxy-gc-amount-button--selected {",
       "  border-color: " + t.accent + ";",
       "  background: " + t.accentSubtle + ";",
       "  color: " + t.accentDark + ";",
       "  box-shadow: 0 0 0 1px " + t.accent + ";",
       "}",
 
-      // ── "Popular" badge floating above an amount button ──
-      s + " .gc-amount-popular-tag {",
+      // ── Highlighted badge floating above an amount button ──
+      s + " .foxy-gc-amount-highlighted-tag {",
       "  position: absolute;",
       "  top: -9px;",
       "  right: 10px;",
@@ -220,7 +297,7 @@
       "}",
 
       // ── Custom amount toggle — dashed border, turns solid when active ──
-      s + " .gc-custom-toggle {",
+      s + " .foxy-gc-custom-toggle {",
       "  width: 100%;",
       "  padding: 14px 8px;",
       "  border: 2px dashed " + t.border + ";",
@@ -235,11 +312,11 @@
       "  text-align: center;",
       "  margin-bottom: 8px;",
       "}",
-      s + " .gc-custom-toggle:hover {",
+      s + " .foxy-gc-custom-toggle:hover {",
       "  border-color: " + t.accent + ";",
       "  color: " + t.accent + ";",
       "}",
-      s + " .gc-custom-toggle--selected {",
+      s + " .foxy-gc-custom-toggle--selected {",
       "  border-style: solid;",
       "  border-color: " + t.accent + ";",
       "  background: " + t.accentSubtle + ";",
@@ -248,16 +325,16 @@
       "}",
 
       // ── Custom amount input wrapper — hidden by default, shown on toggle ──
-      s + " .gc-custom-input-wrapper {",
+      s + " .foxy-gc-custom-input-wrapper {",
       "  position: relative;",
       "  display: none;",
       "}",
-      s + " .gc-custom-input-wrapper--visible {",
+      s + " .foxy-gc-custom-input-wrapper--visible {",
       "  display: block;",
       "}",
 
       // ── Currency symbol inside the custom input ──
-      s + " .gc-custom-currency-symbol {",
+      s + " .foxy-gc-custom-currency-symbol {",
       "  position: absolute;",
       "  left: 16px;",
       "  top: 50%;",
@@ -267,27 +344,27 @@
       "  color: " + t.textLight + ";",
       "  pointer-events: none;",
       "}",
-      s + " .gc-custom-input-wrapper .gc-text-input {",
+      s + " .foxy-gc-custom-input-wrapper .foxy-gc-text-input {",
       "  padding-left: 32px;",
       "}",
 
       // ── Horizontal divider between form sections ──
-      s + " .gc-section-divider {",
+      s + " .foxy-gc-section-divider {",
       "  height: 1px;",
       "  background: " + t.border + ";",
       "  margin: 24px 0;",
       "}",
 
       // ── Form field group — label + input pair, collapsible ──
-      s + " .gc-form-field {",
+      s + " .foxy-gc-form-field {",
       "  margin-bottom: 18px;",
       "}",
-      s + " .gc-form-field--hidden {",
+      s + " .foxy-gc-form-field--hidden {",
       "  display: none;",
       "}",
 
       // ── Field label — small uppercase heading above each input ──
-      s + " .gc-field-label {",
+      s + " .foxy-gc-field-label {",
       "  display: block;",
       "  font-size: 13px;",
       "  font-weight: 700;",
@@ -298,14 +375,14 @@
       "}",
 
       // ── Inline lighter label text (e.g. "optional") ──
-      s + " .gc-field-label-note {",
+      s + " .foxy-gc-field-label-note {",
       "  font-weight: 400;",
       "  text-transform: none;",
       "  letter-spacing: 0;",
       "}",
 
       // ── Text input — single-line fields with focus ring ──
-      s + " .gc-text-input {",
+      s + " .foxy-gc-text-input {",
       "  width: 100%;",
       "  padding: 13px 16px;",
       "  font-family: " + t.fontFamily + ";",
@@ -318,14 +395,14 @@
       "  outline: none;",
       "  -webkit-appearance: none;",
       "}",
-      s + " .gc-text-input:focus {",
+      s + " .foxy-gc-text-input:focus {",
       "  border-color: " + t.accent + ";",
       "  box-shadow: 0 0 0 3px " + t.accentSubtle + ";",
       "}",
-      s + " .gc-text-input::placeholder { color: #bbb; }",
+      s + " .foxy-gc-text-input::placeholder { color: #bbb; }",
 
       // ── Textarea — multi-line input for gift message ──
-      s + " .gc-textarea {",
+      s + " .foxy-gc-textarea {",
       "  width: 100%;",
       "  padding: 13px 16px;",
       "  font-family: " + t.fontFamily + ";",
@@ -339,20 +416,20 @@
       "  min-height: 90px;",
       "  resize: vertical;",
       "}",
-      s + " .gc-textarea:focus {",
+      s + " .foxy-gc-textarea:focus {",
       "  border-color: " + t.accent + ";",
       "  box-shadow: 0 0 0 3px " + t.accentSubtle + ";",
       "}",
-      s + " .gc-textarea::placeholder { color: #bbb; }",
+      s + " .foxy-gc-textarea::placeholder { color: #bbb; }",
 
       // ── Recipient toggle row — flex container for pill buttons ──
-      s + " .gc-recipient-toggle {",
+      s + " .foxy-gc-recipient-toggle {",
       "  display: flex;",
       "  gap: 10px;",
       "}",
 
       // ── Recipient pill button — selectable option with icon ──
-      s + " .gc-recipient-pill {",
+      s + " .foxy-gc-recipient-pill {",
       "  flex: 1;",
       "  padding: 12px 8px;",
       "  border: 2px solid " + t.border + ";",
@@ -370,11 +447,11 @@
       "  justify-content: center;",
       "  gap: 8px;",
       "}",
-      s + " .gc-recipient-pill:hover { border-color: #ccc; }",
-      s + " .gc-recipient-pill svg { width:18px; height:18px; flex-shrink:0; }",
+      s + " .foxy-gc-recipient-pill:hover { border-color: #ccc; }",
+      s + " .foxy-gc-recipient-pill svg { width:18px; height:18px; flex-shrink:0; }",
 
       // ── Selected state for recipient pill ──
-      s + " .gc-recipient-pill--selected {",
+      s + " .foxy-gc-recipient-pill--selected {",
       "  border-color: " + t.accent + ";",
       "  background: " + t.accentSubtle + ";",
       "  color: " + t.accentDark + ";",
@@ -382,7 +459,7 @@
       "}",
 
       // ── Submit button — full-width accent CTA ──
-      s + " .gc-submit-button {",
+      s + " .foxy-gc-submit-button {",
       "  display: block;",
       "  width: 100%;",
       "  padding: 16px 24px;",
@@ -400,22 +477,22 @@
       "  color: " + t.surface + ";",
       "  margin-top: 8px;",
       "}",
-      s + " .gc-submit-button:hover {",
+      s + " .foxy-gc-submit-button:hover {",
       "  background: " + t.accentDark + ";",
       "  border-color: " + t.accentDark + ";",
       "  box-shadow: 0 4px 16px rgba(60,156,158,.3);",
       "}",
 
       // ── Entrance animation ──
-      "@keyframes gcSlideIn {",
+      "@keyframes foxyGcSlideIn {",
       "  from { opacity:0; transform:translateY(24px); }",
       "  to   { opacity:1; transform:translateY(0); }",
       "}",
 
       // ── Mobile: 2-column amount grid, tighter card padding ──
       "@media (max-width:480px) {",
-      "  " + s + " .gc-amount-grid { grid-template-columns: repeat(2,1fr); }",
-      "  " + s + " .gc-form-card { padding: 28px 20px 24px; }",
+      "  " + s + " .foxy-gc-amount-grid { grid-template-columns: repeat(2,1fr); }",
+      "  " + s + " .foxy-gc-form-card { padding: 28px 20px 24px; }",
       "}",
     ].join("\n");
   }
@@ -424,11 +501,22 @@
   // HTML BUILDER
   // ────────────────────────────────────────────────────────
   function buildHTML(cfg, uid) {
-    var action = cfg.cartUrl || "https://" + cfg.store + ".foxycart.com/cart";
-    var h = "";
+    const action = buildCartUrl(cfg.subdomain);
+    const l = cfg.labels;
+    let h = "";
+
+    // Resolve the default amount's code
+    let defaultCode = buildCode(cfg, cfg.defaultAmount, null);
+    for (const entry of cfg.amounts) {
+      const p = parseAmount(entry);
+      if (p.amount === cfg.defaultAmount) {
+        defaultCode = buildCode(cfg, p.amount, p.codeOverride);
+        break;
+      }
+    }
 
     h +=
-      '<form class="gc-form-card" id="gc-form-' +
+      '<form class="foxy-gc-form-card" id="foxy-gc-form-' +
       uid +
       '" action="' +
       esc(action) +
@@ -437,42 +525,59 @@
     // Hidden Foxy fields
     h += '<input type="hidden" name="name" value="' + esc(cfg.productName) + '">';
     h +=
-      '<input type="hidden" name="code" class="gc-hidden-code" value="' +
-      esc(cfg.codePrefix + "_" + cfg.defaultAmount) +
+      '<input type="hidden" name="code" class="foxy-gc-hidden-code" value="' +
+      esc(defaultCode) +
       '">';
     h += '<input type="hidden" name="category" value="' + esc(cfg.category) + '">';
     h +=
-      '<input type="hidden" name="price" class="gc-hidden-price" value="' +
+      '<input type="hidden" name="price" class="foxy-gc-hidden-price" value="' +
       cfg.defaultAmount +
       '">';
 
+    // Template set (optional)
+    if (cfg.templateSet) {
+      h += '<input type="hidden" name="template_set" value="' + esc(cfg.templateSet) + '">';
+    }
+
     // ── Amount selection
-    h += '<div class="gc-form-field">';
-    h += '<label class="gc-field-label">Choose an amount</label>';
-    h += '<div class="gc-amount-grid">';
-    cfg.amounts.forEach(function (amt) {
-      var sel = amt === cfg.defaultAmount ? " gc-amount-button--selected" : "";
-      var pop =
-        amt === cfg.popularAmount ? '<span class="gc-amount-popular-tag">Popular</span>' : "";
+    h += '<div class="foxy-gc-form-field">';
+    h += '<label class="foxy-gc-field-label">' + esc(l.amountHeading) + "</label>";
+    h += '<div class="foxy-gc-amount-grid">';
+    for (const entry of cfg.amounts) {
+      const parsed = parseAmount(entry);
+      const amt = parsed.amount;
+      const code = buildCode(cfg, amt, parsed.codeOverride);
+      const sel = amt === cfg.defaultAmount ? " foxy-gc-amount-button--selected" : "";
+      const badge =
+        amt === cfg.highlightedAmount
+          ? '<span class="foxy-gc-amount-highlighted-tag">' + esc(l.highlightedBadge) + "</span>"
+          : "";
       h +=
-        '<button type="button" class="gc-amount-button' +
+        '<button type="button" class="foxy-gc-amount-button' +
         sel +
         '" data-amount="' +
         amt +
+        '" data-code="' +
+        esc(code) +
         '">' +
-        pop +
+        badge +
         esc(cfg.currency) +
         amt +
         "</button>";
-    });
+    }
     h += "</div>";
 
     if (cfg.allowCustomAmount) {
-      h += '<button type="button" class="gc-custom-toggle">Enter a custom amount</button>';
-      h += '<div class="gc-custom-input-wrapper">';
-      h += '<span class="gc-custom-currency-symbol">' + esc(cfg.currency) + "</span>";
       h +=
-        '<input type="number" class="gc-text-input gc-custom-amount-input" placeholder="Enter amount" min="' +
+        '<button type="button" class="foxy-gc-custom-toggle">' +
+        esc(l.customAmountButton) +
+        "</button>";
+      h += '<div class="foxy-gc-custom-input-wrapper">';
+      h += '<span class="foxy-gc-custom-currency-symbol">' + esc(cfg.currency) + "</span>";
+      h +=
+        '<input type="number" class="foxy-gc-text-input foxy-gc-custom-amount-input" placeholder="' +
+        esc(l.customAmountPlaceholder) +
+        '" min="' +
         cfg.customAmountMin +
         '" max="' +
         cfg.customAmountMax +
@@ -481,61 +586,78 @@
     }
     h += "</div>";
 
-    h += '<div class="gc-section-divider"></div>';
+    h += '<div class="foxy-gc-section-divider"></div>';
 
     // ── Recipient toggle
-    if (cfg.showRecipientToggle && cfg.recipientOptions.length === 2) {
-      h += '<div class="gc-form-field">';
-      h += '<label class="gc-field-label">Who is this for?</label>';
-      h += '<div class="gc-recipient-toggle">';
+    if (cfg.showRecipientToggle) {
+      h += '<div class="foxy-gc-form-field">';
+      h += '<label class="foxy-gc-field-label">' + esc(l.recipientHeading) + "</label>";
+      h += '<div class="foxy-gc-recipient-toggle">';
       h +=
-        '<button type="button" class="gc-recipient-pill gc-recipient-pill--selected" data-who="myself">' +
+        '<button type="button" class="foxy-gc-recipient-pill foxy-gc-recipient-pill--selected" data-who="myself">' +
         ICON_PERSON +
         " " +
-        esc(cfg.recipientOptions[0]) +
+        esc(l.recipientMyself) +
         "</button>";
       h +=
-        '<button type="button" class="gc-recipient-pill" data-who="someone-else">' +
-        ICON_PEOPLE +
+        '<button type="button" class="foxy-gc-recipient-pill" data-who="someone-else">' +
+        ICON_GIFT +
         " " +
-        esc(cfg.recipientOptions[1]) +
+        esc(l.recipientSomeoneElse) +
         "</button>";
       h += "</div></div>";
     }
 
-    // ── Email
-      h += '<div class="gc-form-field" data-field="email">';
-      h += '<label class="gc-field-label" for="gc-email-' + uid + '">Recipient email</label>';
-      h +=
-        '<input type="email" class="gc-text-input" id="gc-email-' +
-        uid +
-        '" name="gift_recipient_email" placeholder="Where should we send the voucher?" required>';
-      h += "</div>";
-
-    // ── Someone-else fields
-    h += '<div class="gc-form-field gc-form-field--hidden" data-field="shipto">';
-    h += '<label class="gc-field-label">Recipient\'s name</label>';
+    // ── Email (always present)
+    h += '<div class="foxy-gc-form-field" data-field="email">';
     h +=
-      '<input type="text" class="gc-text-input" name="shipto" placeholder="Who is receiving this gift?">';
+      '<label class="foxy-gc-field-label" for="foxy-gc-email-' +
+      uid +
+      '">' +
+      esc(l.emailLabel) +
+      "</label>";
+    h +=
+      '<input type="email" class="foxy-gc-text-input" id="foxy-gc-email-' +
+      uid +
+      '" name="gift_recipient_email" placeholder="' +
+      esc(l.emailPlaceholder) +
+      '" required>';
     h += "</div>";
 
-    h += '<div class="gc-form-field gc-form-field--hidden" data-field="from">';
-    h += '<label class="gc-field-label">Your name</label>';
+    // ── Someone-else fields
+    h += '<div class="foxy-gc-form-field foxy-gc-form-field--hidden" data-field="ship_to">';
+    h += '<label class="foxy-gc-field-label">' + esc(l.shiptoLabel) + "</label>";
     h +=
-      '<input type="text" class="gc-text-input" name="from" placeholder="Who is sending this gift?">';
+      '<input type="text" class="foxy-gc-text-input" name="ship_to" placeholder="' +
+      esc(l.shiptoPlaceholder) +
+      '">';
+    h += "</div>";
+
+    h += '<div class="foxy-gc-form-field foxy-gc-form-field--hidden" data-field="from">';
+    h += '<label class="foxy-gc-field-label">' + esc(l.fromLabel) + "</label>";
+    h +=
+      '<input type="text" class="foxy-gc-text-input" name="from" placeholder="' +
+      esc(l.fromPlaceholder) +
+      '">';
     h += "</div>";
 
     if (cfg.showMessageField) {
-      h += '<div class="gc-form-field gc-form-field--hidden" data-field="message">';
+      h += '<div class="foxy-gc-form-field foxy-gc-form-field--hidden" data-field="message">';
       h +=
-        '<label class="gc-field-label">Message <span class="gc-field-label-note">(optional)</span></label>';
+        '<label class="foxy-gc-field-label">' +
+        esc(l.messageLabel) +
+        ' <span class="foxy-gc-field-label-note">' +
+        esc(l.messageLabelNote) +
+        "</span></label>";
       h +=
-        '<textarea class="gc-textarea" name="gift_recipient_message" placeholder="Add a personal note..."></textarea>';
+        '<textarea class="foxy-gc-textarea" name="gift_recipient_message" placeholder="' +
+        esc(l.messagePlaceholder) +
+        '"></textarea>';
       h += "</div>";
     }
 
     // ── Submit
-    h += '<button type="submit" class="gc-submit-button">' + esc(cfg.submitText) + "</button>";
+    h += '<button type="submit" class="foxy-gc-submit-button">' + esc(l.submitText) + "</button>";
     h += "</form>";
 
     return h;
@@ -545,60 +667,52 @@
   // EVENT BINDING
   // ────────────────────────────────────────────────────────
   function bindEvents(cfg, uid, root) {
-    var form = $("#gc-form-" + uid, root);
+    const form = $("#foxy-gc-form-" + uid, root);
     if (!form) return;
 
-    var priceInput = $(".gc-hidden-price", form);
-    var codeInput = $(".gc-hidden-code", form);
-    var amountBtns = $$(".gc-amount-button", form);
-    var custBtn = $(".gc-custom-toggle", form);
-    var custWrap = $(".gc-custom-input-wrapper", form);
-    var custInput = $(".gc-custom-amount-input", form);
-    var pills = $$(".gc-recipient-pill", form);
+    const priceInput = $(".foxy-gc-hidden-price", form);
+    const codeInput = $(".foxy-gc-hidden-code", form);
+    const amountBtns = $$(".foxy-gc-amount-button", form);
+    const custBtn = $(".foxy-gc-custom-toggle", form);
+    const custWrap = $(".foxy-gc-custom-input-wrapper", form);
+    const custInput = $(".foxy-gc-custom-amount-input", form);
+    const pills = $$(".foxy-gc-recipient-pill", form);
 
     // ── Amount selection ──
-    function selectAmount(amount) {
-      if (custBtn) custBtn.classList.remove("gc-custom-toggle--selected");
-      if (custWrap) custWrap.classList.remove("gc-custom-input-wrapper--visible");
+    function selectAmount(btn) {
+      if (custBtn) custBtn.classList.remove("foxy-gc-custom-toggle--selected");
+      if (custWrap) custWrap.classList.remove("foxy-gc-custom-input-wrapper--visible");
       if (custInput) {
         custInput.removeAttribute("required");
         custInput.value = "";
       }
 
-      amountBtns.forEach(function (b) {
-        b.classList.remove("gc-amount-button--selected");
-      });
-      var match = amountBtns.filter(function (b) {
-        return b.dataset.amount === String(amount);
-      })[0];
-      if (match) match.classList.add("gc-amount-button--selected");
+      amountBtns.forEach(b => b.classList.remove("foxy-gc-amount-button--selected"));
+      btn.classList.add("foxy-gc-amount-button--selected");
 
-      priceInput.value = amount;
-      codeInput.value = cfg.codePrefix + "_" + amount;
+      priceInput.value = btn.dataset.amount;
+      codeInput.value = btn.dataset.code;
 
-      if (typeof cfg.onAmountChange === "function") cfg.onAmountChange(Number(amount), false);
+      if (typeof cfg.onAmountChange === "function")
+        cfg.onAmountChange(Number(btn.dataset.amount), false);
     }
 
-    amountBtns.forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        selectAmount(btn.dataset.amount);
-      });
+    amountBtns.forEach(btn => {
+      btn.addEventListener("click", () => selectAmount(btn));
     });
 
     // ── Custom amount ──
     if (custBtn && custWrap && custInput) {
-      custBtn.addEventListener("click", function () {
-        amountBtns.forEach(function (b) {
-          b.classList.remove("gc-amount-button--selected");
-        });
-        custBtn.classList.add("gc-custom-toggle--selected");
-        custWrap.classList.add("gc-custom-input-wrapper--visible");
+      custBtn.addEventListener("click", () => {
+        amountBtns.forEach(b => b.classList.remove("foxy-gc-amount-button--selected"));
+        custBtn.classList.add("foxy-gc-custom-toggle--selected");
+        custWrap.classList.add("foxy-gc-custom-input-wrapper--visible");
         custInput.setAttribute("required", "");
         custInput.focus();
-        codeInput.value = cfg.codePrefix + "_custom";
+        codeInput.value = buildCode(cfg, "custom", null);
       });
 
-      custInput.addEventListener("input", function () {
+      custInput.addEventListener("input", () => {
         if (custInput.value && Number(custInput.value) > 0) {
           priceInput.value = custInput.value;
           if (typeof cfg.onAmountChange === "function")
@@ -608,28 +722,24 @@
     }
 
     // ── Recipient toggle ──
-    var fieldShipto = $('[data-field="shipto"]', form);
-    var fieldFrom = $('[data-field="from"]', form);
-    var fieldMessage = $('[data-field="message"]', form);
+    const fieldShipto = $('[data-field="ship_to"]', form);
+    const fieldFrom = $('[data-field="from"]', form);
+    const fieldMessage = $('[data-field="message"]', form);
 
     function setWho(who) {
-      pills.forEach(function (p) {
-        p.classList.remove("gc-recipient-pill--selected");
-      });
-      var match = pills.filter(function (p) {
-        return p.dataset.who === who;
-      })[0];
-      if (match) match.classList.add("gc-recipient-pill--selected");
+      pills.forEach(p => p.classList.remove("foxy-gc-recipient-pill--selected"));
+      const match = pills.find(p => p.dataset.who === who);
+      if (match) match.classList.add("foxy-gc-recipient-pill--selected");
 
-      var isSomeone = who === "someone-else";
+      const isSomeone = who === "someone-else";
 
-      [fieldShipto, fieldFrom, fieldMessage].forEach(function (f) {
-        if (f) f.classList.toggle("gc-form-field--hidden", !isSomeone);
+      [fieldShipto, fieldFrom, fieldMessage].forEach(f => {
+        if (f) f.classList.toggle("foxy-gc-form-field--hidden", !isSomeone);
       });
 
-      [fieldShipto, fieldFrom].forEach(function (f) {
+      [fieldShipto, fieldFrom].forEach(f => {
         if (!f) return;
-        var inp = $("input", f);
+        const inp = $("input", f);
         if (isSomeone) inp.setAttribute("required", "");
         else {
           inp.removeAttribute("required");
@@ -638,25 +748,23 @@
       });
 
       if (fieldMessage && !isSomeone) {
-        var ta = $("textarea", fieldMessage);
+        const ta = $("textarea", fieldMessage);
         if (ta) ta.value = "";
       }
 
       if (typeof cfg.onRecipientChange === "function") cfg.onRecipientChange(who);
     }
 
-    pills.forEach(function (pill) {
-      pill.addEventListener("click", function () {
-        setWho(pill.dataset.who);
-      });
+    pills.forEach(pill => {
+      pill.addEventListener("click", () => setWho(pill.dataset.who));
     });
 
     // ── Submit hook ──
     if (typeof cfg.onBeforeSubmit === "function") {
-      form.addEventListener("submit", function (e) {
-        var fd = new FormData(form);
-        var data = {};
-        fd.forEach(function (v, k) {
+      form.addEventListener("submit", e => {
+        const fd = new FormData(form);
+        const data = {};
+        fd.forEach((v, k) => {
           data[k] = v;
         });
         if (cfg.onBeforeSubmit(data) === false) e.preventDefault();
@@ -667,7 +775,7 @@
   // ────────────────────────────────────────────────────────
   // PUBLIC API
   // ────────────────────────────────────────────────────────
-  var n = 0;
+  let n = 0;
 
   return {
     /**
@@ -675,19 +783,20 @@
      * @param  {Object} options  Config overrides.
      * @return {{ el: HTMLElement, destroy: Function }}
      */
-    init: function (options) {
-      var cfg = merge(DEFAULTS, options || {});
-      var uid = "gc" + ++n;
-      var scope = "fxgc-" + uid;
+    init(options) {
+      const cfg = merge(DEFAULTS, options || {});
+      const uid = "gc" + ++n;
+      const scope = "fxgc-" + uid;
 
-      var mountEl = typeof cfg.el === "string" ? document.querySelector(cfg.el) : cfg.el;
+      const mountEl =
+        typeof cfg.element === "string" ? document.querySelector(cfg.element) : cfg.element;
       if (!mountEl) {
-        console.error("[FoxyGiftCard] Mount element not found:", cfg.el);
+        console.error("[FoxyGiftCard] Mount element not found:", cfg.element);
         return null;
       }
 
       // Inject scoped styles
-      var style = document.createElement("style");
+      const style = document.createElement("style");
       style.id = "fxgc-css-" + uid;
       style.textContent = buildStyles(cfg, scope);
       document.head.appendChild(style);
@@ -699,10 +808,10 @@
 
       return {
         el: mountEl,
-        destroy: function () {
+        destroy() {
           mountEl.innerHTML = "";
           mountEl.classList.remove(scope);
-          var s = document.getElementById("fxgc-css-" + uid);
+          const s = document.getElementById("fxgc-css-" + uid);
           if (s) s.remove();
         },
       };
