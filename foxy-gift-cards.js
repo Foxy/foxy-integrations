@@ -45,7 +45,7 @@
     templateSet: "",
 
     // Currency symbol shown in buttons and custom input
-    currency: "€",
+    currency: "$",
 
     // Predefined amounts shown as selectable buttons.
     // Each entry can be:
