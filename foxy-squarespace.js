@@ -1,3 +1,10 @@
+document.addEventListener('DOMContentLoaded', () => {
+  // Disable add-to-cart buttons temporarily
+  document
+    .querySelectorAll('button.sqs-add-to-cart-button')
+    .forEach((sqsBtn) => (sqsBtn.disabled = true));
+});
+
 var FC = FC || {};
 FC.onLoad = function () {
   FC.client.on('ready.done', async function () {
@@ -49,6 +56,9 @@ FC.onLoad = function () {
       // Clone and replace Squarespace add-to-cart button
       const btn = sqsBtn.cloneNode(true);
       sqsBtn.parentNode.replaceChild(btn, sqsBtn);
+
+      // Re-enable button
+      btn.disabled = false;
 
       btn.addEventListener('click', (e) => {
         e.preventDefault();
