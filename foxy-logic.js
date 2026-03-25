@@ -10,6 +10,7 @@ var FC = FC || {};
     ignoreSubscriptionsWithPastDue: false,
     removeElementsFromPage: false,
     webhookEndpointURL: "",
+    updateIntervalMinutes: 60,
   };
 
   let SETTINGS = resolvedSettings();
@@ -29,12 +30,13 @@ var FC = FC || {};
     activeSubs = 0,
     activeSubCodes = [],
     hasDynamicRedirect = false;
-  (transactionCodes = []),
+  ((transactionCodes = []),
     (pastDueAmount = 0),
     (customerDetails = {}),
     (customerAttributes = {}),
     (portal = document.getElementsByTagName("foxy-customer-portal")[0]),
     (portalSessionKey = "session"),
+    (lastUpdateKey = "fx.customer.lastUpdate"),
     // Custom Foxy Attributes
     (attributeIfAuthenticated = '[foxy-logic-authenticated="true"]'),
     (attributeIfAnonymous = '[foxy-logic-authenticated="false"]'),
@@ -58,12 +60,12 @@ var FC = FC || {};
     (attributeItemFavoriteCode = "[foxy-logic-favorite-code]"),
     (attributeCustomerFavorite = '[foxy-logic-action="favorite"]'),
     (attributeCustomerUnfavorite = '[foxy-logic-action="unfavorite"]'),
-    (attributeCustomerLogout = '[foxy-logic-action="logout"]');
+    (attributeCustomerLogout = '[foxy-logic-action="logout"]'));
 
   // Support multiple protected paths (or a single string for backwards compatibility)
-    let protectedPaths = Array.isArray(protectedPath)
-      ? protectedPath.filter(Boolean)
-      : protectedPath
+  let protectedPaths = Array.isArray(protectedPath)
+    ? protectedPath.filter(Boolean)
+    : protectedPath
       ? [protectedPath]
       : [];
 
@@ -91,12 +93,20 @@ var FC = FC || {};
     }
   });
 
+  function shouldFetchFreshData() {
+    const intervalMs = SETTINGS.updateIntervalMinutes * 60 * 1000;
+    if (intervalMs <= 0) return true;
+    const lastUpdate = parseInt(localStorage.getItem(lastUpdateKey) || "0", 10);
+    return Date.now() - lastUpdate >= intervalMs;
+  }
+
   function clearLocalStorage() {
     localStorage.removeItem("fx.customer.attributes");
     localStorage.removeItem("fx.customer.details");
     localStorage.removeItem("fx.customer.firstName"); // legacy - remove later
     localStorage.removeItem("fx.customer.subs");
     localStorage.removeItem("fx.customer.transactions");
+    localStorage.removeItem(lastUpdateKey);
     authenticated = false;
     activeSubs = 0;
     activeSubCodes = [];
@@ -144,7 +154,7 @@ var FC = FC || {};
         fetch(
           store +
             "/s/customer/subscriptions?zoom=transaction_template,transaction_template:items,transaction_template:items:item_options",
-          { headers }
+          { headers },
         ),
       ]);
 
@@ -228,8 +238,9 @@ var FC = FC || {};
           count: activeSubs,
           codes: activeSubCodes,
           past_due_amount: pastDueAmount,
-        })
+        }),
       );
+      localStorage.setItem(lastUpdateKey, Date.now().toString());
 
       const event = new Event("fx.fetch.done");
 
@@ -257,13 +268,14 @@ var FC = FC || {};
   let showSpinnerAnimation = function (forcePasswordReset) {
     checkForDynamicRedirect();
     if (
-      loginRedirect != "" && !forcePasswordReset &&
+      loginRedirect != "" &&
+      !forcePasswordReset &&
       !window.location.pathname.match(new RegExp("^" + loginRedirect))
     ) {
       portal.parentElement.style.display = "none";
       portal.parentElement.insertAdjacentHTML(
         "beforebegin",
-        '<style>.spinner {animation: rotate 2s linear infinite;z-index: 2;width: 50px;height: 50px;}</style><div style="display:flex; justify-content:center; margin-top:35vh"><svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg></div>'
+        '<style>.spinner {animation: rotate 2s linear infinite;z-index: 2;width: 50px;height: 50px;}</style><div style="display:flex; justify-content:center; margin-top:35vh"><svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle></svg></div>',
       );
     }
   };
@@ -273,7 +285,7 @@ var FC = FC || {};
   }
   function isOnProtectedPath() {
     return protectedPaths.some(p =>
-      new RegExp("^" + escapeForRegex(p)).test(window.location.pathname)
+      new RegExp("^" + escapeForRegex(p)).test(window.location.pathname),
     );
   }
   let updatePage = function () {
@@ -399,12 +411,12 @@ var FC = FC || {};
         if (
           !codeAttribute ||
           !subCodeAttributes.includes(
-            insertValueIntoAttribute(attributeIfSubscriberByCode, codeAttribute)
+            insertValueIntoAttribute(attributeIfSubscriberByCode, codeAttribute),
           )
         ) {
           showCustomAttribute(
             insertValueIntoAttribute(attributeIfNotSubscriberByCode, codeAttribute),
-            true
+            true,
           );
         }
       });
@@ -421,12 +433,12 @@ var FC = FC || {};
         if (
           !codeAttribute ||
           !transactionCodeAttributes.includes(
-            insertValueIntoAttribute(attributeIfTransactionByCode, codeAttribute)
+            insertValueIntoAttribute(attributeIfTransactionByCode, codeAttribute),
           )
         ) {
           showCustomAttribute(
             insertValueIntoAttribute(attributeIfNotTransactionByCode, codeAttribute),
-            true
+            true,
           );
         }
       });
@@ -436,7 +448,7 @@ var FC = FC || {};
       if (name.includes("favorite-")) {
         completedAttribute = insertValueIntoAttribute(
           attributeIfAttributeFavorite,
-          name.split("favorite-")[1]
+          name.split("favorite-")[1],
         );
       }
       showCustomAttribute(completedAttribute, true);
@@ -449,12 +461,12 @@ var FC = FC || {};
         if (
           !codeAttribute ||
           !attributeNames.includes(
-            insertValueIntoAttribute(attributeIfAttributeByName, codeAttribute)
+            insertValueIntoAttribute(attributeIfAttributeByName, codeAttribute),
           )
         ) {
           showCustomAttribute(
             insertValueIntoAttribute(attributeIfNotAttributeByName, codeAttribute),
-            true
+            true,
           );
         }
       });
@@ -467,12 +479,12 @@ var FC = FC || {};
         if (
           !codeAttribute ||
           !attributeNames.includes(
-            insertValueIntoAttribute(attributeIfAttributeFavorite, codeAttribute)
+            insertValueIntoAttribute(attributeIfAttributeFavorite, codeAttribute),
           )
         ) {
           showCustomAttribute(
             insertValueIntoAttribute(attributeIfAttributeNotFavorite, codeAttribute),
-            true
+            true,
           );
         }
       });
@@ -517,14 +529,14 @@ var FC = FC || {};
           const a = Array.from(el.attributes).find(
             attr =>
               attr.name.startsWith(PREFIX) &&
-              attr.name.endsWith(isIncludes ? INC_SUFFIX : NOT_INC_SUFFIX)
+              attr.name.endsWith(isIncludes ? INC_SUFFIX : NOT_INC_SUFFIX),
           );
           if (!a) return;
 
           // Extract the dynamic segment from the attribute name
           const dyn = a.name.slice(
             PREFIX.length,
-            a.name.length - (isIncludes ? INC_SUFFIX.length : NOT_INC_SUFFIX.length)
+            a.name.length - (isIncludes ? INC_SUFFIX.length : NOT_INC_SUFFIX.length),
           );
           const sDyn = sanitize(dyn);
 
@@ -711,7 +723,7 @@ var FC = FC || {};
       // Dispatch the event.
       window.dispatchEvent(event);
 
-      if (authenticated) {
+      if (authenticated && shouldFetchFreshData()) {
         fetchCustomerData(false);
       }
     } catch (error) {
