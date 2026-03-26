@@ -35,22 +35,15 @@ FC.onLoad = function () {
     // Fetch Squarespace product page JSON
     let sqsPageJson;
     if (foxyConfig.useSquarespaceCategory) {
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.set('format', 'json');
-        const response = await fetch(url.href);
-        sqsPageJson = await response.json();
-
-        if (!sqsPageJson) {
-          throw new Error('Foxy: Invalid Squarespace product page JSON');
-        }
-      } catch (error) {
-        console.error(error);
-        alert(
-          'Something went wrong. Please refresh the page and try again. If the issue persists, please contact the store.'
-        );
-      }
+      sqsPageJson = await fetchSqsPageJson(window.location.href);
     }
+
+    const addOnCardEls = document.querySelectorAll('.add-on-card');
+    const addOnData = await Promise.all(
+      [...addOnCardEls].map((el) =>
+        fetchSqsPageJson(el.querySelector('.add-on-thumbnail-link').href)
+      )
+    );
 
     sqsBtns.forEach((sqsBtn) => {
       // Clone and replace Squarespace add-to-cart button
@@ -69,7 +62,9 @@ FC.onLoad = function () {
           ? 'main' // Main button on product page
           : btn.closest('.product-block')
             ? 'product-block' // One of the buttons inside of a product block
-            : '';
+            : btn.closest('.add-on-card')
+              ? 'add-on' // Add-on on product page
+              : '';
 
         // Retrieve product info from page elements by button location
         let cartUrl;
@@ -170,7 +165,7 @@ FC.onLoad = function () {
               productUrl
             )}&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
               sku
-            )}&weight=${weight}&height=${height}&length=${len}&width=${width}&variant_id=${variantId}&${new URLSearchParams(Object.entries(productOptions)).toString()}${subParams}`;
+            )}&weight=${weight}&height=${height}&length=${len}&width=${width}&variant_id=${variantId}&${new URLSearchParams(productOptions)}${subParams}`;
 
             break;
           }
@@ -251,7 +246,91 @@ FC.onLoad = function () {
               productUrl
             )}&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
               sku
-            )}&variant_id=${variantId}&${new URLSearchParams(Object.entries(productOptions)).toString()}${subParams}`;
+            )}&variant_id=${variantId}&${new URLSearchParams(productOptions)}${subParams}`;
+
+            break;
+          }
+
+          // Add-on on product page
+          case 'add-on': {
+            const addOnCardEl = btn.closest('.add-on-card');
+            const name = addOnCardEl.querySelector('.add-on-title').textContent;
+            const addOnJson = addOnData.find(
+              (addOn) => addOn.item.title === name
+            );
+            const variantData = addOnJson?.item?.variants;
+
+            if (!name || !addOnJson || !variantData) {
+              console.error('Foxy: Missing product name or variant data');
+              alert('Unable to add this product to cart');
+              return;
+            }
+
+            const image = addOnJson.item.items[0]?.assetUrl || '';
+            const category =
+              new DOMParser()
+                .parseFromString(addOnJson.item.body, 'text/html')
+                .querySelector('input[name="foxy-category"]')?.value ||
+              (foxyConfig.useSquarespaceCategory
+                ? addOnJson.nestedCategories?.itemCategories[0]?.shortSlug
+                : '') ||
+              '';
+            const productUrl = addOnCardEl.querySelector(
+              '.add-on-thumbnail-link'
+            ).href;
+
+            const productOptions = {};
+            const productOptionEls =
+              addOnCardEl.querySelectorAll('.variant-option');
+            for (const productOptionEl of productOptionEls) {
+              const optionName = productOptionEl.dataset.variantOptionName;
+              const optionValue =
+                productOptionEl.querySelector('.variant-select').value;
+
+              if (!optionName || !optionValue) {
+                console.error('Foxy: Invalid product option name or value');
+                alert('Please choose an option for all fields');
+                return;
+              }
+
+              productOptions[optionName] = optionValue;
+            }
+
+            const selectedVariant = getSelectedVariant(
+              variantData,
+              productOptions
+            );
+            if (!selectedVariant) {
+              console.error('Foxy: Cannot find a matching selected variant');
+              alert('Unable to add this product to cart');
+              return;
+            }
+
+            const stock = selectedVariant.unlimited
+              ? ''
+              : selectedVariant.qtyInStock;
+            if (stock === 0) {
+              console.error('Foxy: No stock available');
+              alert('This product is out of stock');
+              return;
+            }
+
+            const price = selectedVariant.onSale
+              ? selectedVariant.salePriceMoney.value
+              : selectedVariant.priceMoney.value;
+            const { sku, id: variantId } = selectedVariant;
+            const weight = selectedVariant.weight ?? '';
+            const { height = '', len = '', width = '' } = selectedVariant;
+
+            cartUrl = `https://${FC.settings.storedomain}/cart?name=${encodeURIComponent(
+              name
+            )}&image=${encodeURIComponent(
+              image
+            )}&category=${encodeURIComponent(category)}&url=${encodeURIComponent(
+              productUrl
+            )}&price=${price}&quantity_max=${stock}&code=${encodeURIComponent(
+              sku
+            )}&weight=${weight}&height=${height}&length=${len}&width=${width}&variant_id=${variantId}&${new URLSearchParams(productOptions)}`;
 
             break;
           }
@@ -304,6 +383,25 @@ FC.onLoad = function () {
           ? `&sub_enddate=${subscriptionPlan.numBillingCycles * subFrequencyNum}${subFrequencyUnit}`
           : '')
       );
+    }
+
+    async function fetchSqsPageJson(pageUrl) {
+      try {
+        const fetchUrl = new URL(pageUrl);
+        fetchUrl.searchParams.set('format', 'json');
+        const response = await fetch(fetchUrl);
+
+        if (!response.ok) {
+          throw new Error('Foxy: Failed to fetch Squarespace page JSON');
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error(error);
+        alert(
+          'Something went wrong. Please refresh the page and try again. If the issue persists, please contact the store.'
+        );
+      }
     }
   });
 };
