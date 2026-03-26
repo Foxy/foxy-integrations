@@ -27,8 +27,6 @@
   --foxy-font-weight-semi:                 600;                      /* Semi-bold for headings             */
   --foxy-font-weight-bold:                 700;                      /* Bold for totals and emphasis       */
  
- 
- 
   /* =========================================== */
   /* 2. PAGE                                     */
   /* The background color and text colors         */
@@ -400,6 +398,7 @@
 [data-fc-sidecart] #fc .fc-sidebar,
 [data-fc-sidecart] #fc {
   background-color: var(--foxy-card-background);
+  background: var(--foxy-card-background);
 }
  
 [data-fc-sidecart] #fc .fc-btn-action,
