@@ -393,10 +393,9 @@
 /* Sidecart                                */
 /* ======================================= */
  
-[data-fc-sidecart],
 [data-fc-sidecart] #fc-cart,
 [data-fc-sidecart] #fc .fc-sidebar,
-#fc {
+[data-fc-sidecart] #fc {
   background-color: var(--foxy-card-background);
   background: var(--foxy-card-background);
 }
