@@ -400,12 +400,13 @@
  
 [data-fc-sidecart],
 [data-fc-sidecart] #fc-cart,
-[data-fc-sidecart] #fc .fc-sidebar {
+[data-fc-sidecart] #fc .fc-sidebar,
+[data-fc-sidecart] #fc {
   background-color: var(--foxy-card-background);
 }
  
 [data-fc-sidecart] #fc .fc-btn-action,
-[data-fc-sidecart] #fc .fc-action--checkout--button {
+[data-fc-sidecart] #fc .fc-action--checkout--button { 
   text-transform: uppercase;
   font-size: 13px;
   font-weight: var(--foxy-font-weight-semi);
@@ -488,6 +489,10 @@
 [data-fc-sidecart] #fc .fc-action--checkout--button .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
   margin-right: 3px;
+}
+
+#fc .fc-input-group-container--active{
+  background: var(--foxy-page-background);
 }
  
  
@@ -941,6 +946,10 @@
   color: var(--foxy-page-text) !important;
   background: var(--foxy-card-background);
   cursor: pointer;
+}
+
+#fc .fc-foxycomplete-list .active {
+  background-color: var(--foxy-card-border);
 }
  
 #fc .fc-foxycomplete-list li:first-child {
