@@ -396,7 +396,7 @@
 [data-fc-sidecart],
 [data-fc-sidecart] #fc-cart,
 [data-fc-sidecart] #fc .fc-sidebar,
-[data-fc-sidecart] #fc {
+#fc {
   background-color: var(--foxy-card-background);
   background: var(--foxy-card-background);
 }
