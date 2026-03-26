@@ -36,8 +36,7 @@
  
   --foxy-page-background:                  #f8f8f8;  /* The color behind everything        */
   --foxy-page-text:                        #000000;  /* Body text, labels, and values        */
-  --foxy-page-text-secondary:              #666666;  /* Smaller labels and helper text       */
-  --foxy-page-text-light:                  #999999;  /* "Remove" links and placeholders      */
+  --foxy-page-text-secondary:              #666666;  /* Helper text, field labels, "Remove" links */
   --foxy-page-heading-color:               #000000;  /* Color of all headings and titles     */
   --foxy-radius:                           5px;                      /* Rounded corners on everything      */
   --foxy-max-width:                        1200px;                   /* Maximum page width                 */
@@ -51,8 +50,6 @@
  
   --foxy-card-background:                  #ffffff;  /* Card panel color                    */
   --foxy-card-border:                      #eeeeee;  /* Divider lines between items          */
-  --foxy-card-border-strong:               #cccccc;  /* Stronger borders (payment section)   */
- 
  
   /* =========================================== */
   /* 4. PRIMARY BUTTON                           */
@@ -279,7 +276,7 @@
 }
  
 #fc .fc-cart__item__remove a {
-  color: var(--foxy-page-text-light) !important;
+  color: var(--foxy-page-text-secondary) !important;
   font-size: 12px;
 }
  
@@ -490,7 +487,7 @@
   fill: var(--foxy-icon-color-on-button);
   margin-right: 3px;
 }
-
+ 
 #fc .fc-input-group-container--active{
   background: var(--foxy-page-background);
 }
@@ -819,7 +816,7 @@
 }
  
 #fc .fc-checkout .fc-cart__item__remove a {
-  color: var(--foxy-page-text-light) !important;
+  color: var(--foxy-page-text-secondary) !important;
   font-size: 12px;
 }
  
@@ -947,7 +944,7 @@
   background: var(--foxy-card-background);
   cursor: pointer;
 }
-
+ 
 #fc .fc-foxycomplete-list .active {
   background-color: var(--foxy-card-border);
 }
@@ -1044,7 +1041,7 @@
 /* ======================================= */
  
 #fc .fc-checkout .fc-input-group-container--active {
-  border: 1px solid var(--foxy-card-border-strong);
+  border: 1px solid var(--foxy-card-border);
   border-radius: var(--foxy-radius);
   background: var(--foxy-card-background);
 }
