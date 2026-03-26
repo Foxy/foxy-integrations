@@ -1,5 +1,5 @@
 /* ======================================= */
-/* FoxyThreads – Combined Template         */
+/* Foxy – Combined Template         */
 /* Overrides for Sidecart, Checkout,       */
 /* Full-Page Cart, and Receipt             */
 /* ======================================= */
@@ -15,25 +15,25 @@
 /* ============================================================= */
 
 #fc {
-
+ 
   /* =========================================== */
   /* 1. FONTS                                   */
   /* The typeface                                */
   /* =========================================== */
-
+ 
   --foxy-font-body:                        "Open Sans", sans-serif;  /* Main text font                    */
   --foxy-font-heading:                     "Open Sans", sans-serif;  /* Headings and titles                */
   --foxy-font-weight-normal:               400;                      /* Regular text weight                */
   --foxy-font-weight-semi:                 600;                      /* Semi-bold for headings             */
   --foxy-font-weight-bold:                 700;                      /* Bold for totals and emphasis       */
-
-
-
+ 
+ 
+ 
   /* =========================================== */
   /* 2. PAGE                                     */
   /* The background color and text colors         */
   /* =========================================== */
-
+ 
   --foxy-page-background:                  #f8f8f8;  /* The color behind everything        */
   --foxy-page-text:                        #000000;  /* Body text, labels, and values        */
   --foxy-page-text-secondary:              #666666;  /* Smaller labels and helper text       */
@@ -41,185 +41,187 @@
   --foxy-page-heading-color:               #000000;  /* Color of all headings and titles     */
   --foxy-radius:                           5px;                      /* Rounded corners on everything      */
   --foxy-max-width:                        1200px;                   /* Maximum page width                 */
-
-
+ 
+ 
   /* =========================================== */
   /* 3. CARDS                                    */
   /* The white panels that hold content           */
   /* (checkout form, sidebar, receipt sections)   */
   /* =========================================== */
-
+ 
   --foxy-card-background:                  #ffffff;  /* Card panel color                    */
   --foxy-card-border:                      #eeeeee;  /* Divider lines between items          */
   --foxy-card-border-strong:               #cccccc;  /* Stronger borders (payment section)   */
-
-
+ 
+ 
   /* =========================================== */
   /* 4. PRIMARY BUTTON                           */
   /* The main action buttons — "Checkout",       */
   /* "Submit Order", "Go!"                       */
   /* =========================================== */
-
+ 
   --foxy-button-primary-background:        #3d9c9e;  /* Button fill color                   */
   --foxy-button-primary-label:             #ffffff;  /* Text on the button                  */
   --foxy-button-primary-border:            #3d9c9e;  /* Border around the button             */
-  --foxy-button-primary-hover:             #217f81;  /* Color when you hover over it         */
+  --foxy-button-primary-hover-background:  #217f81;  /* Background on hover                 */
+  --foxy-button-primary-hover-label:       #ffffff;  /* Text on hover                       */
+  --foxy-button-primary-hover-border:      #217f81;  /* Border on hover                     */
   --foxy-button-height:                    40px;     /* Height action buttons                */
-
+ 
   /* =========================================== */
   /* 5. SECONDARY BUTTON                         */
   /* Outline buttons — "Continue Shopping",      */
   /* "Print This Page"                           */
   /* =========================================== */
-
+ 
   --foxy-button-secondary-background:      transparent;  /* See-through by default          */
   --foxy-button-secondary-label:           #000000;  /* Text on the button                  */
   --foxy-button-secondary-border:          #000000;  /* Outline border color                 */
   --foxy-button-secondary-hover-background:#3d9c9e;  /* Fills in on hover                   */
   --foxy-button-secondary-hover-label:     #ffffff;  /* Text turns white on hover            */
   --foxy-button-secondary-hover-border:    #3d9c9e;  /* Border matches fill on hover         */
-
-
+ 
+ 
   /* =========================================== */
   /* 6. TEXT FIELDS                               */
   /* The boxes where customers type               */
   /* (name, email, postal code, quantity)         */
   /* =========================================== */
-
+ 
   --foxy-input-background:                 #ffffff;  /* Inside the text box                 */
   --foxy-input-text:                       #000000;  /* What customers type                 */
   --foxy-input-border:                     #000000;  /* Border around the box                */
   --foxy-input-focus:                      #3d9c9e;  /* Border color when clicked into       */
   --foxy-input-highlight:                  0 0 0 2px color-mix(in srgb, var(--foxy-input-focus) 15%, transparent);  /* Glow when clicked into */
-
-
+ 
+ 
   /* =========================================== */
   /* 7. LINKS                                    */
   /* Clickable text throughout the store          */
   /* =========================================== */
-
+ 
   --foxy-link-color:                       #3d9c9e;  /* Link color                          */
   --foxy-link-hover:                       #217f81;  /* Link color when hovered              */
-
-
+ 
+ 
   /* =========================================== */
   /* 8. ALERTS & MESSAGES                        */
   /* Banners that appear after actions            */
   /* =========================================== */
-
+ 
   /* Success — "Thank you for your order" */
   --foxy-success-background:               #e8f5e9;  /* Green tinted background              */
   --foxy-success-border:                   #c8e6c9;  /* Green border                        */
   --foxy-success-text:                     #2e7d32;  /* Green text                          */
-
+ 
   /* Warning — "Your card is expiring" */
   --foxy-warning-background:               #fff8e1;  /* Yellow tinted background             */
   --foxy-warning-border:                   #ffecb3;  /* Yellow border                       */
   --foxy-warning-text:                     #e65100;  /* Orange text                         */
-
+ 
   /* Info — "Session expired, please try again" */
   --foxy-info-background:                  #e3f2fd;  /* Blue tinted background               */
   --foxy-info-border:                      #bbdefb;  /* Blue border                         */
   --foxy-info-text:                        #0d47a1;  /* Blue text                           */
-
+ 
   /* Error — "Please fix these fields" */
   --foxy-danger-background:                #fdecea;  /* Red tinted background                */
   --foxy-danger-border:                    #f5c6cb;  /* Red border                          */
   --foxy-danger-text:                      #b71c1c;  /* Red text                            */
-
-
+ 
+ 
   /* =========================================== */
   /* 9. EXTRAS                                   */
   /* Discount colors, icons, and highlights       */
   /* =========================================== */
-
+ 
   --foxy-discount-color:                   #3d9c9e;  /* Coupon and gift card text            */
   --foxy-icon-color:                       #000000;  /* Arrow and lock icons                 */
   --foxy-icon-color-on-button:             #ffffff;  /* Icons inside filled buttons          */
   --foxy-button-highlight:                 0 0 0 3px color-mix(in srgb, var(--foxy-input-focus) 35%, transparent);  /* Glow around buttons when tabbed to */
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Global                                  */
 /* ======================================= */
-
+ 
 #fc * {
   font-family: var(--foxy-font-body) !important;
   color: var(--foxy-page-text) !important;
 }
-
+ 
 #fc body {
   background: var(--foxy-page-background) !important;
 }
-
+ 
 #fc h1, #fc h2, #fc h3, #fc h4, #fc h5, #fc h6 {
   font-family: var(--foxy-font-heading) !important;
   color: var(--foxy-page-heading-color) !important;
   text-shadow: none;
 }
-
+ 
 #fc .fc-svg-icon {
   fill: var(--foxy-icon-color);
 }
-
+ 
 #fc a .fc-svg-icon {
   transition: fill 0.2s ease;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Common HTML Elements                    */
 /* Catch-all for native elements inside    */
 /* the Foxy container so new elements      */
 /* inherit the theme automatically.        */
 /* ======================================= */
-
+ 
 #fc select,
 #fc option {
   background: var(--foxy-input-background);
   color: var(--foxy-input-text) !important;
 }
-
+ 
 #fc ul, #fc ol {
   background: var(--foxy-card-background);
 }
-
+ 
 #fc li {
   color: var(--foxy-page-text) !important;
 }
-
+ 
 #fc table, #fc th, #fc td {
   border-color: var(--foxy-card-border);
 }
-
+ 
 #fc textarea {
   background: var(--foxy-input-background);
   color: var(--foxy-input-text) !important;
   border-color: var(--foxy-input-border);
 }
-
+ 
 #fc a:hover .fc-svg-icon {
   fill: var(--foxy-link-hover);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Shared - Headings & Text                */
 /* ======================================= */
-
+ 
 #fc .fc-cart__title__header {
   font-family: var(--foxy-font-heading) !important;
   font-size: 1.5em;
   font-weight: var(--foxy-font-weight-semi);
   margin-bottom: 3px;
 }
-
+ 
 #fc .fc-order-quantity {
   font-size: 16px;
   font-weight: var(--foxy-font-weight-normal);
 }
-
+ 
 #fc .fc-transaction__header {
   font-family: var(--foxy-font-heading) !important;
   font-size: 1.5em;
@@ -227,33 +229,33 @@
   color: var(--foxy-page-heading-color) !important;
   text-shadow: none;
 }
-
+ 
 #fc .fc-section-counter {
   display: none !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Shared - Cart Items                     */
 /* ======================================= */
-
+ 
 #fc .fc-cart__item__image {
   margin-left: 0;
 }
-
+ 
 #fc .fc-cart__item__image span {
   border: 1px solid var(--foxy-card-border);
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-cart__item__name {
   font-weight: var(--foxy-font-weight-semi);
 }
-
+ 
 #fc .fc-cart__item__options {
   margin-left: 0;
 }
-
+ 
 #fc .fc-cart__item__quantity .fc-form-control {
   background: var(--foxy-input-background);
   border: 1px solid var(--foxy-input-border);
@@ -261,30 +263,30 @@
   box-shadow: none;
   transition: border-color 0.2s ease;
 }
-
+ 
 #fc .fc-cart__item__quantity .fc-form-control:focus {
   border-color: var(--foxy-input-focus);
   outline: none;
   box-shadow: var(--foxy-input-highlight);
 }
-
+ 
 #fc .fc-cart__item__total {
   margin-bottom: 0 !important;
 }
-
+ 
 #fc .fc-cart__item__price {
   margin-bottom: 10px !important;
 }
-
+ 
 #fc .fc-cart__item__remove a {
   color: var(--foxy-page-text-light) !important;
   font-size: 12px;
 }
-
+ 
 #fc .fc-cart__item__remove a:hover {
   color: var(--foxy-link-color) !important;
 }
-
+ 
 #fc .fc-cart__items__header {
   background: var(--foxy-card-background);
   border-bottom: 1px solid var(--foxy-card-border);
@@ -292,35 +294,35 @@
   border-radius: 0;
   text-shadow: none;
 }
-
+ 
 #fc .fc-cart__item {
   border-bottom: 1px solid var(--foxy-card-border);
 }
-
+ 
 #fc .fc-cart__item:last-child,
 #fc .fc-cart__item--last {
   border-bottom: none;
 }
-
+ 
 #fc #fc-cart--fixed-width .fc-cart__items--with-images .fc-cart__item__details {
   width: auto;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Shared - Order Summary / Totals         */
 /* ======================================= */
-
+ 
 #fc .fc-subtotal__label,
 #fc .fc-subtotal__label h5 {
   color: var(--foxy-page-text) !important;
   text-shadow: none;
 }
-
+ 
 #fc .fc-subtotal__value {
   color: var(--foxy-page-text) !important;
 }
-
+ 
 #fc .fc-transaction__total .fc-subtotal__label,
 #fc .fc-transaction__total .fc-subtotal__label h5,
 #fc .fc-transaction__total .fc-subtotal__value {
@@ -328,80 +330,80 @@
   font-size: 16px;
   color: var(--foxy-page-text) !important;
 }
-
+ 
 #fc .fc-transaction__section {
   background: none;
 }
-
+ 
 #fc .fc-transaction {
   background: none;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Shared - Alerts                         */
 /* ======================================= */
-
+ 
 #fc .fc-alert {
   text-shadow: none;
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-alert--success {
   background-color: var(--foxy-success-background);
   border-color: var(--foxy-success-border);
   color: var(--foxy-success-text) !important;
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-alert--success * {
   color: var(--foxy-success-text) !important;
 }
-
+ 
 #fc .fc-alert--warning {
   background-color: var(--foxy-warning-background);
   border-color: var(--foxy-warning-border);
   color: var(--foxy-warning-text) !important;
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-alert--warning * {
   color: var(--foxy-warning-text) !important;
 }
-
+ 
 #fc .fc-alert--info {
   background-color: var(--foxy-info-background);
   border-color: var(--foxy-info-border);
   color: var(--foxy-info-text) !important;
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-alert--info * {
   color: var(--foxy-info-text) !important;
 }
-
+ 
 #fc .fc-alert--danger {
   background-color: var(--foxy-danger-background);
   border-color: var(--foxy-danger-border);
   color: var(--foxy-danger-text) !important;
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-alert--danger * {
   color: var(--foxy-danger-text) !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Sidecart                                */
 /* ======================================= */
-
+ 
 [data-fc-sidecart],
 [data-fc-sidecart] #fc-cart,
 [data-fc-sidecart] #fc .fc-sidebar {
   background-color: var(--foxy-card-background);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-btn-action,
 [data-fc-sidecart] #fc .fc-action--checkout--button {
   text-transform: uppercase;
@@ -411,107 +413,107 @@
   text-shadow: none;
   height: var(--foxy-button-height);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-left,
 [data-fc-sidecart] #fc .fc-fixed-button-right {
   padding: 10px;
   height: auto;
   background: var(--foxy-card-background);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-left {
   padding-right: 5px;
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-left .fc-btn-action {
   background: var(--foxy-button-secondary-background);
   border: 1px solid var(--foxy-button-secondary-border);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-left .fc-btn-action:hover {
   background: var(--foxy-button-secondary-hover-background);
   color: var(--foxy-button-secondary-hover-label) !important;
   border: 1px solid var(--foxy-button-secondary-hover-border);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-left .fc-btn-action .fc-svg-icon {
   fill: var(--foxy-icon-color);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-left .fc-btn-action:hover .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-right {
   padding-left: 5px;
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-right .fc-btn-action {
   background: var(--foxy-button-primary-background);
   color: var(--foxy-button-primary-label) !important;
   border: 1px solid var(--foxy-button-primary-border);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-right .fc-btn-action:hover {
-  background: var(--foxy-button-primary-hover);
-  color: var(--foxy-button-primary-label) !important;
-  border: 1px solid var(--foxy-button-primary-hover);
+  background: var(--foxy-button-primary-hover-background);
+  color: var(--foxy-button-primary-hover-label) !important;
+  border: 1px solid var(--foxy-button-primary-hover-border);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-fixed-button-right .fc-btn-action .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-sidebar--cart .fc-actions--payment .fc-action--payment--checkout {
   margin-bottom: 0 !important;
 }
-
+ 
 [data-fc-sidecart] #fc .fc-sidebar--cart .fc-actions--payment {
   padding: 10px;
 }
-
+ 
 [data-fc-sidecart] #fc .fc-action--checkout--button {
   background: var(--foxy-button-primary-background);
   color: var(--foxy-button-primary-label) !important;
   border: 1px solid var(--foxy-button-primary-border);
   width: 100%;
 }
-
+ 
 [data-fc-sidecart] #fc .fc-action--checkout--button:hover {
-  background: var(--foxy-button-primary-hover);
-  color: var(--foxy-button-primary-label) !important;
-  border: 1px solid var(--foxy-button-primary-hover);
+  background: var(--foxy-button-primary-hover-background);
+  color: var(--foxy-button-primary-hover-label) !important;
+  border: 1px solid var(--foxy-button-primary-hover-border);
 }
-
+ 
 [data-fc-sidecart] #fc .fc-action--checkout--button .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
   margin-right: 3px;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Layout                 */
 /* ======================================= */
-
+ 
 #fc .fc-cart__main {
   background: var(--foxy-card-background);
   border: 0;
   box-shadow: none;
 }
-
+ 
 #fc .fc-sidebar {
   background: var(--foxy-card-background);
 }
-
+ 
 #fc .fc-sidebar--cart {
   background: var(--foxy-card-background);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Continue Shopping       */
 /* ======================================= */
-
+ 
 #fc .fc-button--cancel {
   display: inline-block;
   background: var(--foxy-button-secondary-background);
@@ -525,31 +527,31 @@
   text-shadow: none;
   line-height: 24px;
 }
-
+ 
 #fc .fc-button--cancel:hover {
   background: var(--foxy-button-secondary-hover-background);
   color: var(--foxy-button-secondary-hover-label) !important;
   border-color: var(--foxy-button-secondary-hover-border);
 }
-
+ 
 #fc .fc-button--cancel:focus {
   outline: none;
   box-shadow: var(--foxy-button-highlight);
 }
-
+ 
 #fc .fc-button--cancel .fc-svg-icon {
   fill: var(--foxy-icon-color);
 }
-
+ 
 #fc .fc-button--cancel:hover .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Proceed to Checkout    */
 /* ======================================= */
-
+ 
 #fc .fc-actions--payment .fc-action--checkout--button,
 #fc .fc-action--checkout--button {
   background: var(--foxy-button-primary-background);
@@ -562,48 +564,48 @@
   text-shadow: none;
   padding: 12px 24px;
 }
-
+ 
 #fc .fc-actions--payment .fc-action--checkout--button:hover,
 #fc .fc-action--checkout--button:hover {
-  background: var(--foxy-button-primary-hover);
-  color: var(--foxy-button-primary-label) !important;
-  border-color: var(--foxy-button-primary-hover);
+  background: var(--foxy-button-primary-hover-background);
+  color: var(--foxy-button-primary-hover-label) !important;
+  border-color: var(--foxy-button-primary-hover-border);
 }
-
+ 
 #fc .fc-actions--payment .fc-action--checkout--button:focus,
 #fc .fc-action--checkout--button:focus {
   outline: none;
   box-shadow: var(--foxy-button-highlight);
 }
-
+ 
 #fc .fc-actions--payment .fc-action--checkout--button .fc-svg-icon,
 #fc .fc-action--checkout--button .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
   margin-right: 3px;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Sidebar Headings       */
 /* ======================================= */
-
+ 
 #fc .fc-sidebar h4 {
   font-family: var(--foxy-font-heading) !important;
   color: var(--foxy-page-heading-color) !important;
   text-shadow: none;
   font-weight: var(--foxy-font-weight-semi);
 }
-
+ 
 #fc .fc-sidebar h5 {
   color: var(--foxy-page-heading-color) !important;
   text-shadow: none;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Sidebar Form Controls  */
 /* ======================================= */
-
+ 
 #fc .fc-sidebar .fc-form-control {
   border: 1px solid var(--foxy-input-border);
   border-radius: var(--foxy-radius);
@@ -611,18 +613,18 @@
   box-shadow: none;
   transition: border-color 0.2s ease;
 }
-
+ 
 #fc .fc-sidebar .fc-form-control:focus {
   border-color: var(--foxy-input-focus);
   outline: none;
   box-shadow: var(--foxy-input-highlight);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Sidebar "Go!" Button   */
 /* ======================================= */
-
+ 
 #fc .fc-sidebar .fc-button,
 #fc .fc-sidebar button[data-fc-id="submit-shipping-postal-code"] {
   background: var(--foxy-button-primary-background);
@@ -634,58 +636,58 @@
   font-weight: var(--foxy-font-weight-semi);
   text-shadow: none;
 }
-
+ 
 #fc .fc-sidebar .fc-button:hover,
 #fc .fc-sidebar button[data-fc-id="submit-shipping-postal-code"]:hover {
-  background: var(--foxy-button-primary-hover);
-  color: var(--foxy-button-primary-label) !important;
-  border-color: var(--foxy-button-primary-hover);
+  background: var(--foxy-button-primary-hover-background);
+  color: var(--foxy-button-primary-hover-label) !important;
+  border-color: var(--foxy-button-primary-hover-border);
 }
-
+ 
 #fc .fc-sidebar .fc-button:focus,
 #fc .fc-sidebar button[data-fc-id="submit-shipping-postal-code"]:focus {
   outline: none;
   box-shadow: var(--foxy-button-highlight);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Sidebar Links          */
 /* ======================================= */
-
+ 
 #fc .fc-sidebar a {
   color: var(--foxy-link-color) !important;
 }
-
+ 
 #fc .fc-sidebar a:hover {
   color: var(--foxy-link-hover) !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Sidebar Section Borders*/
 /* ======================================= */
-
+ 
 #fc .fc-sidebar--cart .fc-transaction,
 #fc .fc-sidebar--cart .fc-address-entry {
   border-bottom-color: var(--foxy-card-border);
 }
-
+ 
 #fc .fc-sidebar--cart .fc-address-entry,
 #fc .fc-sidebar--cart .fc-actions--payment {
   border-top-color: var(--foxy-card-border);
 }
-
+ 
 #fc .fc-transaction__shipping-address {
   border: 1px solid var(--foxy-card-border);
   border-radius: var(--foxy-radius);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Coupon Entry           */
 /* ======================================= */
-
+ 
 #fc .fc-coupon-entry--input .fc-form-control {
   border: 1px solid var(--foxy-input-border);
   border-radius: var(--foxy-radius) 0 0 var(--foxy-radius);
@@ -693,36 +695,36 @@
   box-shadow: none;
   transition: border-color 0.2s ease;
 }
-
+ 
 #fc .fc-coupon-entry--input .fc-form-control:focus {
   border-color: var(--foxy-input-focus);
   outline: none;
   box-shadow: var(--foxy-input-highlight);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Discount Colors        */
 /* ======================================= */
-
+ 
 #fc .fc-transaction__discounts .fc-subtotal--row .fc-subtotal__label,
 #fc .fc-transaction__discounts .fc-subtotal--row .fc-subtotal__value {
   color: var(--foxy-discount-color) !important;
 }
-
+ 
 #fc .fc-transaction__discounts .fc-svg-icon {
   fill: var(--foxy-discount-color);
 }
-
+ 
 #fc .fc-transaction__discounts a:hover .fc-svg-icon {
   fill: var(--foxy-link-hover);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Full-Page Cart - Responsive             */
 /* ======================================= */
-
+ 
 @media (max-width: 767px) {
   #fc .fc-context--cart-fullpage .fc-cart__main__content,
   #fc .fc-context--cart-fullpage .fc-sidebar--cart {
@@ -730,8 +732,8 @@
     padding-right: 1em;
   }
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Layout (Two-Panel Cards)     */
 /* Main form and sidebar as separate       */
@@ -739,39 +741,39 @@
 /* Override Bootstrap 3 column widths so   */
 /* they don't total 100%, creating a gap.  */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-container {
   max-width: var(--foxy-max-width);
 }
-
+ 
 #fc #fc-checkout-container {
   background: transparent !important;
   border: 0;
   border-radius: 0;
 }
-
+ 
 #fc .fc-checkout__main__contents {
   padding-top: 50px;
   background: var(--foxy-card-background);
   border-radius: var(--foxy-radius);
   overflow: hidden;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Sidebar (separate card)      */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-sidebar--checkout {
   background: var(--foxy-card-background);
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-checkout .fc-sidebar--checkout .fc-logo__image {
   max-width: 80%;
   margin: 0 auto 10px auto;
 }
-
+ 
 #fc .fc-checkout .fc-button--cancel {
   display: inline-block;
   background: var(--foxy-button-secondary-background);
@@ -785,72 +787,72 @@
   text-shadow: none;
   line-height: 24px;
 }
-
+ 
 #fc .fc-checkout .fc-button--cancel:hover {
   background: var(--foxy-button-secondary-hover-background);
   color: var(--foxy-button-secondary-hover-label) !important;
   border-color: var(--foxy-button-secondary-hover-border);
 }
-
+ 
 #fc .fc-checkout .fc-button--cancel:focus {
   outline: none;
   box-shadow: var(--foxy-button-highlight);
 }
-
+ 
 #fc .fc-checkout .fc-button--cancel .fc-svg-icon {
   fill: var(--foxy-icon-color);
 }
-
+ 
 #fc .fc-checkout .fc-button--cancel:hover .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
 }
-
+ 
 #fc .fc-checkout .fc-cart__item__quantity .fc-form-control {
   border: 1px solid var(--foxy-input-border) !important;
   border-radius: var(--foxy-radius);
   background: var(--foxy-input-background);
 }
-
+ 
 #fc .fc-checkout .fc-cart__item__remove a {
   color: var(--foxy-page-text-light) !important;
   font-size: 12px;
 }
-
+ 
 #fc .fc-checkout .fc-cart__item__remove a:hover {
   color: var(--foxy-link-color) !important;
 }
-
+ 
 #fc .fc-checkout .fc-sidebar--cart {
   background: var(--foxy-card-background);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Stack Form                   */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-container__grid--label--name,
 #fc .fc-checkout .fc-container__grid--label--address {
   display: none;
 }
-
+ 
 @media (min-width: 768px) {
   #fc #fc-main .fc-form-group--multiple-inline .fc-container__grid--input--first-name,
   #fc #fc-main .fc-form-group--multiple-inline .fc-container__grid--input--last-name {
     width: 50% !important;
   }
-
+ 
   #fc #fc-main .fc-address-entry__phone-and-company-container .fc-container__grid--input--company,
   #fc #fc-main .fc-address-entry__phone-and-company-container .fc-container__grid--input--phone {
     width: 50% !important;
     float: left !important;
   }
-
+ 
   #fc #fc-main .fc-address-entry__address-container .fc-container__grid--input--address1,
   #fc #fc-main .fc-address-entry__address-container .fc-container__grid--label--address2 {
     width: 50% !important;
   }
-
+ 
   #fc #fc-main .fc-container__grid--input--tax-id,
   #fc #fc-main .fc-container__grid--input--customer-email,
   #fc #fc-main .fc-container__grid--input--plastic-new-card-number,
@@ -867,26 +869,26 @@
     width: 100% !important;
   }
 }
-
+ 
 #fc .fc-shipping-rates .fc-input-group--full-page {
   margin-left: 0 !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Fieldsets                    */
 /* ======================================= */
-
+ 
 #fc .fc-checkout fieldset {
   border: none;
   margin: 0;
   padding: 15px 0;
 }
-
+ 
 #fc .fc-checkout fieldset:last-child {
   border-bottom: none;
 }
-
+ 
 #fc .fc-checkout fieldset legend {
   font-family: var(--foxy-font-heading) !important;
   font-size: 1.5em;
@@ -895,66 +897,66 @@
   margin-bottom: 15px;
   width: 100%;
 }
-
+ 
 #fc .fc-checkout .fc-section-counter {
   background: var(--foxy-page-text);
   color: var(--foxy-button-primary-label) !important;
 }
-
+ 
 #fc .fc-checkout #fc-checkout__section--email #customer_email {
   border-top-left-radius: var(--foxy-radius);
   border-bottom-left-radius: var(--foxy-radius);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Form Controls                */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-form-control {
   border: 1px solid var(--foxy-input-border);
   border-radius: var(--foxy-radius);
   background: var(--foxy-input-background);
   transition: border-color 0.2s ease;
 }
-
+ 
 #fc .fc-checkout .fc-form-control:focus {
   border-color: var(--foxy-input-focus);
   outline: none;
   box-shadow: var(--foxy-input-highlight);
 }
-
+ 
 #fc .fc-checkout .awesomecomplete-input:focus {
   border-color: var(--foxy-input-focus) !important;
 }
-
+ 
 #fc .fc-foxycomplete-list {
   background-color: var(--foxy-card-background);
   border: 1px solid var(--foxy-input-border);
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-foxycomplete-list li {
   border-top: 1px solid var(--foxy-card-border);
   color: var(--foxy-page-text) !important;
   background: var(--foxy-card-background);
   cursor: pointer;
 }
-
+ 
 #fc .fc-foxycomplete-list li:first-child {
   border-top: none;
 }
-
+ 
 #fc .fc-foxycomplete-list li:hover,
 #fc .fc-foxycomplete-list li.selected {
   background: var(--foxy-page-background);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Buttons                      */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-button--check-email,
 #fc .fc-checkout button[data-fc-id="submit-shipping-postal-code"],
 #fc .fc-checkout button[data-fc-id="submit-billing-postal-code"],
@@ -969,15 +971,15 @@
   text-shadow: none;
   height: var(--foxy-button-height);
 }
-
+ 
 #fc .fc-checkout .fc-button--check-email:hover,
 #fc .fc-checkout button[data-fc-id="submit-shipping-postal-code"]:hover,
 #fc .fc-checkout .fc-button--sign-in:hover {
-  background: var(--foxy-button-primary-hover);
-  color: var(--foxy-button-primary-label) !important;
-  border-color: var(--foxy-button-primary-hover);
+  background: var(--foxy-button-primary-hover-background);
+  color: var(--foxy-button-primary-hover-label) !important;
+  border-color: var(--foxy-button-primary-hover-border);
 }
-
+ 
 #fc .fc-checkout .fc-button--check-email:focus,
 #fc .fc-checkout button[data-fc-id="submit-shipping-postal-code"]:focus,
 #fc .fc-checkout button[data-fc-id="submit-billing-postal-code"]:focus,
@@ -985,7 +987,7 @@
   outline: none;
   box-shadow: var(--foxy-button-highlight);
 }
-
+ 
 #fc .fc-checkout .fc-button--submit {
   background: var(--foxy-button-primary-background);
   color: var(--foxy-button-primary-label) !important;
@@ -998,104 +1000,104 @@
   padding: 12px 24px;
   width: 100%;
 }
-
+ 
 #fc .fc-checkout .fc-button--submit:hover {
-  background: var(--foxy-button-primary-hover);
-  color: var(--foxy-button-primary-label) !important;
-  border-color: var(--foxy-button-primary-hover);
+  background: var(--foxy-button-primary-hover-background);
+  color: var(--foxy-button-primary-hover-label) !important;
+  border-color: var(--foxy-button-primary-hover-border);
 }
-
+ 
 #fc .fc-checkout .fc-button--submit:focus {
   outline: none;
   box-shadow: var(--foxy-button-highlight);
 }
-
+ 
 #fc .fc-checkout .fc-button-link {
   color: var(--foxy-link-color) !important;
 }
-
+ 
 #fc .fc-checkout .fc-button-link:hover {
   color: var(--foxy-link-hover) !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Hide lock icon               */
 /* ======================================= */
-
+ 
 #fc .fc-checkout #fc-icon-lock-large {
   display: none !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Payment white + border       */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-input-group-container--active {
   border: 1px solid var(--foxy-card-border-strong);
   border-radius: var(--foxy-radius);
   background: var(--foxy-card-background);
 }
-
+ 
 #fc .fc-checkout .fc-input-group-container--radio {
   border-radius: var(--foxy-radius);
 }
-
+ 
 #fc .fc-checkout .fc-payment-method--plastic__new .fc-input-group-container {
   background: var(--foxy-card-background);
 }
-
+ 
 #fc .fc-checkout .fc-payment-method--plastic__new .fc-input-group-container--active {
   background: var(--foxy-card-background);
   border: 0 !important;
 }
-
+ 
 #fc .fc-checkout .fc-form-label--plastic-new { background: none; }
-
+ 
 #fc .fc-checkout .fc-input-group-container__title {
   background: none;
   text-shadow: none;
 }
-
+ 
 #fc .fc-input-group-container__title::before {
   background: var(--foxy-card-background);
   border-color: var(--foxy-card-background);
 }
-
+ 
 #fc .fc-input-group-container .fc-form-group input {
   background: var(--foxy-input-background);
 }
-
+ 
 #fc .fc-input-group-container .fc-form-group select {
   background: var(--foxy-input-background);
   color: var(--foxy-input-text) !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Checkboxes                   */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-input-group-container--checkbox {
   border-radius: var(--foxy-radius);
   background: var(--foxy-card-background);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Helper text                  */
 /* ======================================= */
-
+ 
 #fc .fc-checkout .fc-container__checkout-helper-text {
   color: var(--foxy-page-text-secondary) !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Checkout - Responsive (Two-Panel)       */
 /* ======================================= */
-
+ 
 /* Desktop (992px+): 60% main / 37% sidebar / 3% gap */
 @media (min-width: 992px) {
   #fc .col-md-offset-3,
@@ -1111,14 +1113,14 @@
   #fc .fc-container__grid--recaptcha {
     margin-left: 0 !important;
   }
-
+ 
   #fc .fc-checkout__main__contents {
     width: 60% !important;
     padding-left: 2.5em;
     padding-right: 2.5em;
   }
 }
-
+ 
 /* Tablet (768px–991px) */
 @media (min-width: 768px) and (max-width: 991px) {
   #fc .fc-checkout__main__contents {
@@ -1127,7 +1129,7 @@
     padding-right: 2em;
   }
 }
-
+ 
 @media (min-width: 768px) {
   #fc .col-sm-offset-3,
   #fc #paypal_platform_fastlane_watermark_container,
@@ -1145,7 +1147,7 @@
     margin-left: 0 !important;
   }
 }
-
+ 
 /* Mobile (<768px): stacked cards with gap between */
 @media (max-width: 767px) {
   #fc .fc-checkout__main__contents {
@@ -1155,31 +1157,31 @@
     margin-bottom: 20px;
   }
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Main Panel                    */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container {
   background: var(--foxy-card-background) !important;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Header                        */
 /* ======================================= */
-
+ 
 #fc #fc-receipt__section--header {
   background: var(--foxy-card-background);
   border-bottom: 1px solid var(--foxy-card-border);
   border-radius: 0;
   padding: 30px 25px;
 }
-
+ 
 #fc #fc-receipt__section--header .fc-logotype {
   font-family: var(--foxy-font-heading) !important;
   font-size: 1.75em;
@@ -1187,49 +1189,49 @@
   color: var(--foxy-page-heading-color) !important;
   text-shadow: none;
 }
-
+ 
 #fc #fc-receipt__section--header h3 {
   font-weight: var(--foxy-font-weight-semi);
   color: var(--foxy-page-heading-color) !important;
   text-shadow: none;
 }
-
+ 
 #fc #fc-receipt__section--header .fc-container__grid--receipt--logo #fc-logo--receipt {
   max-height: 80px;
   margin: 0;
   padding: 0;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Messages & Actions            */
 /* ======================================= */
-
+ 
 #fc #fc-receipt__section--receipt_messaging_and_actions {
   border-bottom: 1px solid var(--foxy-card-border);
   margin-bottom: 0;
   padding-bottom: 15px;
 }
-
+ 
 #fc #fc-receipt__section--receipt_messaging_and_actions .fc-alert {
   border-radius: var(--foxy-radius);
   text-shadow: none;
 }
-
+ 
 /* Collapse empty alerts                              */
 #fc #fc-receipt__section--receipt_messaging_and_actions .fc-alert:empty {
   display: none;
 }
-
+ 
 #fc #fc-messages .fc-alert--success:has(+ .fc-alert--info) {
   display: none;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Action Buttons                */
 /* ======================================= */
-
+ 
 #fc #fc-receipt__section--receipt_messaging_and_actions .fc-button,
 #fc #fc-receipt__section--actions .fc-button {
   display: inline-block;
@@ -1246,31 +1248,31 @@
   padding: 6px 16px;
   margin: 5px;
 }
-
+ 
 #fc #fc-receipt__section--receipt_messaging_and_actions .fc-button:hover,
 #fc #fc-receipt__section--actions .fc-button:hover {
   background: var(--foxy-button-secondary-hover-background);
   color: var(--foxy-button-secondary-hover-label) !important;
   border-color: var(--foxy-button-secondary-hover-border);
 }
-
+ 
 #fc #fc-receipt__section--receipt_messaging_and_actions .fc-button:focus,
 #fc #fc-receipt__section--actions .fc-button:focus {
   outline: none;
   box-shadow: var(--foxy-button-highlight);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Fieldsets & Legends            */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container fieldset {
   border: none;
   margin: 0;
   padding: 15px 0;
 }
-
+ 
 #fc #fc-receipt-container legend,
 #fc #fc-receipt-container #fc-cart--responsive .fc-cart__title__header {
   font-family: var(--foxy-font-heading) !important;
@@ -1282,12 +1284,12 @@
   margin-bottom: 15px;
   text-shadow: none;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Info Sections Spacing          */
 /* ======================================= */
-
+ 
 #fc #fc-receipt__section--general-information,
 #fc #fc-receipt__section--billing-information,
 #fc #fc-receipt__section--shipping-information,
@@ -1295,40 +1297,40 @@
 #fc .fc-receipt__section--multiship-shipping-information {
   padding: 5px 15px;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Static Labels & Values         */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container fieldset .fc-form-group .fc-form-label {
   color: var(--foxy-page-text-secondary) !important;
   font-size: 0.85em;
   font-weight: var(--foxy-font-weight-normal);
 }
-
+ 
 #fc #fc-receipt-container fieldset .fc-form-group div[class*=fc-container__grid--static-input] p {
   color: var(--foxy-page-text) !important;
   font-size: 0.85em;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Cart Section                   */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container .fc-cart__main {
   background: var(--foxy-card-background);
   border: 0;
   box-shadow: none;
   margin-bottom: 0;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Cart Continue Shopping         */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container .fc-button--cancel {
   display: inline-block;
   background: var(--foxy-button-secondary-background);
@@ -1342,73 +1344,73 @@
   text-shadow: none;
   line-height: 24px;
 }
-
+ 
 #fc #fc-receipt-container .fc-button--cancel:hover {
   background: var(--foxy-button-secondary-hover-background);
   color: var(--foxy-button-secondary-hover-label) !important;
   border-color: var(--foxy-button-secondary-hover-border);
 }
-
+ 
 #fc #fc-receipt-container .fc-button--cancel .fc-svg-icon {
   fill: var(--foxy-icon-color);
 }
-
+ 
 #fc #fc-receipt-container .fc-button--cancel:hover .fc-svg-icon {
   fill: var(--foxy-icon-color-on-button);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Sidebar / Order Summary        */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container .fc-sidebar {
   background: var(--foxy-card-background);
   border-radius: 0;
 }
-
+ 
 #fc #fc-receipt-container .fc-sidebar--cart {
   background: var(--foxy-card-background);
 }
-
+ 
 #fc #fc-receipt-container .fc-sidebar .fc-logo {
   display: none;
 }
-
+ 
 #fc #fc-receipt-container .fc-transaction {
   color: var(--foxy-page-text) !important;
 }
-
+ 
 #fc #fc-receipt-container .fc-transaction__section {
   background: none;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Links                          */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container a {
   color: var(--foxy-link-color) !important;
 }
-
+ 
 #fc #fc-receipt-container a:hover {
   color: var(--foxy-link-hover) !important;
 }
-
+ 
 #fc #fc-receipt-container .fc-alert a {
   color: inherit !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Transaction History            */
 /* ======================================= */
-
+ 
 #fc #fc-receipt__section--transaction-history {
   padding: 10px 15px;
 }
-
+ 
 #fc .fc-transaction-history h2 {
   font-family: var(--foxy-font-heading) !important;
   font-size: 1.5em;
@@ -1416,57 +1418,57 @@
   color: var(--foxy-page-heading-color) !important;
   text-shadow: none;
 }
-
+ 
 #fc #fc-receipt__section--transaction-history .fc-transaction-history__positive {
   color: var(--foxy-link-color) !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Footer                         */
 /* ======================================= */
-
+ 
 #fc #fc-receipt__section--footer {
   background: var(--foxy-card-background);
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Muted / Helper text            */
 /* ======================================= */
-
+ 
 #fc #fc-receipt-container .text-muted,
 #fc #fc-receipt-container .fc-container__checkout-helper-text {
   color: var(--foxy-page-text-secondary) !important;
 }
-
-
+ 
+ 
 /* ======================================= */
 /* Receipt - Responsive                    */
 /* ======================================= */
-
+ 
 @media (min-width: 992px) {
   #fc #fc-receipt-container .fc-cart__main__content {
     padding-left: 3em;
     padding-right: 2em;
   }
-
+ 
   #fc #fc-receipt-container .fc-sidebar--cart {
     padding-left: 1em;
     padding-right: 3em;
   }
 }
-
+ 
 @media (max-width: 767px) {
   #fc #fc-receipt-container {
     padding-left: 1em;
     padding-right: 1em;
   }
-
+ 
   #fc #fc-receipt__section--header {
     padding: 20px 15px;
   }
-
+ 
   #fc #fc-receipt__section--general-information,
   #fc #fc-receipt__section--billing-information,
   #fc #fc-receipt__section--shipping-information {
