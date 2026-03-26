@@ -1054,7 +1054,6 @@
  
 #fc .fc-checkout .fc-payment-method--plastic__new .fc-input-group-container--active {
   background: var(--foxy-card-background);
-  border: 0 !important;
 }
  
 #fc .fc-checkout .fc-form-label--plastic-new { background: none; }
