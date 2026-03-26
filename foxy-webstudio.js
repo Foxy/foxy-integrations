@@ -17,26 +17,32 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      :root {
-        white-space: unset;
-        white-space-collapse: unset;
-      }
-      [data-fc-with-sidecart].cart-visible [data-fc-ui-block] {
-        position: fixed !important;
-        inset: 0;
-        height: 100vh;
-        opacity: .2;
-        cursor: pointer;
-      }
-      [data-fc-sidecart] {
-        position: fixed;
-        top: 0;
-        right: 0;
-        height: 100vh;
-        max-height: 100vh;
-        overflow-y: auto;
-      }
-    `.trim();
+  :root {
+    white-space: unset;
+    white-space-collapse: unset;
+  }
+  [data-fc-with-sidecart].cart-visible [data-fc-ui-block] {
+    position: fixed !important;
+    inset: 0;
+    height: 100vh;
+    opacity: .2;
+    cursor: pointer;
+  }
+  [data-fc-sidecart] {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  [data-fc-sidecart] > #fc {
+    flex: 1 1 auto;
+    min-height: 100%;
+  }
+`.trim();
 
     (document.head || document.documentElement).appendChild(style);
   }
