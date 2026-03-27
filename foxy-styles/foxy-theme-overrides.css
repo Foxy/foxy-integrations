@@ -914,6 +914,7 @@
   border-color: var(--foxy-input-focus);
   outline: none;
   box-shadow: var(--foxy-input-highlight);
+  background-color: var(--foxy-card-background);
 }
  
 #fc .fc-checkout .awesomecomplete-input:focus {
