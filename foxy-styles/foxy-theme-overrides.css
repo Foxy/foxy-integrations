@@ -4,22 +4,6 @@
 /* Full-Page Cart, and Receipt             */
 /* ======================================= */
 
-/* ======================================= */
-/* Prevent flash of unstyled content        */
-/* ======================================= */
-
-#fc {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-#fc.fc--cart-is-fullpage,
-#fc.fc--checkout-is-loaded,
-#fc.fc--receipt-is-loaded,
-[data-fc-sidecart].fc-sidecart--is-active #fc {
-  opacity: 1;
-}
-
 /* ============================================================= */
 /*                                                               */
 /*  DESIGN TOKENS                                                */
