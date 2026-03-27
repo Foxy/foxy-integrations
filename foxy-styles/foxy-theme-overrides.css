@@ -78,9 +78,9 @@
  
  
   /* =========================================== */
-  /* 6. TEXT FIELDS                               */
-  /* The boxes where customers type               */
-  /* (name, email, postal code, quantity)         */
+  /* 6. TEXT FIELDS & FOCUS                      */
+  /* The boxes where customers type, and the     */
+  /* highlight glow on focused elements          */
   /* =========================================== */
  
   --foxy-input-background:                 #ffffff;  /* Inside the text box                 */
@@ -88,15 +88,17 @@
   --foxy-input-border:                     #000000;  /* Border around the box                */
   --foxy-input-focus:                      #3d9c9e;  /* Border color when clicked into       */
   --foxy-input-highlight:                  0 0 0 2px color-mix(in srgb, var(--foxy-input-focus) 15%, transparent);  /* Glow when clicked into */
+  --foxy-button-highlight:                 0 0 0 3px color-mix(in srgb, var(--foxy-input-focus) 35%, transparent);  /* Glow around buttons when tabbed to */
  
  
   /* =========================================== */
-  /* 7. LINKS                                    */
-  /* Clickable text throughout the store          */
+  /* 7. LINKS & DISCOUNTS                        */
+  /* Clickable text and coupon colors             */
   /* =========================================== */
  
   --foxy-link-color:                       #3d9c9e;  /* Link color                          */
   --foxy-link-hover:                       #217f81;  /* Link color when hovered              */
+  --foxy-discount-color:                   #3d9c9e;  /* Coupon and gift card text            */
  
  
   /* =========================================== */
@@ -123,17 +125,6 @@
   --foxy-danger-background:                #fdecea;  /* Red tinted background                */
   --foxy-danger-border:                    #f5c6cb;  /* Red border                          */
   --foxy-danger-text:                      #b71c1c;  /* Red text                            */
- 
- 
-  /* =========================================== */
-  /* 9. EXTRAS                                   */
-  /* Discount colors, icons, and highlights       */
-  /* =========================================== */
- 
-  --foxy-discount-color:                   #3d9c9e;  /* Coupon and gift card text            */
-  --foxy-icon-color:                       #000000;  /* Arrow and lock icons                 */
-  --foxy-icon-color-on-button:             #ffffff;  /* Icons inside filled buttons          */
-  --foxy-button-highlight:                 0 0 0 3px color-mix(in srgb, var(--foxy-input-focus) 35%, transparent);  /* Glow around buttons when tabbed to */
 }
  
  
@@ -157,7 +148,7 @@
 }
  
 #fc .fc-svg-icon {
-  fill: var(--foxy-icon-color);
+  fill: var(--foxy-page-text);
 }
  
 #fc a .fc-svg-icon {
@@ -392,7 +383,7 @@
 /* ======================================= */
 /* Sidecart                                */
 /* ======================================= */
-
+ 
 [data-fc-sidecart],
 [data-fc-sidecart] #fc-cart,
 [data-fc-sidecart] #fc .fc-sidebar,
@@ -434,11 +425,11 @@
 }
  
 [data-fc-sidecart] #fc .fc-fixed-button-left .fc-btn-action .fc-svg-icon {
-  fill: var(--foxy-icon-color);
+  fill: var(--foxy-page-text);
 }
  
 [data-fc-sidecart] #fc .fc-fixed-button-left .fc-btn-action:hover .fc-svg-icon {
-  fill: var(--foxy-icon-color-on-button);
+  fill: var(--foxy-button-primary-label);
 }
  
 [data-fc-sidecart] #fc .fc-fixed-button-right {
@@ -458,7 +449,7 @@
 }
  
 [data-fc-sidecart] #fc .fc-fixed-button-right .fc-btn-action .fc-svg-icon {
-  fill: var(--foxy-icon-color-on-button);
+  fill: var(--foxy-button-primary-label);
 }
  
 [data-fc-sidecart] #fc .fc-sidebar--cart .fc-actions--payment .fc-action--payment--checkout {
@@ -483,10 +474,10 @@
 }
  
 [data-fc-sidecart] #fc .fc-action--checkout--button .fc-svg-icon {
-  fill: var(--foxy-icon-color-on-button);
+  fill: var(--foxy-button-primary-label);
   margin-right: 3px;
 }
- 
+
 #fc .fc-input-group-container--active{
   background: var(--foxy-page-background);
 }
@@ -541,11 +532,11 @@
 }
  
 #fc .fc-button--cancel .fc-svg-icon {
-  fill: var(--foxy-icon-color);
+  fill: var(--foxy-page-text);
 }
  
 #fc .fc-button--cancel:hover .fc-svg-icon {
-  fill: var(--foxy-icon-color-on-button);
+  fill: var(--foxy-button-primary-label);
 }
  
  
@@ -581,7 +572,7 @@
  
 #fc .fc-actions--payment .fc-action--checkout--button .fc-svg-icon,
 #fc .fc-action--checkout--button .fc-svg-icon {
-  fill: var(--foxy-icon-color-on-button);
+  fill: var(--foxy-button-primary-label);
   margin-right: 3px;
 }
  
@@ -801,11 +792,11 @@
 }
  
 #fc .fc-checkout .fc-button--cancel .fc-svg-icon {
-  fill: var(--foxy-icon-color);
+  fill: var(--foxy-page-text);
 }
  
 #fc .fc-checkout .fc-button--cancel:hover .fc-svg-icon {
-  fill: var(--foxy-icon-color-on-button);
+  fill: var(--foxy-button-primary-label);
 }
  
 #fc .fc-checkout .fc-cart__item__quantity .fc-form-control {
@@ -943,7 +934,7 @@
   background: var(--foxy-card-background);
   cursor: pointer;
 }
- 
+
 #fc .fc-foxycomplete-list .active {
   background-color: var(--foxy-card-border);
 }
@@ -1356,11 +1347,11 @@
 }
  
 #fc #fc-receipt-container .fc-button--cancel .fc-svg-icon {
-  fill: var(--foxy-icon-color);
+  fill: var(--foxy-page-text);
 }
  
 #fc #fc-receipt-container .fc-button--cancel:hover .fc-svg-icon {
-  fill: var(--foxy-icon-color-on-button);
+  fill: var(--foxy-button-primary-label);
 }
  
  
