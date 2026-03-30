@@ -334,7 +334,7 @@
 }
  
 #fc .fc-alert--success {
-  background-color: var(--foxy-success-background);
+  background-color: var(--foxy-success-background) !important;;
   border-color: var(--foxy-success-border);
   color: var(--foxy-success-text) !important;
   border-radius: var(--foxy-radius);
@@ -345,7 +345,7 @@
 }
  
 #fc .fc-alert--warning {
-  background-color: var(--foxy-warning-background);
+  background-color: var(--foxy-warning-background) !important;;
   border-color: var(--foxy-warning-border);
   color: var(--foxy-warning-text) !important;
   border-radius: var(--foxy-radius);
@@ -356,7 +356,7 @@
 }
  
 #fc .fc-alert--info {
-  background-color: var(--foxy-info-background);
+  background-color: var(--foxy-info-background) !important;;
   border-color: var(--foxy-info-border);
   color: var(--foxy-info-text) !important;
   border-radius: var(--foxy-radius);
@@ -367,7 +367,7 @@
 }
  
 #fc .fc-alert--danger {
-  background-color: var(--foxy-danger-background);
+  background-color: var(--foxy-danger-background) !important;
   border-color: var(--foxy-danger-border);
   color: var(--foxy-danger-text) !important;
   border-radius: var(--foxy-radius);
