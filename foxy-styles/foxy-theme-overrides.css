@@ -130,16 +130,6 @@
 /* Global                                  */
 /* ======================================= */
 
-/* Prevent flash of unstyled content */
-#fc {
-  animation: foxy-reveal 0s 0.05s forwards;
-  opacity: 0;
-}
-
-@keyframes foxy-reveal {
-  to { opacity: 1; }
-}
-
 #fc * {
   font-family: var(--foxy-font-body) !important;
   color: var(--foxy-page-text) !important;
@@ -805,7 +795,7 @@
 }
  
 #fc .fc-checkout .fc-button--cancel:hover .fc-svg-icon {
-  fill: var(--foxy-button-primary-label);
+  fill: var(--foxy-button-secondary-hover-label) !important
 }
  
 #fc .fc-checkout .fc-cart__item__quantity .fc-form-control {
