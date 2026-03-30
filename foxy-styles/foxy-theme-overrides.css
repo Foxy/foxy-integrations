@@ -380,6 +380,13 @@
   background-color: var(--foxy-danger-background) !important;
   color: var(--foxy-danger-text) !important;
 }
+
+#fc .fc-messages__empty-notification {
+  background-color: var(--foxy-info-background) !important;
+  border-radius: var(--foxy-radius);
+  color: var(--foxy-info-text) !important;
+  border-color: var(--foxy-info-border);
+}
  
  
 /* ======================================= */
