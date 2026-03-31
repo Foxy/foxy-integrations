@@ -442,7 +442,7 @@
 }
  
 [data-fc-sidecart] #fc .fc-fixed-button-left .fc-btn-action:hover .fc-svg-icon {
-  fill: var(--foxy-button-primary-hover-label);
+  fill: var(--foxy-button-secondary-hover-label);
 }
  
 [data-fc-sidecart] #fc .fc-fixed-button-right {
