@@ -980,7 +980,6 @@
   font-size: 13px;
   font-weight: var(--foxy-font-weight-semi);
   text-shadow: none;
-  height: var(--foxy-button-height);
 }
  
 #fc .fc-checkout .fc-button--check-email:hover,
