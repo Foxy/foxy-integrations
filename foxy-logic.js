@@ -723,7 +723,7 @@ var FC = FC || {};
       // Dispatch the event.
       window.dispatchEvent(event);
 
-      if (authenticated && shouldFetchFreshData()) {
+      if (authenticated && shouldFetchFreshData() && !portal) {
         fetchCustomerData(false);
       }
     } catch (error) {
