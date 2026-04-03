@@ -921,6 +921,19 @@
   border-top-left-radius: var(--foxy-radius);
   border-bottom-left-radius: var(--foxy-radius);
 }
+
+#fc .fc_checkout__shipping-results__help-text {
+    margin-left: 0;
+    padding-left: 0px;
+}
+
+#fc [data-fc-id="shipping-results"] .fc-alert--danger {
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: -2px;
+  border-radius: 0px;
+  clear: both;
+}
  
  
 /* ======================================= */
