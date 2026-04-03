@@ -308,7 +308,13 @@
 }
  
 #fc .fc-transaction__total .fc-subtotal__label,
-#fc .fc-transaction__total .fc-subtotal__label h5,
+#fc .fc-transaction__total .fc-subtotal__label h5 {
+  font-weight: var(--foxy-font-weight-bold);
+  font-size: 16px;
+  color: var(--foxy-page-text) !important;
+  font-family: var(--foxy-font-heading) !important;
+}
+
 #fc .fc-transaction__total .fc-subtotal__value {
   font-weight: var(--foxy-font-weight-bold);
   font-size: 16px;
@@ -408,7 +414,7 @@
 [data-fc-sidecart] #fc .fc-btn-action,
 [data-fc-sidecart] #fc .fc-action--checkout--button { 
   text-transform: uppercase;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: var(--foxy-font-weight-semi);
   border-radius: var(--foxy-radius);
   text-shadow: none;
@@ -549,7 +555,7 @@
 }
  
 #fc .fc-button--cancel:hover .fc-svg-icon {
-  fill: var(--foxy-button-primary-label);
+  fill: var(--foxy-button-secondary-hover-label);
 }
  
  
@@ -764,7 +770,10 @@
   border-radius: var(--foxy-radius);
   overflow: hidden;
 }
- 
+
+#fc .fc-checkout__main {
+  margin-bottom: 0px;
+}
  
 /* ======================================= */
 /* Checkout - Sidebar (separate card)      */
@@ -1124,9 +1133,9 @@
   }
  
   #fc .fc-checkout__main__contents {
-    width: 60% !important;
-    padding-left: 2.5em;
-    padding-right: 2.5em;
+    width: 64% !important;
+    padding-left: 25px;
+    padding-right: 25px;
   }
 }
  
@@ -1134,8 +1143,8 @@
 @media (min-width: 768px) and (max-width: 991px) {
   #fc .fc-checkout__main__contents {
     width: 58% !important;
-    padding-left: 2em;
-    padding-right: 2em;
+    padding-left: 25px;
+    padding-right: 25px;
   }
 }
  
