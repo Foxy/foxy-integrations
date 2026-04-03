@@ -765,7 +765,6 @@
 }
  
 #fc .fc-checkout__main__contents {
-  padding-top: 50px;
   background: var(--foxy-card-background);
   border-radius: var(--foxy-radius);
   overflow: hidden;
