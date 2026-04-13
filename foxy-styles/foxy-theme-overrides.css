@@ -180,7 +180,7 @@
   font-family: var(--foxy-font-heading) !important;
   font-size: var(--foxy-font-size-heading) !important;
   font-weight: var(--foxy-font-weight-semi);
-  margin: 0 0 0 3px;
+  margin: 15px 0 0 3px;
 }
 #fc .fc-order-quantity {
   font-size: var(--foxy-font-size-body);
