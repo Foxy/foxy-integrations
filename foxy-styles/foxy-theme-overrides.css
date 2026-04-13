@@ -919,7 +919,7 @@
 
 #fc .fc-checkout .fc-sidebar--checkout .fc-logo__image {
   max-width: 60%;
-  margin: 0 auto 10px auto;
+  margin: 15px auto 10px auto;
 }
 #fc .fc-checkout .fc-sidebar--cart {
   background: var(--foxy-card-background);
