@@ -894,7 +894,7 @@
   background: var(--foxy-card-background);
   border-radius: 0;
   overflow: visible;
-  padding: 0 20px !important;
+  padding: 0px !important;
   padding-top: 15px !important;
 }
 
