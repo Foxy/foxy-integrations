@@ -914,7 +914,7 @@
   position: static !important;
   background: var(--foxy-card-background);
   border-radius: 0;
-  padding: 0 20px !important;
+  padding: 0px !important;
 }
 
 #fc .fc-checkout .fc-sidebar--checkout .fc-logo__image {
@@ -1398,7 +1398,7 @@
 
 /* Go button spacing — consistent at all sizes */
 #fc .fc-address-entry .fc-postal-code-entry__submit {
-  margin-left: 6px !important;
+  margin-left: 0px !important;
 }
 #fc .fc-input-group-container__title::before {
   content: none;
