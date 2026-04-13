@@ -587,11 +587,12 @@
 }
 #fc .fc-coupon-entry--input .fc-form-control {
   border: 1px solid var(--foxy-input-border);
-  border-radius: var(--foxy-radius);
+  border-radius: var(--foxy-radius) !important;
   background: var(--foxy-input-background);
   box-shadow: none;
   transition: border-color 0.2s ease;
   height: var(--foxy-button-height);
+  width: 95%;
 }
 #fc .fc-coupon-entry--input .fc-form-control:focus {
   border-color: var(--foxy-input-focus);
@@ -1235,34 +1236,16 @@
 
 /* Email/password input groups — flex layout for input + button */
 #fc .fc-checkout .fc-input-group {
-  display: flex !important;
-  align-items: center !important;
   gap: 8px !important;
   width: 100% !important;
   max-width: 100% !important;
-  flex-wrap: nowrap !important;
 }
 
 /* Force ALL inputs inside input-groups to shrink — width:0 + flex-grow */
 #fc .fc-checkout .fc-input-group > input,
 #fc .fc-checkout .fc-input-group > .fc-form-control {
-  flex: 1 1 66% !important;
-  min-width: 0 !important;
-  width: 0% !important;
+  width: 95% !important;
   border-radius: var(--foxy-radius) !important;
-}
-
-/* Button wrapper grows to fill remaining space */
-#fc .fc-checkout .fc-input-group > .fc-input-group__button {
-  flex: 1 1 auto !important;
-}
-
-/* Desktop: tighter input basis */
-@media (min-width: 1000px) {
-  #fc .fc-checkout .fc-input-group > input,
-  #fc .fc-checkout .fc-input-group > .fc-form-control {
-    flex: 1 1 60% !important;
-  }
 }
 
 /* All buttons inside input-groups get consistent styling */
