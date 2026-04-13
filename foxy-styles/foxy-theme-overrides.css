@@ -654,7 +654,7 @@
   padding-left: 5px;
 }
 
-#fc .fc-logo__image {
+#fc .fc-context--cart-fullpage .fc-logo__image {
   max-width: 80%;
   padding: 0px 0 35px;
 }
