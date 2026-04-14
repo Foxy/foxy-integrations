@@ -263,6 +263,22 @@
   border-bottom: none;
 }
 
+#fc .fc-cart__item--parent-product {
+  border-bottom: none;
+  border-left: none;
+  border-top: 1px solid #fff;
+  background-color: transparent;
+  background-image: unset;
+}
+
+  #fc .fc-cart__item.fc-cart__item--child-product {
+  padding: 0px 25px 5px 30px;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  background: none;
+}
+
 /* ======================================= */
 /* Shared - Totals                         */
 /* ======================================= */
@@ -1277,11 +1293,6 @@
   white-space: nowrap !important;
 }
 
-/* Hide LastPass/password-manager injected elements inside flex groups */
-#fc .fc-checkout .fc-input-group > [data-lastpass-icon-root] {
-  display: none !important;
-}
-
 /* The label above the input (hidden visually but present) — don't disrupt flex */
 #fc .fc-checkout .fc-input-group > label {
   position: absolute !important;
@@ -1300,6 +1311,10 @@
   margin-bottom: -2px;
   border-radius: var(--foxy-radius);
   clear: both;
+}
+
+#fc input[type="radio"] {
+  margin: 2px 0 0;
 }
 
 /* ======================================= */
