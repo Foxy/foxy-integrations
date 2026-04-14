@@ -1032,6 +1032,24 @@
     background: var(--foxy-card-border);
     border-radius: 2px;
   }
+
+  /* Scroll hint: fade + arrow at bottom of cart items */
+  #fc .fc-checkout .fc-sidebar--checkout .fc-cart__items::after {
+    content: "▾";
+    display: block;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--foxy-page-text-secondary) !important;
+    background: linear-gradient(to bottom, transparent, var(--foxy-sidebar-background) 70%);
+    pointer-events: none;
+    z-index: 1;
+  }
 }
 
 /* --- Below 1000px: stacked with breathing room --- */
