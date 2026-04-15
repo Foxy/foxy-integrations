@@ -377,6 +377,11 @@
 [data-fc-sidecart] #fc {
   height: 100%;
 }
+
+[data-fc-sidecart] {
+  overflow-y: inherit;
+}
+
 [data-fc-sidecart] #fc .fc-btn-action,
 [data-fc-sidecart] #fc .fc-action--checkout--button {
   font-size: 13px;
