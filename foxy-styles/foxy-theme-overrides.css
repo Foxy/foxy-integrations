@@ -378,7 +378,7 @@
   height: 100%;
 }
 
-[data-fc-sidecart] {
+[data-fc-with-sidecart="reveal"].cart-visible--animation-complete [data-fc-sidecart] {
   overflow-y: inherit;
 }
 
