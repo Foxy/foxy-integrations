@@ -206,7 +206,7 @@
   background: none;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 999px) {
  #fc .fc-logo{
     display: none !important;
   }
@@ -779,7 +779,7 @@
   }
   #fc .fc-context--cart-fullpage #fc-cart--responsive {
     max-width: 600px !important;
-    margin: 0 auto !important;
+    margin: 20px auto !important;
     padding: 0 15px !important;
   }
 }
@@ -1282,7 +1282,7 @@
   text-transform: none;
   height: var(--foxy-button-height);
   padding: 0 16px;
-  margin-left: 6px;
+  margin-left: 0px;
   line-height: var(--foxy-button-height);
   box-sizing: border-box;
 }
