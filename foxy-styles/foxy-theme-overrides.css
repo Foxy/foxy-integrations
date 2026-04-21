@@ -925,17 +925,17 @@
 
   #fc .fc-checkout__main__contents {
     order: 1 !important;
-    width: 50% !important;
-    flex: 0 0 50% !important;
+    width: 60% !important;
+    flex: 0 0 60% !important;
     padding: 50px 35px 30px 0 !important;
     min-width: 0;
   }
 
   #fc .fc-checkout__main .fc-sidebar--checkout {
     order: 2 !important;
-    width: 50% !important;
-    flex: 0 0 50% !important;
-    padding: 0px 80px 30px 35px !important;
+    width: 40% !important;
+    flex: 0 0 40% !important;
+    padding: 0px 35px 30px 35px !important;
     border-left: none;
     border-top: none;
     position: sticky !important;
