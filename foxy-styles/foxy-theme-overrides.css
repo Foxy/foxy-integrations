@@ -650,7 +650,7 @@
   right: auto !important;
   position: static !important;
   background: var(--foxy-background);
-  padding: 10px !important;
+  padding: 15px !important;
 }
 
 #fc .fc-context--cart-fullpage .fc-cart__main .fc-sidebar--cart {
@@ -881,8 +881,8 @@
   #fc body:not(:has(#fc-receipt-container)) {
     background: linear-gradient(
       to right,
-      var(--foxy-background) 60%,
-      var(--foxy-sidebar-background) 40%
+      var(--foxy-background) 50%,
+      var(--foxy-sidebar-background) 50%
     ) !important;
   }
 
