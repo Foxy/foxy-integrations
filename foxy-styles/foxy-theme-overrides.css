@@ -207,7 +207,7 @@
 }
 
 @media (max-width: 999px) {
- #fc .fc-logo{
+  #fc .fc-logo {
     display: none !important;
   }
 }
@@ -881,8 +881,8 @@
   #fc body:not(:has(#fc-receipt-container)) {
     background: linear-gradient(
       to right,
-      var(--foxy-background) 50%,
-      var(--foxy-sidebar-background) 50%
+      var(--foxy-background) 60%,
+      var(--foxy-sidebar-background) 40%
     ) !important;
   }
 
