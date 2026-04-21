@@ -4,82 +4,9 @@
 /* and Receipt                             */
 /* ======================================= */
 
-/* ============================================================= */
-/*  DESIGN TOKENS                                                */
-/* ============================================================= */
-
-/* #fc {
-  /* ─── FONTS ─── */
-  --foxy-font-body:                                /* Body text, labels, inputs */
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --foxy-font-heading:                             /* Section headings, cart title */
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --foxy-font-weight-normal: 400;                  /* Body text, subtotal labels */
-  --foxy-font-weight-semi: 600;                    /* Buttons, item names, headings */
-  --foxy-font-weight-bold: 700;                    /* Legends, order total, receipt headings */
-  --foxy-font-size-heading: 1rem;                  /* Section headings, cart title */
-  --foxy-font-size-body: 0.9em;                    /* Body text, labels, inputs, item options */
-
-  /* ─── COLORS ─── */
-  --foxy-background: #ffffff;                      /* Main surface — form panel, sidecart, receipt */
-  --foxy-sidebar-background: #fafafa;              /* Right panel on desktop (cart summary side) */
-  --foxy-text: #1a1a1a;                            /* Primary text */
-  --foxy-text-muted: #707070;                      /* Helper text, "Remove" links, receipt labels */
-  --foxy-heading-color: #1a1a1a;                   /* All headings and legends */
-  --foxy-border: #e5e5e5;                          /* Item dividers, image outlines, table borders */
-  --foxy-divider: #e1e1e1;                         /* Vertical line between panels on desktop */
-  --foxy-radius: 5px;                              /* Corner rounding on buttons, inputs, alerts */
-
-  /* ─── PRIMARY BUTTON — Submit, Checkout, Continue, Go ─── */
-  --foxy-button-background: #1a1a1a;               /* Fill color */
-  --foxy-button-text: #ffffff;                     /* Text and icon color */
-  --foxy-button-border: #1a1a1a;                   /* Border color */
-  --foxy-button-hover-background: #333333;         /* Fill on hover */
-  --foxy-button-hover-text: #ffffff;               /* Text on hover */
-  --foxy-button-hover-border: #333333;             /* Border on hover */
-  --foxy-button-height: 40px;                      /* Height for inline buttons (Continue, Go, Apply) */
-
-  /* ─── SECONDARY BUTTON — Continue Shopping, Cancel, Apply Coupon ─── */
-  --foxy-secondary-button-background: transparent;        /* Outline style by default */
-  --foxy-secondary-button-text: #1a1a1a;
-  --foxy-secondary-button-border: #1a1a1a;
-  --foxy-secondary-button-hover-background: #1a1a1a;      /* Inverts to solid on hover */
-  --foxy-secondary-button-hover-text: #ffffff;
-  --foxy-secondary-button-hover-border: #1a1a1a;
-
-  /* ─── INPUTS ─── */
-  --foxy-input-background: #ffffff;                /* Input, select, textarea fill */
-  --foxy-input-text: #1a1a1a;                      /* Typed text */
-  --foxy-input-border: #545454;                    /* Border color */
-  --foxy-input-focus-border: #1a1a1a;              /* Border when focused */
-  --foxy-input-focus-ring: 0 0 0 2px rgba(26,26,26,0.15); /* Glow around focused inputs */
-  --foxy-button-focus-ring: 0 0 0 3px rgba(26,26,26,0.2); /* Glow around focused buttons */
-
-  /* ─── LINKS ─── */
-  --foxy-link-color: #1a1a1a;                      /* Link text color */
-  --foxy-link-hover-color: #545454;                /* Link hover color */
-  --foxy-discount-color: #1a1a1a;                  /* Discount label and value text */
-
-  /* ─── ALERTS ─── */
-  --foxy-success-background: #e8f5e9;
-  --foxy-success-border: #c8e6c9;
-  --foxy-success-text: #2e7d32;
-  --foxy-warning-background: #fff8e1;
-  --foxy-warning-border: #ffecb3;
-  --foxy-warning-text: #e65100;
-  --foxy-info-background: #f0f0f0;
-  --foxy-info-border: #e0e0e0;
-  --foxy-info-text: #333333;
-  --foxy-danger-background: #fdecea;
-  --foxy-danger-border: #f5c6cb;
-  --foxy-danger-text: #b71c1c;
-} */
-
 /* Flash Prevention */
 #fc {
-  animation: foxy-reveal 0s 0.10s forwards;
+  animation: foxy-reveal 0s 0.1s forwards;
   opacity: 0;
 }
 @keyframes foxy-reveal {
@@ -97,7 +24,9 @@
 }
 #fc body {
   background: var(--foxy-background) !important;
+  padding: 0px !important;
 }
+
 #fc h1,
 #fc h2,
 #fc h3,
@@ -202,6 +131,10 @@
   border-radius: var(--foxy-radius);
 }
 
+#fc #fc-cart--fixed-width .fc-cart__item__image {
+  width: 25% !important;
+}
+
 /* Cart item details always side-by-side with image */
 #fc #fc-cart--fixed-width .fc-cart__items--with-images .fc-cart__item__details {
   width: 66.3% !important;
@@ -265,12 +198,18 @@
   background-image: unset;
 }
 
-  #fc .fc-cart__item.fc-cart__item--child-product {
+#fc .fc-cart__item.fc-cart__item--child-product {
   padding: 0px 25px 5px 30px;
   border-top: none;
   border-bottom: none;
   border-left: none;
   background: none;
+}
+
+@media (max-width: 1000px) {
+ #fc .fc-logo{
+    display: none !important;
+  }
 }
 
 /* ======================================= */
@@ -674,6 +613,10 @@
   padding: 0px 0 35px;
 }
 
+#fc .fc-logo__image {
+  padding: 50px 0 0px;
+}
+
 /* ======================================= */
 /* Full-Page Cart — Layout                 */
 /* ======================================= */
@@ -697,10 +640,6 @@
 #fc .fc-context--cart-fullpage .fc-cart__main::before,
 #fc .fc-context--cart-fullpage .fc-cart__main::after {
   display: none !important;
-}
-
-#fc #fc-cart--responsive .fc-cart__main__content {
-  padding: 0px !important;
 }
 
 /* Nuke BS3 float/push/pull on cart panels */
@@ -996,7 +935,7 @@
     order: 2 !important;
     width: 50% !important;
     flex: 0 0 50% !important;
-    padding: 0px 0 30px 35px !important;
+    padding: 0px 80px 30px 35px !important;
     border-left: none;
     border-top: none;
     position: sticky !important;
@@ -1024,7 +963,7 @@
 
   /* Cart items list scrolls when too many products */
   #fc .fc-checkout .fc-sidebar--checkout .fc-cart__items {
-    max-height: 50vh;
+    max-height: 45vh;
     overflow-x: hidden !important;
     overflow-y: auto !important;
     scrollbar-width: thin;
