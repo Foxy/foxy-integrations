@@ -866,8 +866,8 @@
 }
 
 #fc .fc-checkout .fc-sidebar--checkout .fc-logo__image {
-  max-width: 60%;
-  margin: 15px auto 10px auto;
+  max-width: 80%;
+  margin: 0px auto 10px auto;
 }
 #fc .fc-checkout .fc-sidebar--cart {
   background: var(--foxy-background);
@@ -927,7 +927,7 @@
     order: 1 !important;
     width: 50% !important;
     flex: 0 0 50% !important;
-    padding: 30px 35px 30px 0 !important;
+    padding: 50px 35px 30px 0 !important;
     min-width: 0;
   }
 
