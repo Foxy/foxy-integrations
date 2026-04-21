@@ -706,8 +706,8 @@
     order: 1 !important;
     min-width: 0;
     background: transparent !important;
-    flex: 0 0 60% !important;
-    width: 60% !important;
+    flex: 0 0 50% !important;
+    width: 50% !important;
   }
 
   /* Cart sidebar: order 2 (right), 40%, sticky */
