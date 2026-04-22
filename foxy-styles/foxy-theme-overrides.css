@@ -706,8 +706,8 @@
     order: 1 !important;
     min-width: 0;
     background: transparent !important;
-    flex: 0 0 50% !important;
-    width: 50% !important;
+    flex: 0 0 60% !important;
+    width: 60% !important;
   }
 
   /* Cart sidebar: order 2 (right), 40%, sticky */
@@ -723,6 +723,19 @@
     align-self: flex-start !important;
     max-height: 100vh;
     background: transparent !important;
+  }
+
+  /* Cart — grey background via fixed pseudo on body */
+  #fc body.fc-context--cart-fullpage::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: calc(50% + 97px);
+    right: 0;
+    background: var(--foxy-sidebar-background);
+    z-index: -1;
+    pointer-events: none;
   }
 
   /* Sidebar children transparent for grey */
@@ -878,7 +891,7 @@
 /* --- DESKTOP (1000px+): Flexbox split --- */
 @media (min-width: 1000px) {
   /* Grey background — applies on checkout and cart, NOT receipt */
-  #fc body:not(:has(#fc-receipt-container)) {
+  #fc body:not(:has(#fc-receipt-container)):not(:has(.fc-context--cart-fullpage)) {
     background: linear-gradient(
       to right,
       var(--foxy-background) 50%,
