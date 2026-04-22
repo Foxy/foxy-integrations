@@ -891,7 +891,7 @@
 /* --- DESKTOP (1000px+): Flexbox split --- */
 @media (min-width: 1000px) {
   /* Grey background — applies on checkout and cart, NOT receipt */
-  #fc body:not(:has(#fc-receipt-container)):not(:has(.fc-context--cart-fullpage)) {
+  #fc body:not(:has(#fc-receipt-container)):not(.fc-context--cart-fullpage) {
     background: linear-gradient(
       to right,
       var(--foxy-background) 50%,
