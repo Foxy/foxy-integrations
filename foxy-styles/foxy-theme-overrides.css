@@ -484,7 +484,7 @@
   fill: var(--foxy-secondary-button-hover-text);
 }
 #fc .fc-actions--payment .fc-action--checkout--button,
-#fc .fc-action--checkout--button {
+#fc .fc-action--checkout--button, #fc .fc-foxycomplete-combobox {
   background: var(--foxy-button-background);
   color: var(--foxy-button-text) !important;
   border: 1px solid var(--foxy-button-border);
@@ -496,13 +496,13 @@
   padding: 12px 24px;
 }
 #fc .fc-actions--payment .fc-action--checkout--button:hover,
-#fc .fc-action--checkout--button:hover {
+#fc .fc-action--checkout--button:hover, #fc .fc-foxycomplete-combobox:hover {
   background: var(--foxy-button-hover-background);
   color: var(--foxy-button-hover-text) !important;
   border-color: var(--foxy-button-hover-border);
 }
 #fc .fc-actions--payment .fc-action--checkout--button:focus,
-#fc .fc-action--checkout--button:focus {
+#fc .fc-action--checkout--button:focus, #fc .fc-foxycomplete-combobox:focus {
   outline: none;
   box-shadow: var(--foxy-button-focus-ring);
 }
@@ -1009,7 +1009,7 @@
   }
 
   #fc .fc-checkout__main .fc-sidebar--checkout {
-    border-bottom: 1px solid var(--foxy-divider) !important;
+    border-bottom: 1px solid var(--foxy-border) !important;
   }
 }
 
@@ -1256,7 +1256,7 @@
   font-size: var(--foxy-font-size-body);
 }
 #fc .fc-checkout .fc-form-control:focus {
-  border-color: var(--foxy-input-focus-border);
+  border-color: var(--foxy-input-focus-border) !important;
   outline: none;
   box-shadow: var(--foxy-input-focus-ring);
   background-color: var(--foxy-input-background);
