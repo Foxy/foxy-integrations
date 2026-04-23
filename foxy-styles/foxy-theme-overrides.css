@@ -800,22 +800,6 @@
     background: transparent !important;
   }
 
-  /* Full-height divider on the full-width #fc-cart container */
-  #fc .fc-context--cart-fullpage #fc-cart {
-    position: relative;
-  }
-  #fc .fc-context--cart-fullpage #fc-cart::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 1px;
-    background: var(--foxy-divider);
-    pointer-events: none;
-    z-index: 2;
-  }
-
   /* Hidden inputs inside the form shouldn't disrupt flex */
   #fc .fc-context--cart-fullpage .fc-cart__main > form > input[type="hidden"] {
     position: absolute !important;
@@ -944,22 +928,6 @@
   #fc .fc-checkout .fc-container,
   #fc #fc-checkout-container {
     background: transparent !important;
-  }
-
-  /* Full-height divider on the full-width container */
-  #fc #fc-checkout-container {
-    position: relative;
-  }
-  #fc #fc-checkout-container::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 1px;
-    background: var(--foxy-divider);
-    pointer-events: none;
-    z-index: 2;
   }
 
   #fc .fc-checkout__main {
