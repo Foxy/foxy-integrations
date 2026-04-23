@@ -484,7 +484,7 @@
   fill: var(--foxy-secondary-button-hover-text);
 }
 #fc .fc-actions--payment .fc-action--checkout--button,
-#fc .fc-action--checkout--button, #fc .fc-foxycomplete-combobox {
+#fc .fc-action--checkout--button {
   background: var(--foxy-button-background);
   color: var(--foxy-button-text) !important;
   border: 1px solid var(--foxy-button-border);
@@ -495,6 +495,19 @@
   text-transform: none;
   padding: 12px 24px;
 }
+
+#fc .fc-foxycomplete-combobox {
+    background: var(--foxy-button-background);
+  color: var(--foxy-button-text) !important;
+  border: 1px solid var(--foxy-button-border);
+  border-radius: var(--foxy-radius);
+  font-size: var(--foxy-font-size-body);
+  font-weight: var(--foxy-font-weight-semi);
+  text-shadow: none;
+  text-transform: none;
+}
+
+
 #fc .fc-actions--payment .fc-action--checkout--button:hover,
 #fc .fc-action--checkout--button:hover, #fc .fc-foxycomplete-combobox:hover {
   background: var(--foxy-button-hover-background);
