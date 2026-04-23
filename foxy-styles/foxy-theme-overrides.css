@@ -169,7 +169,7 @@
 }
 #fc .fc-cart__item__remove a {
   color: var(--foxy-text-muted) !important;
-  font-size: 12px;
+  font-size: var(--foxy-font-size-body) !important;
   text-decoration: underline;
 }
 #fc .fc-cart__item__remove a:hover {
@@ -323,7 +323,7 @@
 
 [data-fc-sidecart] #fc .fc-btn-action,
 [data-fc-sidecart] #fc .fc-action--checkout--button {
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body);
   font-weight: var(--foxy-font-weight-semi);
   border-radius: var(--foxy-radius);
   text-shadow: none;
@@ -459,7 +459,7 @@
   border: 1px solid var(--foxy-secondary-button-border);
   color: var(--foxy-secondary-button-text) !important;
   text-decoration: none !important;
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body);
   font-weight: var(--foxy-font-weight-semi);
   border-radius: var(--foxy-radius);
   text-shadow: none;
@@ -540,7 +540,7 @@
   color: var(--foxy-secondary-button-text) !important;
   border: 1px solid var(--foxy-secondary-button-border);
   border-radius: var(--foxy-radius) !important;
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body);
   font-weight: var(--foxy-font-weight-semi);
   text-shadow: none;
   text-transform: none;
@@ -600,7 +600,7 @@
   height: var(--foxy-button-height);
   padding: 0 16px;
   margin-left: 6px;
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body);
   font-weight: var(--foxy-font-weight-semi);
   text-transform: none;
   text-shadow: none;
@@ -1103,7 +1103,7 @@
   border: 1px solid var(--foxy-secondary-button-border);
   color: var(--foxy-secondary-button-text) !important;
   text-decoration: none !important;
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body);
   font-weight: var(--foxy-font-weight-semi);
   border-radius: var(--foxy-radius);
   text-shadow: none;
@@ -1456,7 +1456,7 @@
 }
 #fc .fc-checkout .fc-container__checkout-helper-text {
   color: var(--foxy-text-muted) !important;
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body) !important;
 }
 
 #fc .fc-checkout__main__form .fc-input-group-container--checkbox {
@@ -1517,7 +1517,7 @@
   border: 1px solid var(--foxy-secondary-button-border);
   color: var(--foxy-secondary-button-text) !important;
   text-decoration: none !important;
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body) !important;
   font-weight: var(--foxy-font-weight-semi);
   border-radius: var(--foxy-radius);
   text-shadow: none;
@@ -1562,12 +1562,12 @@
 }
 #fc #fc-receipt-container fieldset .fc-form-group .fc-form-label {
   color: var(--foxy-text-muted) !important;
-  font-size: 0.85em;
+  font-size: var(--foxy-font-size-body) !important;
   font-weight: var(--foxy-font-weight-normal);
 }
 #fc #fc-receipt-container fieldset .fc-form-group div[class*="fc-container__grid--static-input"] p {
   color: var(--foxy-text) !important;
-  font-size: 0.85em;
+  font-size: var(--foxy-font-size-body) !important;
 }
 #fc #fc-receipt-container .fc-cart__main {
   background: var(--foxy-background);
@@ -1581,7 +1581,7 @@
   border: 1px solid var(--foxy-secondary-button-border);
   color: var(--foxy-secondary-button-text) !important;
   text-decoration: none !important;
-  font-size: 13px;
+  font-size: var(--foxy-font-size-body) !important;
   font-weight: var(--foxy-font-weight-semi);
   border-radius: var(--foxy-radius);
   text-shadow: none;
@@ -1644,6 +1644,7 @@
 #fc #fc-receipt-container .text-muted,
 #fc #fc-receipt-container .fc-container__checkout-helper-text {
   color: var(--foxy-text-muted) !important;
+  font-size: var(--foxy-font-size-body) !important;
 }
 
 @media (min-width: 1000px) {
