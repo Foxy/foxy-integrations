@@ -25,6 +25,7 @@
 #fc body {
   background: var(--foxy-background) !important;
   padding: 0px !important;
+  font-size: var(--foxy-font-size-body);
 }
 
 #fc h1,
@@ -302,6 +303,8 @@
   color: var(--foxy-info-text) !important;
   border-color: var(--foxy-info-border);
 }
+
+
 
 /* ======================================= */
 /* Sidecart                                */
