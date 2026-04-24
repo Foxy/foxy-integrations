@@ -1221,9 +1221,9 @@
 
 /* Email/password input groups — flex layout for input + button */
 #fc .fc-checkout .fc-input-group {
-  gap: 8px !important;
   width: 100% !important;
   max-width: 100% !important;
+  border-radius: var(--foxy-radius);
 }
 
 #fc .fc-checkout .fc-input-group > input,
@@ -1278,13 +1278,13 @@
   font-size: var(--foxy-font-size-body);
 }
 #fc .fc-checkout .fc-form-control:focus {
-  border-color: var(--foxy-input-focus-border) !important;
+   border: 2px solid var(--foxy-input-focus-border) !important;
   outline: none;
   box-shadow: none;
   background-color: var(--foxy-input-background);
 }
 #fc .fc-checkout .awesomecomplete-input:focus {
-  border-color: var(--foxy-input-focus-border) !important;
+   border: 2px solid var(--foxy-input-focus-border) !important;
 }
 #fc .fc-foxycomplete-list {
   background-color: var(--foxy-background);
@@ -1306,6 +1306,14 @@
 #fc .fc-foxycomplete-list li:hover,
 #fc .fc-foxycomplete-list li.selected {
   background: var(--foxy-background);
+}
+
+#fc .fc-checkout .fc-alert-container--error .fc-form-control, #fc .fc-alert-container--error .fc-form-control:focus {
+  background: var(--foxy-danger-background) !important;
+  border: 2px solid var(--foxy-danger-border) !important;
+  -webkit-transition: background 0.2s linear, border 0.2s linear, padding 0.2s linear;
+  -o-transition: background 0.2s linear, border 0.2s linear, padding 0.2s linear;
+  transition: background 0.2s linear, border 0.2s linear, padding 0.2s linear;
 }
 
 /* ======================================= */
