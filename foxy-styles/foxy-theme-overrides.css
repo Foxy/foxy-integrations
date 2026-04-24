@@ -497,7 +497,7 @@
 }
 
 #fc .fc-foxycomplete-combobox {
-    background: var(--foxy-button-background);
+  background: var(--foxy-button-background);
   color: var(--foxy-button-text) !important;
   border: 1px solid var(--foxy-button-border);
   border-radius: var(--foxy-radius);
