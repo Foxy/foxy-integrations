@@ -157,7 +157,7 @@
   transition: border-color 0.2s ease;
 }
 #fc .fc-cart__item__quantity .fc-form-control:focus {
-  border-color: var(--foxy-input-focus-border);
+  border-color: var(--foxy-input-focus-border) !important;
   outline: none;
   box-shadow: var(--foxy-input-focus-ring);
 }
@@ -542,7 +542,7 @@
   transition: border-color 0.2s ease;
 }
 #fc .fc-sidebar .fc-form-control:focus {
-  border-color: var(--foxy-input-focus-border);
+  border-color: var(--foxy-input-focus-border) !important;
   outline: none;
   box-shadow: var(--foxy-input-focus-ring);
   background-color: var(--foxy-input-background);
@@ -601,7 +601,7 @@
   width: 95%;
 }
 #fc .fc-coupon-entry--input .fc-form-control:focus {
-  border-color: var(--foxy-input-focus-border);
+  border-color: var(--foxy-input-focus-border) !important;
   outline: none;
   box-shadow: var(--foxy-input-focus-ring);
 }
