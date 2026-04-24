@@ -1260,6 +1260,12 @@
 /* ======================================= */
 /* Checkout - Form Controls                */
 /* ======================================= */
+
+#fc .fc-form-control{
+    box-shadow: none;
+    height: var(--foxy-button-height);
+}
+
 #fc .fc-checkout .fc-form-control {
   border: 1px solid var(--foxy-input-border);
   border-radius: var(--foxy-radius);
