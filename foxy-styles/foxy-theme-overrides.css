@@ -158,7 +158,7 @@
   transition: border-color 0.2s ease;
 }
 #fc .fc-cart__item__quantity .fc-form-control:focus {
-   border: 2px solid var(--foxy-input-focus-border) !important;
+  border: 2px solid var(--foxy-input-focus-border) !important;
   outline: none;
   box-shadow: none;
 }
@@ -304,8 +304,6 @@
   border-color: var(--foxy-info-border);
 }
 
-
-
 /* ======================================= */
 /* Sidecart                                */
 /* ======================================= */
@@ -405,40 +403,43 @@
 /* Slide the cart not the page */
 
 [data-fc-sidecart] {
-    z-index: 100 !important;
-    transform: translate3d(0px, 0, 0);
-    transition: transform 0.5s ease-in-out 0s, width 0s linear 0s, height 0s linear 0s;
-    right: -280px !important;
+  z-index: 100 !important;
+  transform: translate3d(0px, 0, 0);
+  transition:
+    transform 0.5s ease-in-out 0s,
+    width 0s linear 0s,
+    height 0s linear 0s;
+  right: -280px !important;
 }
 
 [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-    transform: translate3d(-280px, 0, 0);
+  transform: translate3d(-280px, 0, 0);
 }
 
 [data-fc-with-sidecart="reveal"].cart-visible [data-fc-ui-block] {
-    opacity: 0.2;
+  opacity: 0.2;
 }
 
 [data-fc-store-page] {
-    transform: none !important;
+  transform: none !important;
 }
 
 @media (min-width: 768px) {
-    [data-fc-sidecart] {
-        right: -310px !important;
-    }
-    [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-        transform: translate3d(-310px, 0, 0);
-    }
+  [data-fc-sidecart] {
+    right: -310px !important;
+  }
+  [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
+    transform: translate3d(-310px, 0, 0);
+  }
 }
 
 @media (min-width: 992px) {
-    [data-fc-sidecart] {
-        right: -340px !important;
-    }
-    [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-        transform: translate3d(-340px, 0, 0);
-    }
+  [data-fc-sidecart] {
+    right: -340px !important;
+  }
+  [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
+    transform: translate3d(-340px, 0, 0);
+  }
 }
 
 /* ======================================= */
@@ -510,15 +511,16 @@
   text-transform: none;
 }
 
-
 #fc .fc-actions--payment .fc-action--checkout--button:hover,
-#fc .fc-action--checkout--button:hover, #fc .fc-foxycomplete-combobox:hover {
+#fc .fc-action--checkout--button:hover,
+#fc .fc-foxycomplete-combobox:hover {
   background: var(--foxy-button-hover-background);
   color: var(--foxy-button-hover-text) !important;
   border-color: var(--foxy-button-hover-border);
 }
 #fc .fc-actions--payment .fc-action--checkout--button:focus,
-#fc .fc-action--checkout--button:focus, #fc .fc-foxycomplete-combobox:focus {
+#fc .fc-action--checkout--button:focus,
+#fc .fc-foxycomplete-combobox:focus {
   outline: none;
   box-shadow: var(--foxy-button-focus-ring);
 }
@@ -1264,9 +1266,9 @@
 /* Checkout - Form Controls                */
 /* ======================================= */
 
-#fc .fc-form-control{
-    box-shadow: none;
-    height: var(--foxy-button-height);
+#fc .fc-form-control {
+  box-shadow: none;
+  height: var(--foxy-button-height);
 }
 
 #fc .fc-checkout .fc-form-control {
@@ -1278,13 +1280,13 @@
   font-size: var(--foxy-font-size-body);
 }
 #fc .fc-checkout .fc-form-control:focus {
-   border: 2px solid var(--foxy-input-focus-border) !important;
+  border: 2px solid var(--foxy-input-focus-border) !important;
   outline: none;
   box-shadow: none;
   background-color: var(--foxy-input-background);
 }
 #fc .fc-checkout .awesomecomplete-input:focus {
-   border: 2px solid var(--foxy-input-focus-border) !important;
+  border: 2px solid var(--foxy-input-focus-border) !important;
 }
 #fc .fc-foxycomplete-list {
   background-color: var(--foxy-background);
@@ -1308,12 +1310,22 @@
   background: var(--foxy-background);
 }
 
-#fc .fc-checkout .fc-alert-container--error .fc-form-control, #fc .fc-alert-container--error .fc-form-control:focus {
+#fc .fc-checkout .fc-alert-container--error .fc-form-control,
+#fc .fc-alert-container--error .fc-form-control:focus {
   background: var(--foxy-danger-background) !important;
   border: 2px solid var(--foxy-danger-border) !important;
-  -webkit-transition: background 0.2s linear, border 0.2s linear, padding 0.2s linear;
-  -o-transition: background 0.2s linear, border 0.2s linear, padding 0.2s linear;
-  transition: background 0.2s linear, border 0.2s linear, padding 0.2s linear;
+  -webkit-transition:
+    background 0.2s linear,
+    border 0.2s linear,
+    padding 0.2s linear;
+  -o-transition:
+    background 0.2s linear,
+    border 0.2s linear,
+    padding 0.2s linear;
+  transition:
+    background 0.2s linear,
+    border 0.2s linear,
+    padding 0.2s linear;
 }
 
 /* ======================================= */
