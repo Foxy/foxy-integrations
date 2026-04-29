@@ -563,7 +563,7 @@
   text-shadow: none;
   text-transform: none;
   height: auto;
-  padding: 10px 16px;
+  padding: 8px 16px;
   margin-left: 6px;
 }
 #fc .fc-sidebar .fc-button:hover,
@@ -1260,6 +1260,10 @@
   margin: 2px 0 0;
 }
 
+#fc .fc-checkout__additional-field--save-account [for="new_customer_password"] {
+  display: none;
+}
+
 /* ======================================= */
 /* Checkout - Form Controls                */
 /* ======================================= */
@@ -1403,7 +1407,7 @@
   content: none;
 }
 #fc .fc-input-group-container--radio input[type="radio"] {
-  margin-left: -15px;
+  margin-left: -14px;
 }
 #fc .fc-checkout #use_different_addresses {
   margin-right: 10px;
@@ -1450,10 +1454,6 @@
 #fc .fc-checkout .fc-input-group-container--checkbox {
   border-radius: var(--foxy-radius);
   background: var(--foxy-background);
-}
-
-#fc input[type="checkbox"] {
-  margin: 0px !important;
 }
 
 #fc .fc-input-group-container--radio .fc-input-group-container__title input {
