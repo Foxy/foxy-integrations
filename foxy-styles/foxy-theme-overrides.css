@@ -328,7 +328,7 @@
   font-weight: var(--foxy-font-weight-semi);
   border-radius: var(--foxy-radius);
   text-shadow: none;
-  height: var(--foxy-button-height);
+  height: auto;
   text-transform: none;
 }
 [data-fc-sidecart] #fc .fc-fixed-button-left,
@@ -468,8 +468,8 @@
   border-radius: var(--foxy-radius);
   text-shadow: none;
   text-transform: none;
-  height: var(--foxy-button-height);
-  padding: 0 16px;
+  height: auto;
+  padding: 8px 16px;
   box-sizing: border-box;
 }
 #fc .fc-button--cancel:hover {
@@ -562,8 +562,8 @@
   font-weight: var(--foxy-font-weight-semi);
   text-shadow: none;
   text-transform: none;
-  height: var(--foxy-button-height);
-  padding: 0 16px;
+  height: auto;
+  padding: 8px 16px;
   margin-left: 6px;
 }
 #fc .fc-sidebar .fc-button:hover,
@@ -602,7 +602,7 @@
   background: var(--foxy-input-background);
   box-shadow: none;
   transition: border-color 0.2s ease;
-  height: var(--foxy-button-height);
+  height: auto;
   width: 95%;
 }
 #fc .fc-coupon-entry--input .fc-form-control:focus {
@@ -615,8 +615,8 @@
   color: var(--foxy-secondary-button-text) !important;
   border: 1px solid var(--foxy-secondary-button-border) !important;
   border-radius: var(--foxy-radius) !important;
-  height: var(--foxy-button-height);
-  padding: 0 16px;
+  height: auto;
+  padding: 8px 16px;
   margin-left: 6px;
   font-size: var(--foxy-font-size-body);
   font-weight: var(--foxy-font-weight-semi);
@@ -1267,7 +1267,7 @@
 
 #fc .fc-form-control {
   box-shadow: none;
-  height: var(--foxy-button-height);
+  height: auto ;
 }
 
 #fc .fc-checkout .fc-form-control {
@@ -1342,10 +1342,10 @@
   font-weight: var(--foxy-font-weight-semi);
   text-shadow: none;
   text-transform: none;
-  height: var(--foxy-button-height);
-  padding: 0 16px;
+  height: inherit;
+  padding: 8px 16px;
   margin-left: 0px;
-  line-height: var(--foxy-button-height);
+  line-height: inherit;
   box-sizing: border-box;
 }
 #fc .fc-checkout .fc-button--check-email:hover,
