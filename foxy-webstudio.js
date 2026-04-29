@@ -29,7 +29,7 @@
     cursor: pointer;
   }
   [data-fc-sidecart] {
-    position: fixed;
+    position: fixed !important;
     top: 0;
     right: 0;
     height: 100vh;
