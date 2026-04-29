@@ -1471,6 +1471,10 @@
   padding-top: 5px !important;
 }
 
+#fc .fc-checkout__additional-field--save-account .fc-input-group-container--checkbox.fc-input-group-container--active [data-fc-id="account-creation-label"]{
+  padding-left: 50px;
+}
+
 /* ======================================= */
 /* Receipt                                 */
 /* ======================================= */
