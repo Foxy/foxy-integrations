@@ -469,7 +469,7 @@
   text-shadow: none;
   text-transform: none;
   height: auto;
-  padding: 8px 16px;
+  padding: 10px 16px;
   box-sizing: border-box;
 }
 #fc .fc-button--cancel:hover {
@@ -563,7 +563,7 @@
   text-shadow: none;
   text-transform: none;
   height: auto;
-  padding: 8px 16px;
+  padding: 10px 16px;
   margin-left: 6px;
 }
 #fc .fc-sidebar .fc-button:hover,
@@ -616,7 +616,7 @@
   border: 1px solid var(--foxy-secondary-button-border) !important;
   border-radius: var(--foxy-radius) !important;
   height: auto;
-  padding: 8px 16px;
+  padding: 10px 16px;
   margin-left: 6px;
   font-size: var(--foxy-font-size-body);
   font-weight: var(--foxy-font-weight-semi);
@@ -1093,7 +1093,6 @@
   border-radius: var(--foxy-radius);
   text-shadow: none;
   text-transform: none;
-  line-height: 40px;
 }
 #fc .fc-checkout .fc-button--cancel:hover {
   background: var(--foxy-secondary-button-hover-background);
@@ -1275,7 +1274,7 @@
   border-radius: var(--foxy-radius);
   background: var(--foxy-input-background);
   transition: border-color 0.2s ease;
-  padding: 8px 12px;
+  padding: 10px 12.5px;
   font-size: var(--foxy-font-size-body);
 }
 #fc .fc-checkout .fc-form-control:focus {
@@ -1343,7 +1342,7 @@
   text-shadow: none;
   text-transform: none;
   height: inherit;
-  padding: 8px 16px;
+  padding: 10px 16px;
   margin-left: 0px;
   line-height: inherit;
   box-sizing: border-box;
