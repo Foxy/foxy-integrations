@@ -1217,10 +1217,6 @@
   border-radius: var(--foxy-radius) !important;
 }
 
-#fc .fc-checkout .fc-input-group--customer-email__found .fc-form-control {
-  width: 100% !important;
-}
-
 #fc .fc-checkout .fc-input-group .fc-input-group__button .fc-button {
   border-radius: var(--foxy-radius) !important;
   white-space: nowrap !important;
