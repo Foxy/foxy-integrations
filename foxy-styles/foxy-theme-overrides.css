@@ -968,6 +968,11 @@
     min-width: 0;
   }
 
+  #fc .fc-checkout__main__contents:has(form[style*="display: none"]) {
+    width: 50% !important;
+    flex: 0 0 50% !important;
+  }
+
   #fc .fc-checkout__main .fc-sidebar--checkout {
     order: 2 !important;
     width: 40% !important;
