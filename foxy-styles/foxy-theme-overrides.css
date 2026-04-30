@@ -1222,6 +1222,10 @@
   border-radius: var(--foxy-radius) !important;
 }
 
+#fc .fc-checkout .fc-input-group--customer-email__found > #customer_email {
+  width: 100% !important;
+}
+
 #fc .fc-checkout .fc-input-group .fc-input-group__button .fc-button {
   border-radius: var(--foxy-radius) !important;
   white-space: nowrap !important;
@@ -1278,6 +1282,7 @@
   transition: border-color 0.2s ease;
   padding: 10px 12.5px;
   font-size: var(--foxy-font-size-body);
+  line-height: 1.9;
 }
 #fc .fc-checkout .fc-form-control:focus {
   border: 2px solid var(--foxy-input-focus-border) !important;
