@@ -538,6 +538,7 @@
   background: var(--foxy-input-background);
   box-shadow: none;
   transition: border-color 0.2s ease;
+  padding: 10px 16px;
 }
 #fc .fc-sidebar .fc-form-control:focus {
   border: 2px solid var(--foxy-input-focus-border) !important;
@@ -556,7 +557,7 @@
   text-shadow: none;
   text-transform: none;
   height: auto;
-  padding: 8px 16px;
+  padding: 10px 16px;
   margin-left: 6px;
 }
 #fc .fc-sidebar .fc-button:hover,
@@ -573,6 +574,8 @@
 #fc .fc-sidebar a {
   color: var(--foxy-link-color) !important;
 }
+
+
 #fc .fc-sidebar a:hover {
   color: var(--foxy-link-hover-color) !important;
 }
@@ -597,6 +600,7 @@
   transition: border-color 0.2s ease;
   height: auto;
   width: 95%;
+  padding: 10px 16px;
 }
 #fc .fc-coupon-entry--input .fc-form-control:focus {
   border: 2px solid var(--foxy-input-focus-border) !important;
@@ -1213,6 +1217,10 @@
   border-radius: var(--foxy-radius) !important;
 }
 
+#fc .fc-checkout .fc-input-group--customer-email__found .fc-form-control {
+  width: 100% !important;
+}
+
 #fc .fc-checkout .fc-input-group .fc-input-group__button .fc-button {
   border-radius: var(--foxy-radius) !important;
   white-space: nowrap !important;
@@ -1318,7 +1326,7 @@
 #fc .fc-checkout button[data-fc-id="submit-shipping-postal-code"],
 #fc .fc-checkout button[data-fc-id="submit-billing-postal-code"],
 #fc .fc-checkout .fc-button--sign-in {
-  background: var(--foxy-button-background);
+  background: var(--foxy-button-background) !important;
   color: var(--foxy-button-text) !important;
   border: 1px solid var(--foxy-button-border);
   border-radius: var(--foxy-radius) !important;
