@@ -397,7 +397,7 @@
 
 [data-fc-sidecart] {
   z-index: 100 !important;
-  transform: translate3d(0px, 0, 0);
+  transform: translate3d(0px, 0, 0) !important;
   transition:
     transform 0.5s ease-in-out 0s,
     width 0s linear 0s,
@@ -406,7 +406,7 @@
 }
 
 [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-  transform: translate3d(-280px, 0, 0);
+  transform: translate3d(-280px, 0, 0) !important;
 }
 
 [data-fc-with-sidecart="reveal"].cart-visible [data-fc-ui-block] {
@@ -422,7 +422,7 @@
     right: -310px !important;
   }
   [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-    transform: translate3d(-310px, 0, 0);
+    transform: translate3d(-310px, 0, 0) !important;
   }
 }
 
@@ -431,7 +431,7 @@
     right: -340px !important;
   }
   [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-    transform: translate3d(-340px, 0, 0);
+    transform: translate3d(-340px, 0, 0) !important;
   }
 }
 
