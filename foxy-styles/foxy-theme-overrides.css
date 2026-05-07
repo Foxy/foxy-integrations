@@ -397,42 +397,37 @@
 
 [data-fc-sidecart] {
   z-index: 100 !important;
-  transform: translate3d(0px, 0, 0) !important;
-  transition:
-    transform 0.5s ease-in-out 0s,
-    width 0s linear 0s,
-    height 0s linear 0s !important;
-  right: -280px !important;
+  --sidecart-slide: -280px;
+  right: var(--sidecart-slide) !important;
+  /* Default state (no .cart-visible) — slide back out */
+  animation: foxy-sidecart-slide-out 0.4s ease-in-out forwards;
 }
 
+@media (min-width: 768px) {
+  [data-fc-sidecart] { --sidecart-slide: -310px; }
+}
+
+@media (min-width: 992px) {
+  [data-fc-sidecart] { --sidecart-slide: -340px; }
+}
+
+/* Open state — slide in */
 [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-  transform: translate3d(-280px, 0, 0) !important;
+  animation: foxy-sidecart-slide-in 0.5s ease-in-out forwards;
 }
 
-[data-fc-with-sidecart="reveal"].cart-visible [data-fc-ui-block] {
-  opacity: 0.2;
+@keyframes foxy-sidecart-slide-in {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(var(--sidecart-slide), 0, 0); }
+}
+
+@keyframes foxy-sidecart-slide-out {
+  from { transform: translate3d(var(--sidecart-slide), 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
 }
 
 [data-fc-store-page] {
   transform: none !important;
-}
-
-@media (min-width: 768px) {
-  [data-fc-sidecart] {
-    right: -310px !important;
-  }
-  [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-    transform: translate3d(-310px, 0, 0) !important;
-  }
-}
-
-@media (min-width: 992px) {
-  [data-fc-sidecart] {
-    right: -340px !important;
-  }
-  [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-    transform: translate3d(-340px, 0, 0) !important;
-  }
 }
 
 /* ======================================= */
