@@ -1343,7 +1343,6 @@
   height: inherit;
   padding: 10px 16px;
   margin-left: 0;
-  line-height: inherit;
   box-sizing: border-box;
 }
 #fc .fc-checkout .fc-button--check-email:hover,
