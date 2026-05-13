@@ -1284,6 +1284,7 @@
   outline: none;
   box-shadow: none;
   background-color: var(--foxy-input-background);
+  height: auto;
 }
 #fc .fc-checkout .awesomecomplete-input:focus {
   border: 2px solid var(--foxy-input-focus-border) !important;
