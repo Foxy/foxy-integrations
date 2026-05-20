@@ -442,9 +442,11 @@
    so Foxy's built-in page-push never fires */
 [data-fc-store-page] {
   transform: none !important;
+  will-change: auto !important;
+  perspective: none !important;
+  contain: none !important;
   transition: none !important;
 }
-
 /* Also lock the body/reveal wrapper so no stray transform
    creates a new containing block for fixed elements */
 [data-fc-with-sidecart="reveal"],
