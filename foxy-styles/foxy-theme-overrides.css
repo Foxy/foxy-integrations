@@ -436,41 +436,43 @@
   background: var(--foxy-background);
 }
 
-/* Slide the cart not the page */
+/* Slide the cart, not the page */
 
+/* Lock the page wrapper: kill both transform AND transition
+   so Foxy's built-in page-push never fires */
+[data-fc-store-page] {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Also lock the body/reveal wrapper so no stray transform
+   creates a new containing block for fixed elements */
+[data-fc-with-sidecart="reveal"],
+[data-fc-with-sidecart="reveal"].cart-visible,
+[data-fc-with-sidecart="reveal"].cart-visible--animation-complete {
+  transform: none !important;
+}
+
+/* Sidecart: slide via right position (not transform) */
 [data-fc-sidecart] {
   z-index: 100 !important;
-  --sidecart-slide: -280px;
-  right: var(--sidecart-slide) !important;
-  /* Default state (no .cart-visible) — slide back out */
-  animation: foxy-sidecart-slide-out 0.4s ease-in-out forwards;
+  right: -280px !important;
+  transition: right 0.4s ease-in-out !important;
+  transform: none !important;
+  animation: none !important;
 }
 
 @media (min-width: 768px) {
-  [data-fc-sidecart] { --sidecart-slide: -310px; }
+  [data-fc-sidecart] { right: -310px !important; }
 }
 
 @media (min-width: 992px) {
-  [data-fc-sidecart] { --sidecart-slide: -340px; }
+  [data-fc-sidecart] { right: -340px !important; }
 }
 
 /* Open state — slide in */
 [data-fc-with-sidecart="reveal"].cart-visible [data-fc-sidecart] {
-  animation: foxy-sidecart-slide-in 0.5s ease-in-out forwards;
-}
-
-@keyframes foxy-sidecart-slide-in {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(var(--sidecart-slide), 0, 0); }
-}
-
-@keyframes foxy-sidecart-slide-out {
-  from { transform: translate3d(var(--sidecart-slide), 0, 0); }
-  to   { transform: translate3d(0, 0, 0); }
-}
-
-[data-fc-store-page] {
-  transform: none !important;
+  right: 0 !important;
 }
 
 /* ======================================= */
