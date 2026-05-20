@@ -457,7 +457,7 @@
 [data-fc-sidecart] {
   z-index: 100 !important;
   right: -280px !important;
-  transition: right 0.4s ease-in-out !important;
+  transition: right 0.5s ease-in-out !important;
   transform: none !important;
   animation: none !important;
 }
