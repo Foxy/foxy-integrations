@@ -136,6 +136,10 @@
   margin: 0 auto 10px auto;
 }
 
+#fc .fc-logo__image{
+  padding-bottom: 0px;
+}
+
 /* Full-page cart logo */
 #fc .fc-context--cart-fullpage .fc-logo__image {
   padding: 0 0 35px;
