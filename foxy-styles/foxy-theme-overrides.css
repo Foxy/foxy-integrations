@@ -98,15 +98,30 @@
 /* Shared - Logo (all surfaces)            */
 /* ======================================= */
 
-/* Base: constrain both dimensions, preserve aspect ratio */
+/* Base: preserve aspect ratio */
 #fc .fc-logo__image,
 #fc #fc-logo--receipt {
-  max-width: 40%;
-  max-height: 50%;
   width: auto;
   height: auto;
   object-fit: contain;
   display: block;
+  max-height: 50%;
+}
+
+/* Desktop (1000px+) */
+@media (min-width: 1000px) {
+  #fc .fc-logo__image,
+  #fc #fc-logo--receipt {
+    max-width: 60%;
+  }
+}
+
+/* Below 1000px */
+@media (max-width: 999px) {
+  #fc .fc-logo__image,
+  #fc #fc-logo--receipt {
+    max-width: 40%;
+  }
 }
 
 /* Checkout sidebar logo (centered) */
