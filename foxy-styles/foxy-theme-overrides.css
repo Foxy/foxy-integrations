@@ -101,8 +101,8 @@
 /* Base: constrain both dimensions, preserve aspect ratio */
 #fc .fc-logo__image,
 #fc #fc-logo--receipt {
-  max-width: 300px;
-  max-height: 120px;
+  max-width: 80%;
+  max-height: 70%;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -123,24 +123,6 @@
 #fc #fc-receipt__section--header .fc-container__grid--receipt--logo #fc-logo--receipt {
   margin: 0;
   padding: 0;
-}
-
-/* Tablet */
-@media (max-width: 999px) {
-  #fc .fc-logo__image,
-  #fc #fc-logo--receipt {
-    max-width: 240px;
-    max-height: 100px;
-  }
-}
-
-/* Small mobile */
-@media (max-width: 600px) {
-  #fc .fc-logo__image,
-  #fc #fc-logo--receipt {
-    max-width: 180px;
-    max-height: 90px;
-  }
 }
 
 /* ======================================= */
