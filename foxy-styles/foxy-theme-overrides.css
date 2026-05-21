@@ -438,19 +438,15 @@
 
 /* Slide the cart, not the page */
 
-[data-fc-with-sidecart].cart-visible {
-  transition-duration: 0.25s !important;
+/* Kill all transitions on body (Foxy sets transition-property:
+   transform, opacity on the body for its page-push effect) */
+[data-fc-with-sidecart] {
+  transition: none !important;
 }
 
-[data-fc-with-sidecart].cart-visible [data-fc-ui-block] {
-  transition: transform 0.25s ease-in-out 0s,
-              opacity 0.25s ease-in-out 0s,
-              width 0s linear 0s,
-              height 0s linear 0s !important;
-}
-
-/* Lock the page wrapper: kill both transform AND transition
-   so Foxy's built-in page-push never fires */
+/* Lock the page wrapper: kill every property that creates
+   a new containing block (breaks position: fixed/sticky),
+   plus undo Foxy's scroll hijack (overflow-y: scroll + height: 100%) */
 [data-fc-store-page] {
   transform: none !important;
   will-change: auto !important;
@@ -458,7 +454,8 @@
   contain: none !important;
   transition: none !important;
 }
-/* Also lock the body/reveal wrapper so no stray transform
+
+/* Lock the body/reveal wrapper so no stray transform
    creates a new containing block for fixed elements */
 [data-fc-with-sidecart="reveal"],
 [data-fc-with-sidecart="reveal"].cart-visible,
@@ -466,9 +463,27 @@
   transform: none !important;
 }
 
+/* Kill transform on the overlay (Foxy applies translateZ(0) at rest
+   and translate3d(-Npx) when open, which compounds with page push) */
+[data-fc-with-sidecart="reveal"] [data-fc-ui-block] {
+  transform: none !important;
+}
+
+/* Overlay fade: 0.25s for both open and close */
+[data-fc-ui-block] {
+  transition: opacity 0.25s ease-in-out 0s,
+              width 0s linear 0.25s,
+              height 0s linear 0.25s !important;
+}
+[data-fc-with-sidecart].cart-visible [data-fc-ui-block] {
+  transition: opacity 0.25s ease-in-out 0s,
+              width 0s linear 0s,
+              height 0s linear 0s !important;
+}
+
 /* Sidecart: slide via right position (not transform) */
 [data-fc-sidecart] {
-  z-index: 100 !important;
+  z-index: 10001 !important;
   right: -280px !important;
   transition: right 0.25s ease-in-out !important;
   transform: none !important;
