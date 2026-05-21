@@ -113,6 +113,7 @@
   #fc .fc-logo__image,
   #fc #fc-logo--receipt {
     max-width: 60%;
+    max-height: 100px;
   }
 }
 
@@ -121,6 +122,7 @@
   #fc .fc-logo__image,
   #fc #fc-logo--receipt {
     max-width: 45%;
+    max-height: 100px;
   }
 }
 
