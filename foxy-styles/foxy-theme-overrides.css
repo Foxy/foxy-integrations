@@ -444,9 +444,7 @@
   transition: none !important;
 }
 
-/* Lock the page wrapper: kill every property that creates
-   a new containing block (breaks position: fixed/sticky),
-   plus undo Foxy's scroll hijack (overflow-y: scroll + height: 100%) */
+/* Lock the page wrapper*/
 [data-fc-store-page] {
   transform: none !important;
   will-change: auto !important;
