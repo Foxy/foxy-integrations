@@ -113,7 +113,7 @@
   #fc .fc-logo__image,
   #fc #fc-logo--receipt {
     max-width: 60%;
-    max-height: 240px;
+    max-height: 200px;
   }
 }
 
@@ -122,7 +122,12 @@
   #fc .fc-logo__image,
   #fc #fc-logo--receipt {
     max-width: 45%;
-    max-height: 240px;
+    max-height: 200px;
+  }
+
+  /* Hide logo in full-page cart */
+  #fc .fc-context--cart-fullpage .fc-logo{
+    display: none !important;
   }
 }
 
