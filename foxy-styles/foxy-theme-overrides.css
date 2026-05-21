@@ -438,6 +438,17 @@
 
 /* Slide the cart, not the page */
 
+[data-fc-with-sidecart].cart-visible {
+  transition-duration: 0.25s !important;
+}
+
+[data-fc-with-sidecart].cart-visible [data-fc-ui-block] {
+  transition: transform 0.25s ease-in-out 0s,
+              opacity 0.25s ease-in-out 0s,
+              width 0s linear 0s,
+              height 0s linear 0s !important;
+}
+
 /* Lock the page wrapper: kill both transform AND transition
    so Foxy's built-in page-push never fires */
 [data-fc-store-page] {
