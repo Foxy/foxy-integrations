@@ -1403,7 +1403,7 @@
   text-shadow: none;
   text-transform: none;
   height: inherit;
-  padding: 10px 16px;
+  padding: 10px 16px !important;
   margin-left: 0;
   box-sizing: border-box;
 }
