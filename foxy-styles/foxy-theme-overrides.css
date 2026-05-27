@@ -119,8 +119,7 @@
 
 /* Below 1000px */
 @media (max-width: 999px) {
-  #fc .fc-logo__image,
-  #fc #fc-logo--receipt {
+  #fc .fc-logo__image {
     max-width: 45%;
     max-height: 200px;
   }
