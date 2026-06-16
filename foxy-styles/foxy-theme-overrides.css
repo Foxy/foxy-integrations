@@ -623,6 +623,8 @@
   box-shadow: none;
   transition: border-color 0.2s ease;
   padding: 10px;
+  font-size: var(--foxy-font-size-body);
+  line-height: 1.4;
 }
 #fc .fc-sidebar .fc-form-control:focus {
   border: 1px solid var(--foxy-input-border) !important;
@@ -643,6 +645,7 @@
   height: auto;
   padding: 10px;
   margin-left: 6px;
+  line-height: 1.4;
 }
 #fc .fc-sidebar .fc-button:hover,
 #fc .fc-sidebar button[data-fc-id="submit-shipping-postal-code"]:hover {
@@ -684,6 +687,8 @@
   height: auto;
   width: 95%;
   padding: 10px;
+  font-size: var(--foxy-font-size-body);
+  line-height: 1.4;
 }
 #fc .fc-coupon-entry--input .fc-form-control:focus {
   border: 1px solid var(--foxy-input-border) !important;
@@ -702,6 +707,7 @@
   font-weight: var(--foxy-font-weight-semi);
   text-transform: none;
   text-shadow: none;
+  line-height: 1.4;
 }
 #fc .fc-coupon-entry__apply:hover {
   background: var(--foxy-secondary-button-hover-background) !important;
