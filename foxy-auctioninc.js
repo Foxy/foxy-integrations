@@ -69,11 +69,19 @@ FC.onLoad = function () {
         const idx = onInput.name.slice(2);
         if (!/^\d+$/.test(idx)) return;
         const osInput = form.querySelector(`[name="os${idx}"]`);
-        if (!osInput) return;
+        if (!osInput) {
+          onInput.remove(); // drop orphan label with no matching value field
+          return;
+        }
         osInput.name = sanitizeOptionName(onInput.value);
         onInput.remove();
         debugLog("Converted option", `on${idx}/os${idx}`, "->", osInput.name);
       });
+
+      // Drop any orphan os{N} value fields that had no matching on{N} label
+      form
+        .querySelectorAll('input[name^="os"]')
+        .forEach((el) => { if (/^os\d+$/.test(el.name)) el.remove(); });
 
       // 3. Rename mapped fields; remove AuctionInc-only fields
       form.querySelectorAll("input, select, textarea").forEach((el) => {
