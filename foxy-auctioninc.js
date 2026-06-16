@@ -21,20 +21,14 @@ FC.onLoad = function () {
       if (isEnabled) console.log("[AI2F]", msg, ...args);
     }
 
-    // AuctionInc input name -> Foxy product param name
+    // AuctionInc input name -> Foxy product param name. Fields not listed
+    // here have no Foxy equivalent and are preserved/passed through as-is.
     const inputNameMap = {
       item_name: "name",
       item_number: "code",
       amount: "price",
       quantity: "quantity",
     };
-
-    // AuctionInc-only fields that must NOT be posted to Foxy
-    const dropFields = new Set([
-      "cmd", "business", "taxable", "undefined_quantity", "calc_method",
-      "lot_size", "length", "width", "height", "package", "insure",
-      "supp_handling_fee", "cn", "item_group", "weight_lbs", "weight_oz",
-    ]);
 
     /**
      * Combine AuctionInc weight_lbs + weight_oz into a single Foxy decimal weight (lbs).
@@ -59,10 +53,13 @@ FC.onLoad = function () {
     }
 
     function processAddToCartForm(form, cartUrl) {
-      // 1. Combine weight BEFORE removing the source fields
-      const lbs = form.querySelector('input[name="weight_lbs"]')?.value;
-      const oz = form.querySelector('input[name="weight_oz"]')?.value;
-      const weight = lbsOzToWeight(lbs, oz);
+      // 1. Translate weight_lbs + weight_oz into Foxy's `weight` field (their
+      //    Foxy match), then remove the source fields since they've been mapped.
+      const lbsInput = form.querySelector('input[name="weight_lbs"]');
+      const ozInput = form.querySelector('input[name="weight_oz"]');
+      const weight = lbsOzToWeight(lbsInput?.value, ozInput?.value);
+      if (lbsInput) lbsInput.remove();
+      if (ozInput) ozInput.remove();
 
       // 2. Convert on{N}/os{N} option pairs into Foxy custom options
       form.querySelectorAll('input[name^="on"]').forEach((onInput) => {
@@ -83,10 +80,10 @@ FC.onLoad = function () {
         .querySelectorAll('input[name^="os"]')
         .forEach((el) => { if (/^os\d+$/.test(el.name)) el.remove(); });
 
-      // 3. Rename mapped fields; remove AuctionInc-only fields
+      // 3. Map fields that have a Foxy equivalent; preserve everything else
+      //    (all other AuctionInc fields are passed through to Foxy unchanged).
       form.querySelectorAll("input, select, textarea").forEach((el) => {
         if (!el.name) return;
-        if (dropFields.has(el.name)) { el.remove(); return; }
         if (inputNameMap.hasOwnProperty(el.name)) el.name = inputNameMap[el.name];
       });
 
