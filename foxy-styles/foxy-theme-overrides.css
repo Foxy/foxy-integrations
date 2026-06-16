@@ -208,9 +208,9 @@
   transition: border-color 0.2s ease;
 }
 #fc .fc-cart__item__quantity .fc-form-control:focus {
-  border: 2px solid var(--foxy-input-focus-border) !important;
-  outline: none;
-  box-shadow: none;
+  border: 1px solid var(--foxy-border) !important;
+  outline: 2px solid transparent;   /* invisible normally, appears in High Contrast */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foxy-input-focus-border) 25%, transparent);
 }
 #fc .fc-cart__item__total {
   margin-bottom: 0 !important;
@@ -625,9 +625,9 @@
   padding: 10px;
 }
 #fc .fc-sidebar .fc-form-control:focus {
-  border: 2px solid var(--foxy-input-focus-border) !important;
-  outline: none;
-  box-shadow: none;
+  border: 1px solid var(--foxy-input-border) !important;
+  outline: 2px solid transparent;   /* invisible normally, appears in High Contrast */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foxy-input-focus-border) 25%, transparent);
   background-color: var(--foxy-input-background);
 }
 #fc .fc-sidebar .fc-button,
@@ -686,9 +686,9 @@
   padding: 10px;
 }
 #fc .fc-coupon-entry--input .fc-form-control:focus {
-  border: 2px solid var(--foxy-input-focus-border) !important;
-  outline: none;
-  box-shadow: none;
+  border: 1px solid var(--foxy-input-border) !important;
+  outline: 2px solid transparent;   /* invisible normally, appears in High Contrast */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foxy-input-focus-border) 25%, transparent);
 }
 #fc .fc-coupon-entry__apply {
   background: var(--foxy-secondary-button-background) !important;
@@ -993,6 +993,56 @@
 
 #fc .fc-checkout .fc-sidebar--cart {
   background: var(--foxy-background);
+}
+
+/* --- EXPRESS CHECKOUT OPTIONS --- */
+
+#fc #fc-checkout__section--express-options .fc-express-option {
+  display: block;
+}
+#fc #fc-express-checkout {
+  margin-bottom: 20px;
+}
+#fc #fc-express-checkout legend,
+#fc #fc-express-checkout #fc-checkout__section--express-options {
+  float: unset;
+}
+#fc .fc-action--payment--or {
+  margin-bottom: 20px;
+}
+#fc #stripe-express-options {
+  padding-bottom: 4px;
+}
+#fc #fc-checkout__section--express-options {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* "Express Checkout" heading is a <legend> that lives in a <div>,
+   not a <fieldset>, so the section-legend rule never reaches it.
+   Re-apply the same heading tokens so it matches the other sections. */
+#fc #fc-express-checkout legend {
+  font-family: var(--foxy-font-heading) !important;
+  font-size: var(--foxy-font-size-heading) !important;
+  font-weight: var(--foxy-font-weight-bold);
+  color: var(--foxy-heading-color) !important;
+  margin-bottom: 12px;
+  width: 100%;
+  border: none;
+  text-shadow: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* "— Or enter your details —" divider (text node is moved here by the
+   footer script). Theme its color explicitly; flip to --foxy-text for a
+   bolder look. NOTE: the express payment buttons themselves (Apple Pay,
+   Google Pay, Link, etc.) render inside provider iframes and cannot be
+   recolored to follow the theme. */
+#fc .fc-action--payment--or {
+  color: var(--foxy-text-muted) !important;
+  text-align: center;
+  font-size: var(--foxy-font-size-body) !important;
 }
 
 /* --- DESKTOP (1000px+): Flexbox split --- */
@@ -1348,20 +1398,22 @@
   border: 1px solid var(--foxy-input-border);
   border-radius: var(--foxy-radius);
   background: var(--foxy-input-background);
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   padding: 10px;
   font-size: var(--foxy-font-size-body);
   line-height: 1.9;
 }
 #fc .fc-checkout .fc-form-control:focus {
-  border: 2px solid var(--foxy-input-focus-border) !important;
-  outline: none;
-  box-shadow: none;
+  border: 1px solid var(--foxy-input-border) !important;
+  outline: 2px solid transparent;   /* invisible normally, appears in High Contrast */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foxy-input-focus-border) 25%, transparent);
   background-color: var(--foxy-input-background);
   height: auto;
 }
 #fc .fc-checkout .awesomecomplete-input:focus {
-  border: 2px solid var(--foxy-input-focus-border) !important;
+  border: 1px solid var(--foxy-input-border) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foxy-input-focus-border) 25%, transparent);
 }
 #fc .fc-foxycomplete-list {
   background-color: var(--foxy-background);
@@ -1388,11 +1440,52 @@
 #fc .fc-checkout .fc-alert-container--error .fc-form-control,
 #fc .fc-alert-container--error .fc-form-control:focus {
   background: var(--foxy-danger-background) !important;
-  border: 2px solid var(--foxy-danger-border) !important;
+  border: 1px solid var(--foxy-danger-border) !important;
   transition:
     background 0.2s linear,
     border 0.2s linear,
     padding 0.2s linear;
+}
+
+/* ======================================= */
+/* Select fields - normalize native UI     */
+/* Safari (and Chrome) keep their own       */
+/* rounded shape + double-arrow on <select> */
+/* until appearance is reset. Strip the     */
+/* native chrome so selects match the       */
+/* themed text inputs, and draw a custom    */
+/* chevron. The country combobox is styled  */
+/* as a button on purpose, so it's excluded.*/
+/* ======================================= */
+#fc .fc-checkout select:not(.fc-foxycomplete-combobox),
+#fc .fc-context--cart-fullpage select,
+#fc #fc-receipt-container select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  border: 1px solid var(--foxy-input-border);
+  border-radius: var(--foxy-radius);
+  background-color: var(--foxy-input-background);
+  color: var(--foxy-input-text) !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23888888' stroke-width='1.6' d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  padding: 10px 34px 10px 10px !important;
+  font-size: var(--foxy-font-size-body);
+  text-overflow: ellipsis;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+#fc .fc-checkout select:not(.fc-foxycomplete-combobox):focus,
+#fc .fc-context--cart-fullpage select:focus,
+#fc #fc-receipt-container select:focus {
+  border-color: var(--foxy-input-border) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foxy-input-focus-border) 25%, transparent);
+}
+/* Hide the duplicate native arrow that IE/Edge legacy adds */
+#fc .fc-checkout select:not(.fc-foxycomplete-combobox)::-ms-expand {
+  display: none;
 }
 
 /* ======================================= */
@@ -1411,7 +1504,7 @@
   text-shadow: none;
   text-transform: none;
   height: inherit;
-  padding: 10px!important;
+  padding: 10px !important;
   margin-left: 0;
   box-sizing: border-box;
 }
@@ -1740,7 +1833,7 @@
     padding: 20px 15px;
   }
   #fc #fc-receipt__section--general-information,
-  #fc #fc-receipt__section--billing-information,
+  #fc #fc-receipt__section-billing-information,
   #fc #fc-receipt__section--shipping-information {
     padding: 5px 10px;
   }
