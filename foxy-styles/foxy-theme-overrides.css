@@ -22,6 +22,14 @@
   font-family: var(--foxy-font-body) !important;
   color: var(--foxy-text) !important;
 }
+
+/* 
+  Google translate sets the <font> which overrides our button theme colors. This rule ensures that the button text color is inherited from the button background color, which is set via CSS variables.
+*/
+#fc font {
+  color: inherit !important;
+}
+
 #fc body {
   background: var(--foxy-background) !important;
   padding: 0 !important;
