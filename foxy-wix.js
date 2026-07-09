@@ -1,7 +1,7 @@
 var FC = FC || {};
 FC.onLoad = function () {
   FC.client.on('sidecart-detach', function () {
-    // Reset variants
+    // Reset selected product options
     document
       .querySelectorAll("[data-hook='dropdown-base-text']")
       .forEach((el) => (el.innerText = 'Select'));
@@ -159,7 +159,7 @@ FC.onLoad = function () {
                   window.location.href =
                     `https://${
                       FC.settings.storedomain
-                    }/cart?name=${encodeURIComponent(
+                    }/cart?${FC.session.get()}&name=${encodeURIComponent(
                       name
                     )}&price=${price}&Start_Date=${encodeURIComponent(
                       startDate
