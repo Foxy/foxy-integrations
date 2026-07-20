@@ -62,7 +62,7 @@ FC.onLoad = function () {
       if (ozInput) ozInput.remove();
 
       // 2. Convert on{N}/os{N} option pairs into Foxy custom options
-      form.querySelectorAll('input[name^="on"]').forEach((onInput) => {
+      form.querySelectorAll('input[name^="on"]').forEach(onInput => {
         const idx = onInput.name.slice(2);
         if (!/^\d+$/.test(idx)) return;
         const osInput = form.querySelector(`[name="os${idx}"]`);
@@ -76,13 +76,13 @@ FC.onLoad = function () {
       });
 
       // Drop any orphan os{N} value fields that had no matching on{N} label
-      form
-        .querySelectorAll('input[name^="os"]')
-        .forEach((el) => { if (/^os\d+$/.test(el.name)) el.remove(); });
+      form.querySelectorAll('input[name^="os"]').forEach(el => {
+        if (/^os\d+$/.test(el.name)) el.remove();
+      });
 
       // 3. Map fields that have a Foxy equivalent; preserve everything else
       //    (all other AuctionInc fields are passed through to Foxy unchanged).
-      form.querySelectorAll("input, select, textarea").forEach((el) => {
+      form.querySelectorAll("input, select, textarea").forEach(el => {
         if (!el.name) return;
         if (inputNameMap.hasOwnProperty(el.name)) el.name = inputNameMap[el.name];
       });
@@ -90,7 +90,9 @@ FC.onLoad = function () {
       // 4. Inject combined weight
       if (weight > 0 && !form.querySelector('input[name="weight"]')) {
         const w = document.createElement("input");
-        w.type = "hidden"; w.name = "weight"; w.value = weight;
+        w.type = "hidden";
+        w.name = "weight";
+        w.value = weight;
         form.appendChild(w);
       }
 
@@ -99,13 +101,29 @@ FC.onLoad = function () {
         const code = form.querySelector('input[name="code"]');
         if (code) {
           const n = document.createElement("input");
-          n.type = "hidden"; n.name = "name"; n.value = code.value;
+          n.type = "hidden";
+          n.name = "name";
+          n.value = code.value;
           form.appendChild(n);
         }
       }
 
       // 6. Point the form at Foxy
       form.action = cartUrl;
+
+      // 7. AuctionInc's hosted "Add to Cart" button images (imagehost.auctioninc.com)
+      //    are going away, so swap the <input type="image"> for a plain submit
+      //    button. Add a class hook so the merchant can style it with CSS.
+      const imageBtn = form.querySelector('input[type="image"][name="cart_btn"]');
+      if (imageBtn) {
+        const submitBtn = document.createElement("input");
+        submitBtn.type = "submit";
+        submitBtn.value = imageBtn.value || "Add to Cart";
+        submitBtn.className = "foxy-submit";
+        imageBtn.replaceWith(submitBtn);
+        debugLog("Replaced hosted image button with submit button", submitBtn);
+      }
+
       debugLog("Rewrote add-to-cart form", form);
     }
 
