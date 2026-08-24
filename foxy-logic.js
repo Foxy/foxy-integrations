@@ -29,6 +29,7 @@ var FC = FC || {};
   let authenticated = false,
     activeSubs = 0,
     activeSubCodes = [],
+    customerDataPending = false,
     hasDynamicRedirect = false;
   ((transactionCodes = []),
     (pastDueAmount = 0),
@@ -60,6 +61,8 @@ var FC = FC || {};
     (attributeItemFavoriteCode = "[foxy-logic-favorite-code]"),
     (attributeCustomerFavorite = '[foxy-logic-action="favorite"]'),
     (attributeCustomerUnfavorite = '[foxy-logic-action="unfavorite"]'),
+    (attributeCustomerFavoriteAction =
+      attributeCustomerFavorite + ", " + attributeCustomerUnfavorite),
     (attributeCustomerLogout = '[foxy-logic-action="logout"]'));
 
   // Support multiple protected paths (or a single string for backwards compatibility)
@@ -133,11 +136,11 @@ var FC = FC || {};
       window.location.reload();
       return;
     }
-    if (target.matches(attributeCustomerUnfavorite) || target.matches(attributeCustomerFavorite))
-      await handleFavorites(event);
+    const favoriteAction = target?.closest?.(attributeCustomerFavoriteAction);
+    if (favoriteAction) await handleFavorites(event, favoriteAction);
   });
 
-  let fetchCustomerData = async function (allowRedirect = true) {
+  let fetchCustomerDataInner = async function (allowRedirect = true) {
     let sessionToken = getSessionToken();
     if (sessionToken) {
       const store =
@@ -201,7 +204,9 @@ var FC = FC || {};
               transactionCodes.push(items[i].code);
             }
           }
-          if (useLatestTransactionOnly && i == 0) break;
+          // Only the newest transaction that actually carried items counts. Transactions
+          // arrive newest-first, and empty ones were skipped by the `continue` above.
+          if (useLatestTransactionOnly) break;
         }
       }
       localStorage.setItem("fx.customer.transactions", JSON.stringify({ codes: transactionCodes }));
@@ -214,19 +219,24 @@ var FC = FC || {};
           let subscription = subscriptions[s];
 
           if (subscription.is_active) {
-            if (
-              !ignoreSubscriptionsWithPastDue ||
-              (ignoreSubscriptionsWithPastDue && subscription.past_due_amount == 0)
-            ) {
-              activeSubs += 1;
-            }
+            const countsAsActive =
+              !ignoreSubscriptionsWithPastDue || subscription.past_due_amount == 0;
+
+            // Past due still accrues even for a subscription the filter excludes, so the
+            // past-due amount stays accurate.
             if (subscription.past_due_amount > 0) {
               pastDueAmount += subscription.past_due_amount;
             }
-            let items = subscription._embedded["fx:transaction_template"]._embedded["fx:items"];
-            for (let i = 0; i < items.length; i++) {
-              if (items[i].code != "" && activeSubCodes.indexOf(items[i].code) === -1) {
-                activeSubCodes.push(items[i].code);
+
+            // Codes must follow the same rule as the count, otherwise
+            // foxy-logic-subscribed="false" and foxy-logic-subscribed-to="CODE" can both show.
+            if (countsAsActive) {
+              activeSubs += 1;
+              let items = subscription._embedded["fx:transaction_template"]._embedded["fx:items"];
+              for (let i = 0; i < items.length; i++) {
+                if (items[i].code != "" && activeSubCodes.indexOf(items[i].code) === -1) {
+                  activeSubCodes.push(items[i].code);
+                }
               }
             }
           }
@@ -254,7 +264,23 @@ var FC = FC || {};
         handleOnLogInRedirect();
       }
     }
-    updatePage();
+  };
+
+  // While a fetch is in flight the in-memory data is still the cold-start defaults
+  // (no subscriptions, no attributes). updatePage() is safe to run then -- it only
+  // restyles -- but removeElementsFromPage is destructive and must not act on data
+  // that has not arrived yet, so it waits on this flag.
+  let fetchCustomerData = async function (allowRedirect = true) {
+    customerDataPending = true;
+    try {
+      await fetchCustomerDataInner(allowRedirect);
+    } catch (error) {
+      // Never leave the page unrendered because one request failed.
+      console.log("Portal content protection fetch error:", error);
+    } finally {
+      customerDataPending = false;
+      updatePage();
+    }
   };
   let handleOnLogInRedirect = function () {
     if (
@@ -590,25 +616,32 @@ var FC = FC || {};
       document.head.appendChild(newStylesheet);
     }
 
-    // Remove hidden elements from the page if configured to and not on the portal page
-    if (!portal && removeElementsFromPage) {
+    // Remove hidden elements from the page if configured to and not on the portal page.
+    // Skipped while customer data is still loading: removal is irreversible, and on a cold
+    // cache the pre-fetch pass would delete content the customer actually qualifies for.
+    // The CSS above has already hidden it, so nothing is exposed by waiting.
+    if (!portal && removeElementsFromPage && !customerDataPending) {
+      // Favorite/unfavorite state wrappers stay in the DOM so the control can be toggled
+      // after the customer favorites or unfavorites an item; CSS keeps the inactive state
+      // hidden. Everything else that is hidden is still physically removed, so gated
+      // content is never left readable in the markup.
+      const favoriteStatePrefixes = [
+        attributeIfAttributeFavorite.slice(0, -1),
+        attributeIfAttributeNotFavorite.slice(0, -1),
+      ];
+
       for (let c = 0; c < attributesToHide.length; c++) {
         const elAttribute = attributesToHide[c];
+        if (favoriteStatePrefixes.some(prefix => elAttribute.startsWith(prefix))) continue;
         if (!attributesToShow.includes(elAttribute)) {
           document.querySelectorAll(elAttribute).forEach(el => {
-            const elementAttributes = el.attributes;
-            let shouldRemove = true;
-
-            for (let i = 0; i < elementAttributes.length; i++) {
-              const attribute = elementAttributes[i];
-              if (attributesToShow.includes(`[${attribute.name}="${attribute.value}"]`)) {
-                shouldRemove = false;
-                break;
+            try {
+              if (!attributesToShow.some(selector => el.matches(selector))) {
+                el.remove();
               }
-            }
-
-            if (shouldRemove) {
-              el.remove();
+            } catch (error) {
+              // An unparseable selector must not abort the rest of the removal pass.
+              console.log(error);
             }
           });
         }
@@ -616,34 +649,49 @@ var FC = FC || {};
     }
   };
 
-  let handleFavorites = async function (event) {
+  let handleFavorites = async function (event, actionElement) {
     if (!webhookEndpointURL) return;
-    const favoriteElement = event.target;
+    const favoriteElement =
+      actionElement || event.target?.closest?.(attributeCustomerFavoriteAction);
     let customerID = getCustomerID();
 
+    if (!favoriteElement || !customerID) return;
+
+    const favoriteItem = favoriteElement.closest(attributeItemFavoriteCode);
+    const itemID = favoriteItem?.getAttribute(attributeItemFavoriteCode.replace(/\[|\]/g, ""));
+    const isFavoriteAction = favoriteElement.matches(attributeCustomerFavorite);
+    const isUnfavoriteAction = favoriteElement.matches(attributeCustomerUnfavorite);
+
+    if (!favoriteItem || !itemID || (!isFavoriteAction && !isUnfavoriteAction)) return;
+
+    const oppositeSelector = isFavoriteAction
+      ? attributeCustomerUnfavorite
+      : attributeCustomerFavorite;
+    const oppositeElement = favoriteItem.matches(oppositeSelector)
+      ? favoriteItem
+      : favoriteItem.querySelector(oppositeSelector);
+
+    // The visual swap is best effort: if the counterpart control is missing the attribute
+    // is still saved, and checkAttributes() settles the display once the data comes back.
     let displayOppositeFavoriteState = oppositeElement => {
       //  removing pointer-events to element while action takes place for debouncing
       favoriteElement.style.setProperty("display", "none", "important");
-      oppositeElement.style.setProperty("display", "revert", "important");
+      oppositeElement?.style.setProperty("display", "revert", "important");
 
       favoriteElement.style.setProperty("pointer-events", "none");
-      oppositeElement.style.setProperty("pointer-events", "none");
+      oppositeElement?.style.setProperty("pointer-events", "none");
       setTimeout(() => {
         favoriteElement.style.setProperty("pointer-events", "auto");
-        oppositeElement.style.setProperty("pointer-events", "auto");
+        oppositeElement?.style.setProperty("pointer-events", "auto");
       }, 2000);
 
       setTimeout(() => {
         favoriteElement.style.setProperty("display", "unset", "");
-        oppositeElement.style.setProperty("display", "unset", "");
+        oppositeElement?.style.setProperty("display", "unset", "");
       }, 10000);
     };
 
     let addOrRemoveFavorite = async function (ifTrueAddElseRemove = false) {
-      const itemID = favoriteElement
-        ?.closest(attributeItemFavoriteCode)
-        .getAttribute(attributeItemFavoriteCode.replace(/\[|\]/g, ""));
-
       const attributeID = customerAttributes[`favorite-${itemID}`]?.id;
       try {
         const headers = {
@@ -676,15 +724,13 @@ var FC = FC || {};
       }
     };
 
-    if (favoriteElement.matches(attributeCustomerFavorite) && customerID) {
-      const unfavoriteElement = document.querySelector(attributeCustomerUnfavorite);
-      displayOppositeFavoriteState(unfavoriteElement);
+    if (isFavoriteAction) {
+      displayOppositeFavoriteState(oppositeElement);
       await addOrRemoveFavorite(true);
       await fetchCustomerData(false);
       return;
-    } else if (favoriteElement.matches(attributeCustomerUnfavorite) && customerID) {
-      const favoriteElement = document.querySelector(attributeCustomerFavorite);
-      displayOppositeFavoriteState(favoriteElement);
+    } else if (isUnfavoriteAction) {
+      displayOppositeFavoriteState(oppositeElement);
       await addOrRemoveFavorite(false);
       await fetchCustomerData(false);
       return;
